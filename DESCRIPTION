@@ -1,0 +1,10 @@
+Package: PBMExperiment
+Title: Tools for the analysis of Protein Binding Microarrays
+Version: 0.99.0
+Authors@R: person("Patrick", "Kimes", email = "patrick.kimes@gmail.com.com", role = c("aut", "cre"))
+Description: Classes and methods for the organization and analysis of transcription factor binding affinities
+  in vitro using single-channel Protein Binding Microarrays.
+Depends: R (>= 3.4.2)
+License: MIT
+Encoding: UTF-8
+LazyData: true
