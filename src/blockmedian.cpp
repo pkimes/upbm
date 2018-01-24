@@ -1,0 +1,46 @@
+// [[Rcpp::depends(RcppArmadillo)]]
+
+#include <RcppArmadillo.h>
+#include <math.h>
+
+using namespace Rcpp;
+using namespace arma;
+
+// [[Rcpp::export]]
+NumericMatrix blockmedian(NumericMatrix Xr, int w, bool center = true) {
+    int n = Xr.nrow(), p = Xr.ncol();
+    arma::mat X(Xr.begin(), n, p, false);
+    arma::mat Xnew(n, p, arma::fill::zeros);
+    arma::vec temp_v(w * w);
+    int rmin = 0, rmax = 0, cmin = 0, cmax = 0;
+    double med;
+    
+    // median of all non-NA values in matrix
+    if (center) {
+        arma::vec v = arma::vectorise(X);
+        med = arma::median(v.elem(arma::find_finite(v)));
+    };
+    // median values in w x w windows
+    for (int i = 0; i < n; ++i) {
+        rmin = std::max(0, (int) (i - floor(w / 2.0)));
+        rmax = std::min(rmin + w - 1, n - 1);
+        rmin = std::max(rmax - w + 1, 0);
+        for (int j = 0; j < p; ++j) {
+            cmin = std::max(0, (int) (j - floor(w / 2.0)));
+            cmax = std::min(cmin + w - 1, p - 1);
+            cmin = std::max(cmax - w + 1, 0);
+            temp_v = arma::vectorise(X.submat(rmin, cmin, rmax, cmax));
+            try {
+                Xnew(i, j) = arma::median(temp_v.elem(arma::find_finite(temp_v)));
+            } catch (...) {
+                cout << "Error at i = " << i << ", j = " << j;
+                Xnew(i, j) = arma::datum::nan;
+            };
+        };
+    };
+    if (center) {
+        return wrap(Xnew - med);
+    } else {
+        return wrap(Xnew);
+    };
+}
