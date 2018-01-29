@@ -9,18 +9,40 @@ makePBMExperiment <- function(tab) {
     tab <- tidyr::unite(tab, "assay", c("date", "id", "scan", "lp"),
                         remove = FALSE)
 
-    ## assays, colData, rowData #################################################
-    ## start by reading in each assay
+    ## read in all assays
     assay_metadata <- dplyr::select(tab, assay, date, id, scan, lp)
     assay_metadata <- dplyr::distinct(assay_metadata)
-    assay_list <- lapply(assay_metadata$assay, readAssay, stab = tab)
+    assay_tables <- lapply(assay_metadata$assay, readAssay, stab = tab)
+    assay_tables <- purrr::reduce(assay_tables, left_join,
+                                  by = c("Column", "Row", "Name", "ID"))
 
-    ## merge SummarizedExperiments?
-    ## - or I should have been using data.frames up until now...
+    ## make list of asssays
+    assay_list <- assay_tables %>%
+        mutate_if(is.list, funs(ifelse(sapply(., length) > 0, ., NA_real_))) %>%
+        gather(array, vals, -Column, -Row, -Name, -ID) %>%
+        select(., -Column, -Row, -Name, -ID) %>%
+        group_by(array) %>%
+        do(l = DataFrame(unnest(select(., -array))))
 
-    ## assayData ################################################################
-    ## then, need to add assay data
+    ## add names to assays
+    assay_names <- assay_list$array
+    assay_list <- assay_list$l
+    names(assay_list) <- assay_names
+
+    ## row/probe-level metadata
+    rowdat <- DataFrame(select(assay_tables, Column, Row, Name, ID))
+    
+    ## column/condition-level metadata
+    coldat <- DataFrame(select(assay_metadata, -assay))
+    rownames(coldat) <- assay_metadata$assay
+
+    ## SummarizedExperiment
+    SummarizedExperiment(assays = assay_list, rowData = rowdat,
+                         metadata = list(assayinfo = coldat))
 }
+
+
+
 
 
 #' Read GPR Files as Assay
@@ -41,11 +63,11 @@ makePBMExperiment <- function(tab) {
 readAssay <- function(x, stab) {
     stab <- filter(stab, assay == x)
     gpr_list <- lapply(stab$gpr, readGPR)
-    gpr_list <- mapply(function(g, n) { colnames(g) <- n; g },
-                       gpr_list, stab$condition)
-    gprs <- do.call(cbind, gpr_list)
-    names(assays(gprs)) <- x
-    gprs
+    gpr_list <- mapply(function(g, n) { names(g)[5] <- n; g },
+                       gpr_list, stab$condition, SIMPLIFY = FALSE)
+    gprs <- purrr::reduce(gpr_list, left_join,
+                          by = c("Column", "Row", "Name", "ID"))
+    tidyr::nest(gprs, -Column, -Row, -Name, -ID, .key = UQ(x))
 }
 
 
@@ -70,7 +92,7 @@ readGPR <- function(x) {
     colt[c(4, 5, 38, 40)] <- 'c'
     colt[c(34)] <- 'd'
     vals <- read_tsv(x, skip = 35, col_types = paste(colt, collapse = ""))
-    SummarizedExperiment(assays = list(a = DataFrame(val = dplyr::pull(vals, 5))),
-                         rowData = DataFrame(select(vals, Column, Row, Name, ID)))
+    names(vals)[5] <- 'intensity'
+    vals %>% select(Column, Row, Name, ID, intensity)
 }
 
