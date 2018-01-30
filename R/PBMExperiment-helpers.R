@@ -1,18 +1,28 @@
 #' Read PBMExperiment Data
 #'
+#' @param tab table of samples with at least `gpr` and `vers` columns
+#'        corresponding to GPR file paths and the corresponding PBM
+#'        design version
+#' @param useMean logical whether to use mean fluorescent intensity
+#'        for each probe rather than median fluorescent intensity
+#'        (default = FALSE)
+#' @param useBackground logical whether to use background subtracted
+#'        intensity rather than non-subtracted intensity
+#'        (default = FALSE)
+#' 
 #' @import SummarizedExperiment
 #' @importFrom purrr reduce
 #' @importFrom dplyr select
 #' @export
 #' @author Patrick Kimes
-makePBMExperiment <- function(tab) {
+makePBMExperiment <- function(tab, useMean = FALSE, useBackground = FALSE) {
     ## currently only support all scans with same design
     if (length(unique(tab$vers)) > 1) {
         stop("All samples/scans must have the same assay design version")
     }
 
     ## read in all gpr scans
-    assay_table <- lapply(tab$gpr, readGPR)
+    assay_table <- lapply(tab$gpr, readGPR, useMean = useMean, useBackground = useBackground)
     assay_table <- purrr::reduce(assay_table, left_join,
                                  by = c("Column", "Row", "Name", "ID"))
 
@@ -37,7 +47,13 @@ makePBMExperiment <- function(tab) {
 #' 
 #' Helper function for reading in each GPR file.
 #'
-#' @param x path to GPR fle 
+#' @param x path to GPR fle
+#' @param useMean logical whether to use mean fluorescent intensity
+#'        for each probe rather than median fluorescent intensity
+#'        (default = FALSE)
+#' @param useBackground logical whether to use background subtracted
+#'        intensity rather than non-subtracted intensity
+#'        (default = FALSE)
 #'
 #' @return
 #' SummarizedExperiment object with one assay with one column,
@@ -50,11 +66,22 @@ makePBMExperiment <- function(tab) {
 #' @importFrom readr read_tsv
 #' @importFrom dplyr select
 #' @author Patrick Kimes
-readGPR <- function(x) {
+readGPR <- function(x, useMean = FALSE, useBackground = FALSE) {
     colt <- rep("-", 45)
     colt[c(2, 3)] <- 'i'
     colt[c(4, 5, 38, 40)] <- 'c'
-    colt[c(34)] <- 'd'
+
+    ## column corresponding to intensities
+    if (useMean) {
+        value_idx <- 10
+    } else {
+        value_idx <- 9
+    }
+    if (useBackground) {
+        value_idx <- value_idx + 25
+    }
+    colt[c(value_idx)] <- 'd'
+
     vals <- readr::read_tsv(x, skip = 35, col_types = paste(colt, collapse = ""))
     names(vals)[5] <- 'intensity'
     vals %>% dplyr::select(Column, Row, Name, ID, intensity)
