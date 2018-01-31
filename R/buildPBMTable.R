@@ -77,7 +77,7 @@ buildPBMTable <- function(gpr_dir) {
 
     ## fill in Cy3 scan condition names
     bind_rows(
-        dplyr::left_join(dplyr::select(filter::filter(tab, scan == "Cy3"), -condition),
+        dplyr::left_join(dplyr::select(dplyr::filter(tab, scan == "Cy3"), -condition),
                          idx2name, by = c("vers", "id", "idx")),
         dplyr::filter(tab, scan == "Alexa488")
     )
