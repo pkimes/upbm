@@ -41,7 +41,7 @@ mapkmers <- function(probes, kmers) {
     
     ## if is a recognized design format, keep only de Bruijn probes and trim sequences
     if (isDesign) {
-        probes <- dplyr::filter(probes, grepl("^dBr_", NAME))
+        probes <- dplyr::filter(probes, grepl("^dBr_", ID))
         probes <- dplyr::mutate(probes, Sequence = Biostrings::subseq(Sequence, 1, 36))
     } else {
         warning("Specified 'probes' table does not match recognized design format.\n",
