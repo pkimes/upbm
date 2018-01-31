@@ -20,31 +20,30 @@
 map8mers <- function(seqfile, kmers) {
     
     ## map from chip coordinates (Column, Row) to 60nt probe sequence
-    probes <- read_tsv(seqfile)
+    probes <- readr::read_tsv(seqfile)
 
     ## only keep de Bruijn probes and trim out primer sequence
-    probes <- probes %>%
-        filter(grepl("^dBr_", NAME)) %>%
-        mutate(Sequence = subseq(Sequence, 1, 36),
-               probe_idx = row_number())
-
+    probes <- dplyr::filter(probes, grepl("^dBr_", NAME))
+    probes <- dplyr::mutate(probes, Sequence = Biostrings::subseq(Sequence, 1, 36))
+    probes <- tibble::rownames_to_column(probes, "probe_idx")
+    
     ## count up occurrences of 8mers
     rolls <- lapply(probes$Sequence, substring, 1:29, 8:36)
     rolls <- tibble(probe_idx = probes$probe_idx, fwd_seq = rolls)
-    rolls <- unnest(rolls)
-    rolls <- mutate(rolls, rev_seq = as.character(reverseComplement(DNAStringSet(fwd_seq))))
+    rolls <- tidyr::unnest(rolls)
+    rolls <- dplyr::mutate(rolls, rev_seq = as.character(Biostrings::reverseComplement(Biostrings::DNAStringSet(fwd_seq))))
     
-    rolls_fwd <- filter(rolls, fwd_seq %in% kmers)
-    rolls_fwd <- mutate(rolls_fwd, seq = fwd_seq, orient = 'fwd') 
+    rolls_fwd <- dplyr::filter(rolls, fwd_seq %in% kmers)
+    rolls_fwd <- dplyr::mutate(rolls_fwd, seq = fwd_seq, orient = 'fwd') 
     
-    rolls_rev <- filter(rolls, rev_seq %in% kmers, ! rev_seq == fwd_seq)
-    rolls_rev <- mutate(rolls_rev, seq = rev_seq, orient = 'rev') 
+    rolls_rev <- dplyr::filter(rolls, rev_seq %in% kmers, ! rev_seq == fwd_seq)
+    rolls_rev <- dplyr::mutate(rolls_rev, seq = rev_seq, orient = 'rev') 
     
-    rolls <- bind_rows(rolls_fwd, rolls_rev)
-    rolls <- select(rolls, probe_idx, seq, orient)
-
+    rolls <- dplyr::bind_rows(rolls_fwd, rolls_rev)
+    rolls <- dplyr::select(rolls, probe_idx, seq, orient)
+    
     ## add all probe identifiers except for sequence
-    rolls <- left_join(rolls, select(probes, -Sequence), by = "probe_idx")
-
+    rolls <- dplyr::left_join(rolls, dplyr::select(probes, -Sequence), by = "probe_idx")
+    
     return(rolls)
 }
