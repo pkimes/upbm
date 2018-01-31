@@ -25,8 +25,11 @@
 #' * lower.limits = 0
 #' * thresh = 1e-10
 #' 
-#' @import Matrix
-#' @import glmnet
+#' @import Matrix glmnet SummarizedExperiment
+#' @importFrom Biostrings subseq
+#' @importFrom utils data
+#' @importFrom stats coef
+#' @importFrom methods as is
 #' @export
 #' @author Patrick Kimes
 predictkmers <- function(se, kmers = NULL, stdArray = TRUE, ...) {

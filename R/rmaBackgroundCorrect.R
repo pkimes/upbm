@@ -9,12 +9,13 @@
 #' @return
 #' SummarizedExperiment object with background corrected intensities.
 #' 
-#' @import preprocessCore
+#' @import SummarizedExperiment
+#' @importFrom preprocessCore rma.background.correct
 #' @export 
 #' @author Patrick Kimes
 rmaBackgroundCorrect <- function(se) {
     ## perform RMA background correction (normal, exponential mixture)
-    new_assay <- rma.background.correct(as.matrix(assay(se, "gpr")))
+    new_assay <- preprocessCore::rma.background.correct(as.matrix(assay(se, "gpr")))
     
     ## construct new SummarizedExperiment from input SummarizedExperiment
     new_se <- se

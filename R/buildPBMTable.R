@@ -1,9 +1,20 @@
 #' Build PBM Sample Table
 #'
+#' Helper function to create table of GPR sample files from specified directory path.
+#' Parsing of file names is based on previously observed patterns and may not be exact.
+#' 
+#' @param gpr_dir path to directory containing 'gpr' 
+#'
+#' @return
+#' tibble with each row corresponding to a sample GPR file.
+#'
+#' @importFrom tibble tibble
+#' @importFrom dplyr left_join filter select
+#' @export
 #' @author Patrick Kimes
 buildPBMTable <- function(gpr_dir) {
     ## find all gpr files
-    flfull <- list.files(gpr_dir, pattern = "\\.gpr$", full.names = TRUE)
+    flfull <- list.files(gpr_dir, pattern = "\\.gpr$", full.names = TRUE, ignore.case = TRUE)
 
     ## determine Cy3, Alexa488 GPRs
     flcy3 <- grep("_Cy3_", flfull, ignore.case = TRUE)
@@ -51,12 +62,12 @@ buildPBMTable <- function(gpr_dir) {
     fl_scan <- rep("Cy3", length(flfull))
     fl_scan[fl488] <- "Alexa488"
     
-    tab <- tibble(date = fl_date, vers = fl_vers, id = fl_id, idx = fl_idx,
-                  condition = fl_name, lp = fl_lp, pg = fl_pg, scan = fl_scan,
-                  gpr = flfull)
+    tab <- tibble::tibble(date = fl_date, vers = fl_vers, id = fl_id, idx = fl_idx,
+                          condition = fl_name, lp = fl_lp, pg = fl_pg, scan = fl_scan,
+                          gpr = flfull)
 
     ## verify that version/id of experiment gives unique name:idx mapping 
-    idx2name <- distinct(filter(tab, scan == "Alexa488"), vers, id, idx, condition)
+    idx2name <- distinct(dplyr::filter(tab, scan == "Alexa488"), vers, id, idx, condition)
     if (nrow(idx2name) != nrow(distinct(idx2name, vers, id, idx))) {
         stop("Some version/id/idx values map to multiple condition names")
     }
@@ -66,8 +77,8 @@ buildPBMTable <- function(gpr_dir) {
 
     ## fill in Cy3 scan condition names
     bind_rows(
-        left_join(select(filter(tab, scan == "Cy3"), -condition),
-                  idx2name, by = c("vers", "id", "idx")),
-        filter(tab, scan == "Alexa488")
+        dplyr::left_join(dplyr::select(filter::filter(tab, scan == "Cy3"), -condition),
+                         idx2name, by = c("vers", "id", "idx")),
+        dplyr::filter(tab, scan == "Alexa488")
     )
 }

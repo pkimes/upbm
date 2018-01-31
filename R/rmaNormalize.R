@@ -10,7 +10,8 @@
 #' @return
 #' SummarizedExperiment object with normalized intensities.
 #'
-#' @import preprocessCore
+#' @import SummarizedExperiment
+#' @importFrom preprocessCore normalize.quantiles
 #' @export
 #' @author Patrick Kimes
 rmaNormalize <- function(se) {

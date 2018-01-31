@@ -18,6 +18,10 @@
 #' corresponds to a unique occurrence of the sequence on a probe and on
 #' the array.
 #'
+#' @importFrom tibble tibble rownames_to_column
+#' @importFrom tidyr unnest
+#' @importFrom dplyr mutate filter bind_rows select left_join
+#' @importFrom Biostrings DNAStringSet reverseComplement
 #' @export
 #' @author Patrick Kimes
 mapkmers <- function(probes, kmers) {
@@ -46,7 +50,7 @@ mapkmers <- function(probes, kmers) {
     
     ## count up occurrences of kmers - note: will do ALL kmers
     rolls <- lapply(probes$Sequence, substring, 1:(seql - k + 1), k:seql)
-    rolls <- tibble(probe_idx = probes$probe_idx, fwd_seq = rolls)
+    rolls <- tibble::tibble(probe_idx = probes$probe_idx, fwd_seq = rolls)
     rolls <- tidyr::unnest(rolls)
     rolls <- dplyr::mutate(rolls, rev_seq = as.character(Biostrings::reverseComplement(Biostrings::DNAStringSet(fwd_seq))))
     

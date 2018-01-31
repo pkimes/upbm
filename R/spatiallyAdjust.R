@@ -24,6 +24,10 @@
 #' Row and column metadata are copied from the original SummarizedExperiment
 #' object.
 #'
+#' @import SummarizedExperiment
+#' @importFrom tibble as_tibble
+#' @importFrom tidyr gather spread unnest
+#' @importFrom dplyr select mutate select_ do group_by left_join
 #' @export
 #' @author Patrick Kimes
 spatiallyAdjust <- function(se, k = 15, returnBias = TRUE) {
@@ -54,7 +58,7 @@ spatiallyAdjust <- function(se, k = 15, returnBias = TRUE) {
     intensity <- tidyr::gather(intensity, sample, value, -Row, -Column)
     intensity <- dplyr::group_by(intensity, sample)
     intensity <- dplyr::do(intensity, spatialmedian = .wrapSA(., k))
-    intensity <- unnest(intensity)
+    intensity <- tidyr::unnest(intensity)
 
     ## spread back so samples are in separate columns
     intensity <- tidyr::spread(intensity, -Row, -Column)

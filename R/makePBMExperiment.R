@@ -1,5 +1,7 @@
 #' Read PBMExperiment Data
 #'
+#' Read PBM data from a table containing paths to GPR files. 
+#' 
 #' @param tab table of samples with at least `gpr` and `vers` columns
 #'        corresponding to GPR file paths and the corresponding PBM
 #'        design version
@@ -9,7 +11,15 @@
 #' @param useBackground logical whether to use background subtracted
 #'        intensity rather than non-subtracted intensity
 #'        (default = FALSE)
-#' 
+#' @param probes data.frame containing probe sequences in a column, 'Sequence',
+#'        or a character vector specifying the probe sequences. If specified,
+#'        these values will be added to the rowData of the returned
+#'        SummarizedExperiment object (default = NULL)
+#'
+#' @return
+#' a SummarizedExperiment object with a single assay, 'gpr', containing the probe
+#' intensities for the samples specified in the input 'tab'.
+#'
 #' @import SummarizedExperiment
 #' @importFrom purrr reduce
 #' @importFrom dplyr select
