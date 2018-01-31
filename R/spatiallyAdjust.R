@@ -43,48 +43,65 @@ spatiallyAdjust <- function(se, k = 15, returnBias = TRUE) {
     stopifnot("gpr" %in% assayNames(se))
 
     ## extract intensities for easier manipulation
-    intensity <- assay(se, "gpr")
+    raw_intensity <- assay(se, "gpr")
    
     ## if ID column present, only use de Bruijn probes (mask others)
     if ("ID" %in% names(rowData(se))) {
-        intensity[grepl("^dBr_", rowData(se)$ID), ] <- NA_real_
+        raw_intensity[grepl("^dBr_", rowData(se)$ID), ] <- NA_real_
     }
 
     ## add row/column indicies
-    intensity <- cbind(rowData(se)[, c("Row", "Column")], intensity)
+    raw_intensity <- cbind(rowData(se)[, c("Row", "Column")], raw_intensity)
 
     ## compute spatial adjustment 
-    intensity <- tibble::as_tibble(intensity)
-    intensity <- tidyr::gather(intensity, sample, value, -Row, -Column)
-    intensity <- dplyr::group_by(intensity, sample)
-    intensity <- dplyr::do(intensity, spatialmedian = .wrapSA(., k))
-    intensity <- tidyr::unnest(intensity)
+    raw_intensity <- tibble::as_tibble(as.data.frame(raw_intensity))
+    raw_intensity <- tidyr::gather(raw_intensity, sample, value, -Row, -Column)
+    med_intensity <- dplyr::group_by(raw_intensity, sample)
+    med_intensity <- dplyr::do(med_intensity, spatialmedian = .wrapSA(., k))
+    med_intensity <- tidyr::unnest(med_intensity)
 
+    ## join median deviations w/ original raw intensities, subtract
+    sub_intensity <- dplyr::left_join(raw_intensity, med_intensity,
+                                      by = c("Row", "Column", "sample"),
+                                      suffix = c(".raw", ".med"))
+    ## only replace NA w/ 0 in median intensities - if NA in raw (i.e. non-dBr probe) want NA in output
+    sub_intensity <- dplyr::mutate(sub_intensity, value.med = ifelse(is.na(value.med), 0, value.med))
+    sub_intensity <- dplyr::mutate(sub_intensity, value = value.raw - value.med)
+    sub_intensity <- dplyr::select(sub_intensity, Row, Column, sample, value)
+    
     ## spread back so samples are in separate columns
-    intensity <- tidyr::spread(intensity, -Row, -Column)
+    med_intensity <- tidyr::spread(med_intensity, sample, value)
+    sub_intensity <- tidyr::spread(sub_intensity, sample, value)
 
     ## join to original rowData to get proper row orders 
-    intensity <- dplyr::left_join(rowData(se), intensity, by = c("Row", "Column"))
-    intensity <- dplyr::select_(intensity, paste0("-", names(rowData(se))))
+    med_intensity <- dplyr::left_join(as.data.frame(rowData(se)), med_intensity, by = c("Row", "Column"))
+    sub_intensity <- dplyr::left_join(as.data.frame(rowData(se)), sub_intensity, by = c("Row", "Column"))
 
-    ## construct new SummarizedExperiment from input SummarizedExperiment
-    new_se <- se
-    
-    ## add new assays
+    ## only keep data columns
+    med_intensity <- dplyr::select_(med_intensity, .dots = paste0("-", names(rowData(se))))
+    sub_intensity <- dplyr::select_(sub_intensity, .dots = paste0("-", names(rowData(se))))
+
+    ## reorder columns to match original SummarizedExperiment
+    med_intensity <- DataFrame(med_intensity)
+    med_intensity <- med_intensity[, rownames(colData(se))]
+    sub_intensity <- DataFrame(sub_intensity)
+    sub_intensity <- sub_intensity[, rownames(colData(se))]
+
+    ## modify input SummarizedExperiment
+    assay(se, "gpr") <- sub_intensity
+    print("here")
     if (returnBias) {
-        new_assays <- list(gpr = , spatialbias = )
-    } else {
-        new_assays <- list(gpr = )
+        assay(se, "spatialbias") <- med_intensity
     }
-    assays(new_se) <- new_assays
+    print("here")
     
     ## add step to list
-    if (! "steps" %in% names(metadata(new_se))) {
-        metadata(new_se)$steps <- list()
+    if (! "steps" %in% names(metadata(se))) {
+        metadata(se)$steps <- list()
     }
-    metadata(new_se)$steps <- c(metadata(new_se)$steps, "spatial adjustment")
+    metadata(se)$steps <- c(metadata(se)$steps, "spatial adjustment")
     
-    return(new_se) 
+    return(se) 
 }
 
 ## Helper function which takes a data.frame with 'value', 'Column', 'Row'
