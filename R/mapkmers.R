@@ -36,17 +36,6 @@ mapkmers <- function(probes, kmers) {
              "Method currently only supports kmers of uniform length.")
     }
 
-    ## determine whether the probe specifications are from a PBM probe sequence file
-    isDesign <- all(names(probes) %in% c("Column", "Row", "NAME", "ID", "Sequence"))
-    
-    ## if is a recognized design format, keep only de Bruijn probes and trim sequences
-    if (isDesign) {
-        probes <- dplyr::filter(probes, grepl("^dBr_", ID))
-        probes <- dplyr::mutate(probes, Sequence = Biostrings::subseq(Sequence, 1, 36))
-    } else {
-        warning("Specified 'probes' table does not match recognized design format.\n",
-                "Sequences will not be trimmed or filtered, and will be used 'as is'.")
-    }
     probes <- tibble::rownames_to_column(probes, "probe_idx")
     
     ## check if sequences are of uniform length
