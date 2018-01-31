@@ -1,0 +1,79 @@
+#' Map K-mer Motifs to PBM Probe Sequences
+#'
+#' This helper function takes a standardized PBM sequence design file,
+#' e.g. "8x60k_v1_sequences.txt", and k-mer sequences of interest,
+#' and identifies the subset of probes containing each k-mer sequence.
+#' The output table can be used to compute k-mer-level affinities from
+#' the probe-level intensity values.
+#'
+#' @param probes table containing sequence information for probes,
+#'        e.g. read in from "8x60k_v1_sequences.txt". At a minimum,
+#'        must have a column called "Sequence" with the array probe
+#'        sequences.
+#' @param kmers character vector of K-mers (of equal length) to which
+#'        probes should be mapped.
+#'
+#' @return
+#' a table with 8mer sequences (seq), and probes, where each row
+#' corresponds to a unique occurrence of the sequence on a probe and on
+#' the array.
+#'
+#' @export
+#' @author Patrick Kimes
+mapkmers <- function(probes, kmers) {
+    ## check validity of inputs
+    if (!is(probes, "DataFrame") & !is(probes, "data.frame")) {
+        stop("Specified 'probes' must be a DataFrame or data.frame ",
+             "of probe sequences.")
+    }
+    stopifnot("Sequence" %in% names(probes))
+    stopifnot(is.vector(kmers, mode = "character"))
+
+    ## check if kmers/motfs are of uniform length
+    k <- unique(nchar(kmers))
+    if (length(k) > 1) {
+        stop("Specified 'kmers' includes motifs of varying length.\n",
+             "Method currently only supports kmers of uniform length.")
+    }
+
+    ## determine whether the probe specifications are from a PBM probe sequence file
+    isDesign <- all(names(probes) %in% c("Column", "Row", "NAME", "ID", "Sequence"))
+    
+    ## if is a recognized design format, keep only de Bruijn probes and trim sequences
+    if (isDesign) {
+        probes <- dplyr::filter(probes, grepl("^dBr_", NAME))
+        probes <- dplyr::mutate(probes, Sequence = Biostrings::subseq(Sequence, 1, 36))
+    } else {
+        warning("Specified 'probes' table does not match recognized design format.\n",
+                "Sequences will not be trimmed or filtered, and will be used 'as is'.")
+    }
+    probes <- tibble::rownames_to_column(probes, "probe_idx")
+    
+    ## check if sequences are of uniform length
+    seql <- unique(nchar(probes$Sequence))
+    if (length(seql) > 1) {
+        stop("Probe sequences should all be of equal length.") 
+    }
+    
+    ## count up occurrences of kmers - note: will do ALL kmers
+    rolls <- lapply(probes$Sequence, substring, 1:(seql - k + 1), k:seql)
+    rolls <- tibble(probe_idx = probes$probe_idx, fwd_seq = rolls)
+    rolls <- tidyr::unnest(rolls)
+    rolls <- dplyr::mutate(rolls, rev_seq = as.character(Biostrings::reverseComplement(Biostrings::DNAStringSet(fwd_seq))))
+    
+    rolls_fwd <- dplyr::filter(rolls, fwd_seq %in% kmers)
+    rolls_fwd <- dplyr::mutate(rolls_fwd, seq = fwd_seq, orient = 'fwd') 
+    
+    rolls_rev <- dplyr::filter(rolls, rev_seq %in% kmers, ! rev_seq == fwd_seq)
+    rolls_rev <- dplyr::mutate(rolls_rev, seq = rev_seq, orient = 'rev') 
+    
+    rolls <- dplyr::bind_rows(rolls_fwd, rolls_rev)
+    rolls <- dplyr::select(rolls, probe_idx, seq, orient)
+    
+    ## add all probe identifiers except for sequence
+    if (length(probes) > 1) {
+        rolls <- dplyr::left_join(rolls, dplyr::select(probes, -Sequence), by = "probe_idx")
+    }
+    
+    return(rolls)
+}
