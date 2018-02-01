@@ -17,18 +17,17 @@
 rmaNormalize <- function(se) {
     ## perform quantile normalization
     new_assay <- preprocessCore::normalize.quantiles(as.matrix(assay(se, "gpr")))
+    new_assay <- DataFrame(new_assay)
+    names(new_assay) <- rownames(colData(se))
     
-    ## construct new SummarizedExperiment from input SummarizedExperiment
-    new_se <- se
+    ## modify input SummarizedExperiment
+    assay(se, "gpr") <- new_assay
 
-    ## replace assays
-    assays(new_se) <- list(gpr = DataFrame(new_assay))
-    
     ## add step to list
-    if (! "steps" %in% names(metadata(new_se))) {
-        metadata(new_se)$steps <- list()
+    if (! "steps" %in% names(metadata(se))) {
+        metadata(se)$steps <- list()
     }
-    metadata(new_se)$steps <- c(metadata(new_se)$steps, "rma normalization")
+    metadata(se)$steps <- c(metadata(se)$steps, "rma normalization")
 
-    return(new_se)
+    return(se)
 }

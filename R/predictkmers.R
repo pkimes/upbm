@@ -36,8 +36,27 @@ predictkmers <- function(se, kmers = NULL, stdArray = TRUE, ...) {
     if (is.null(kmers)) {
         data(pbm_8mers)
         kmers <- pbm_8mers
+        cat("!! Using the default 8mer set.\n") 
     } else if (!is.vector(kmers, mode = "character")) {
         stop("If specified, 'kmers' must be a vector of nucleotide sequences to estimate.")
+    }
+
+    if (! "Sequence" %in% names(rowData(se))) {
+        cat("!! Specified SummarizedExperiment object does not contain probe sequence information in the rowData.\n",
+            "!! The included default data(pbm_8x60k_v1) will be used.\n", sep = "")
+        if (! all(c("Row", "Column") %in% names(rowData(se)))) {
+            stop("The default set of probe sequences could not be used because the specified SummarizedExperiment ",
+                 "object does not contain probe 'Row' and 'Column' information in the rowData.\n",
+                 "The unique 'Row' and 'Column' values (and 'Sequence') information must be added to the rowData.")
+        }
+        data(pbm_8x60k_v1)
+        if (nrow(se) != nrow(pbm_8x60k_v1)) {
+            stop("The default set of probe sequences could not be used because the specified SummarizedExperiment ",
+                 "contains ", nrow(se), " rows, and the default probe set includes ", nrow(pbm_8x60k_v1), " rows.\n",
+                 "The unique 'Sequence' information must be added to the rowData to use this command.")
+        }
+        ovnames <- intersect(names(pbm_8x60k_v1), names(rowData(se)))
+        rowData(se) <- merge(rowData(se), pbm_8x60k_v1, by = ovnames, all.x = TRUE)
     }
 
     if (stdArray) {
@@ -52,6 +71,7 @@ predictkmers <- function(se, kmers = NULL, stdArray = TRUE, ...) {
         se <- se[grepl("^dBr_", rowData(se)$ID), ]
 
         plens <- unique(nchar(rowData(se)$Sequence))
+        print(plens)
         if (length(plens) > 1 || plens != 60) {
             stop("Not all probe sequences in specified SummarizedExperiment object are 60nt.\n",
                  "If this is not a standard PBM array and no probe filtering or sequence",

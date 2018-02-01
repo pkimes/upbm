@@ -16,18 +16,17 @@
 rmaBackgroundCorrect <- function(se) {
     ## perform RMA background correction (normal, exponential mixture)
     new_assay <- preprocessCore::rma.background.correct(as.matrix(assay(se, "gpr")))
+    new_assay <- DataFrame(new_assay)
+    names(new_assay) <- rownames(colData(se))
     
-    ## construct new SummarizedExperiment from input SummarizedExperiment
-    new_se <- se
-
-    ## replace assays
-    assays(new_se) <- list(gpr = DataFrame(new_assay))
+    ## modify input SummarizedExperiment
+    assay(se, "gpr") <- new_assay
     
     ## add step to list
-    if (! "steps" %in% names(metadata(new_se))) {
-        metadata(new_se)$steps <- list()
+    if (! "steps" %in% names(metadata(se))) {
+        metadata(se)$steps <- list()
     }
-    metadata(new_se)$steps <- c(metadata(new_se)$steps, "background correction")
+    metadata(se)$steps <- c(metadata(se)$steps, "background correction")
 
-    return(new_se)
+    return(se)
 }

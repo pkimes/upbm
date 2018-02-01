@@ -45,10 +45,10 @@ spatiallyAdjust <- function(se, k = 15, returnBias = TRUE) {
     ## extract intensities for easier manipulation
     raw_intensity <- assay(se, "gpr")
    
-    ## if ID column present, only use de Bruijn probes (mask others)
-    if ("ID" %in% names(rowData(se))) {
-        raw_intensity[grepl("^dBr_", rowData(se)$ID), ] <- NA_real_
-    }
+    ## ## if ID column present, only use de Bruijn probes (mask others)
+    ## if ("ID" %in% names(rowData(se))) {
+    ##     raw_intensity[grepl("^dBr_", rowData(se)$ID), ] <- NA_real_
+    ## }
 
     ## add row/column indicies
     raw_intensity <- cbind(rowData(se)[, c("Row", "Column")], raw_intensity)
@@ -89,11 +89,9 @@ spatiallyAdjust <- function(se, k = 15, returnBias = TRUE) {
 
     ## modify input SummarizedExperiment
     assay(se, "gpr") <- sub_intensity
-    print("here")
     if (returnBias) {
         assay(se, "spatialbias") <- med_intensity
     }
-    print("here")
     
     ## add step to list
     if (! "steps" %in% names(metadata(se))) {
