@@ -37,7 +37,7 @@
 #' @importFrom methods as is
 #' @export
 #' @author Patrick Kimes
-predictkmers <- function(se, kmers = NULL, stdArray = TRUE, verbose = FALSE, ...) {
+predictKmers <- function(se, kmers = NULL, stdArray = TRUE, verbose = FALSE, ...) {
     if (is.null(kmers)) {
         data(pbm_8mers)
         kmers <- pbm_8mers
@@ -137,8 +137,6 @@ predictkmers <- function(se, kmers = NULL, stdArray = TRUE, verbose = FALSE, ...
                         lower.limits = 0, thresh = 1e-10)
     args_input <- list(...)
     glmnet_args <- replace(glmnet_args, names(args_input), args_input)
-
-    print(glmnet_args)
 
     ## fit elastic net model, constraint to non-negative
     if (verbose) { print("starting glmnet fit ...") }

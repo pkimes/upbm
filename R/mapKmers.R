@@ -24,7 +24,7 @@
 #' @importFrom Biostrings DNAStringSet reverseComplement
 #' @export
 #' @author Patrick Kimes
-mapkmers <- function(probes, kmers) {
+mapKmers <- function(probes, kmers) {
     ## check validity of inputs
     if (is(probes, "DataFrame")) {
         probes <- as.data.frame(probes)
