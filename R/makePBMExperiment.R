@@ -124,7 +124,7 @@ makePBMExperiment <- function(tab, useMean = FALSE, useBackground = FALSE, probe
 readGPR <- function(x, useMean = FALSE, useBackground = FALSE) {
     colt <- rep("-", 45)
     colt[c(2, 3)] <- 'i'
-    colt[c(38, 40)] <- 'c'
+    ##colt[c(38, 40)] <- 'c'
 
     ## column corresponding to intensities
     if (useMean) {
