@@ -31,6 +31,25 @@ makePBMExperiment <- function(tab, useMean = FALSE, useBackground = FALSE, probe
     stopifnot(c("vers", "gpr") %in% names(tab))
     stopifnot(is.logical(useMean))
     stopifnot(is.logical(useBackground))
+    
+    ## currently only support all scans with same design
+    if (length(unique(tab$vers)) > 1) {
+        stop("All samples/scans must have the same assay design version")
+    }
+
+    ## read in all GPR scans
+    assay_table <- lapply(tab$gpr, readGPR, useMean = useMean, useBackground = useBackground)
+    assay_table <- purrr::reduce(assay_table, left_join,
+                                 by = c("Column", "Row"))
+
+    ## probe intensities from GPR files
+    assaydat <- DataFrame(dplyr::select(assay_table, -Column, -Row))
+    names(assaydat) <- paste0("s", 1:ncol(assaydat))
+
+    ## row/probe-level metadata from GPR files
+    rowdat <- DataFrame(dplyr::select(assay_table, Column, Row))
+
+    ## check probes
     if (!is.null(probes)) {
         if (is.vector(probes, mode = "character")) {
             probes <- DataFrame(Sequence = probes)
@@ -50,23 +69,6 @@ makePBMExperiment <- function(tab, useMean = FALSE, useBackground = FALSE, probe
             probes <- NULL
         }
     }
-    
-    ## currently only support all scans with same design
-    if (length(unique(tab$vers)) > 1) {
-        stop("All samples/scans must have the same assay design version")
-    }
-
-    ## read in all GPR scans
-    assay_table <- lapply(tab$gpr, readGPR, useMean = useMean, useBackground = useBackground)
-    assay_table <- purrr::reduce(assay_table, left_join,
-                                 by = c("Column", "Row"))
-
-    ## probe intensities from GPR files
-    assaydat <- DataFrame(dplyr::select(assay_table, -Column, -Row))
-    names(assaydat) <- paste0("s", 1:ncol(assaydat))
-
-    ## row/probe-level metadata from GPR files
-    rowdat <- DataFrame(dplyr::select(assay_table, Column, Row))
 
     ## add probes to metadata if provided
     if (!is.null(probes)) {
