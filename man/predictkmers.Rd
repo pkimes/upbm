@@ -4,7 +4,7 @@
 \alias{predictkmers}
 \title{Estimation of K-Mer Intensities}
 \usage{
-predictkmers(se, kmers = NULL, stdArray = TRUE, ...)
+predictkmers(se, kmers = NULL, stdArray = TRUE, verbose = FALSE, ...)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing PBM intensity data}
@@ -35,6 +35,11 @@ Default signature for the glmnet call is:
 * lambda = rev(0:50)
 * lower.limits = 0
 * thresh = 1e-10
+
+Features to be added:
+* option to select different regression models
+* option to return glmnet results for all alpha
+* frozen RMA-like pooled estimate?
 }
 \author{
 Patrick Kimes

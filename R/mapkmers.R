@@ -26,7 +26,9 @@
 #' @author Patrick Kimes
 mapkmers <- function(probes, kmers) {
     ## check validity of inputs
-    if (!is(probes, "DataFrame") & !is(probes, "data.frame")) {
+    if (is(probes, "DataFrame")) {
+        probes <- as.data.frame(probes)
+    } else if (!is(probes, "data.frame")) {
         stop("Specified 'probes' must be a DataFrame or data.frame ",
              "of probe sequences.")
     }

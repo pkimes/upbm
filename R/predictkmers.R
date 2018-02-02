@@ -24,6 +24,11 @@
 #' * lambda = rev(0:50)
 #' * lower.limits = 0
 #' * thresh = 1e-10
+#'
+#' Features to be added:
+#' * option to select different regression models
+#' * option to return glmnet results for all alpha
+#' * frozen RMA-like pooled estimate?
 #' 
 #' @import Matrix glmnet SummarizedExperiment
 #' @importFrom Biostrings subseq
@@ -32,18 +37,22 @@
 #' @importFrom methods as is
 #' @export
 #' @author Patrick Kimes
-predictkmers <- function(se, kmers = NULL, stdArray = TRUE, ...) {
+predictkmers <- function(se, kmers = NULL, stdArray = TRUE, verbose = FALSE, ...) {
     if (is.null(kmers)) {
         data(pbm_8mers)
         kmers <- pbm_8mers
-        cat("!! Using the default 8mer set.\n") 
+        if (verbose) {
+            cat("!! Using the default 8mer set.\n")
+        }
     } else if (!is.vector(kmers, mode = "character")) {
         stop("If specified, 'kmers' must be a vector of nucleotide sequences to estimate.")
     }
 
     if (! "Sequence" %in% names(rowData(se))) {
-        cat("!! Specified SummarizedExperiment object does not contain probe sequence information in the rowData.\n",
-            "!! The included default data(pbm_8x60k_v1) will be used.\n", sep = "")
+        if (verbose) {
+            cat("!! Specified SummarizedExperiment object does not contain probe sequence information in the rowData.\n",
+                "!! The included default data(pbm_8x60k_v1) will be used.\n", sep = "")
+        }
         if (! all(c("Row", "Column") %in% names(rowData(se)))) {
             stop("The default set of probe sequences could not be used because the specified SummarizedExperiment ",
                  "object does not contain probe 'Row' and 'Column' information in the rowData.\n",
@@ -56,9 +65,11 @@ predictkmers <- function(se, kmers = NULL, stdArray = TRUE, ...) {
                  "The unique 'Sequence' information must be added to the rowData to use this command.")
         }
         ovnames <- intersect(names(pbm_8x60k_v1), names(rowData(se)))
-        rowData(se) <- merge(rowData(se), pbm_8x60k_v1, by = ovnames, all.x = TRUE)
+        rdat <- dplyr::left_join(as.data.frame(rowData(se)), dplyr::distinct(pbm_8x60k_v1),
+                                 by = ovnames)
+        rowData(se) <- DataFrame(rdat)
     }
-
+    
     if (stdArray) {
         if (! "ID" %in% names(rowData(se))) {
             stop("Specified SummarizedExperiment object does not contain probe ID ",
@@ -71,7 +82,6 @@ predictkmers <- function(se, kmers = NULL, stdArray = TRUE, ...) {
         se <- se[grepl("^dBr_", rowData(se)$ID), ]
 
         plens <- unique(nchar(rowData(se)$Sequence))
-        print(plens)
         if (length(plens) > 1 || plens != 60) {
             stop("Not all probe sequences in specified SummarizedExperiment object are 60nt.\n",
                  "If this is not a standard PBM array and no probe filtering or sequence",
@@ -87,13 +97,14 @@ predictkmers <- function(se, kmers = NULL, stdArray = TRUE, ...) {
         }
         rowData(se)$Sequence <- Biostrings::subseq(rowData(se)$Sequence, 1, 36)
     }
-    
+
     ## find mapping between kmers and probes
     ovnames <- intersect(names(rowData(se)), c("Row", "Column", "ID", "Sequence"))
     kmermap <- mapkmers(rowData(se)[, ovnames], kmers)
 
-    kmer_levels <- levels(kmermap$seq)
-    
+    ## use ordering from input 'kmers'
+    kmermap$seq <- factor(kmermap$seq, levels = kmers)
+
     ## convert kmer map to design matrix
     designmat <- sparseMatrix(i = as.numeric(kmermap$probe_idx),
                               j = as.numeric(kmermap$seq))
@@ -126,19 +137,22 @@ predictkmers <- function(se, kmers = NULL, stdArray = TRUE, ...) {
     args_input <- list(...)
     glmnet_args <- replace(glmnet_args, names(args_input), args_input)
 
+    print(glmnet_args)
+
     ## fit elastic net model, constraint to non-negative
+    if (verbose) { print("starting glmnet fit ...") }
     efit <- do.call(glmnet, glmnet_args)
+    if (verbose) { print("... finished!") }
     
     ## extracting estimated affinities
     nlambda <- length(glmnet_args$lambda)
     coefs_all <- coef(efit)[-1, nlambda]
     coefs_est <- matrix(coefs_all[ 1:(ncol(se) * nkmers) ],
                         ncol = ncol(se), nrow = nkmers)
-    coefs_probes <- coefs_all[(ncol(se) * nkmers) + 1:41944]
 
     ## turn coefficient estimates into table w/ rows = 8mers, cols = conditions
     coefs_est <- DataFrame(coefs_est)
-    names(coefs_est) <- names(es)
+    colnames(coefs_est) <- colnames(se)
 
     ## determine row data
     rowdat <- DataFrame(kmer = kmers)
