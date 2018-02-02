@@ -17,7 +17,7 @@
 #'        SummarizedExperiment object (default = NULL)
 #'
 #' @return
-#' a SummarizedExperiment object with a single assay, 'gpr', containing the probe
+#' SummarizedExperiment object with a single assay, 'gpr', containing the probe
 #' intensities for the samples specified in the input 'tab'.
 #'
 #' @import SummarizedExperiment
@@ -59,14 +59,14 @@ makePBMExperiment <- function(tab, useMean = FALSE, useBackground = FALSE, probe
     ## read in all GPR scans
     assay_table <- lapply(tab$gpr, readGPR, useMean = useMean, useBackground = useBackground)
     assay_table <- purrr::reduce(assay_table, left_join,
-                                 by = c("Column", "Row", "Name", "ID"))
+                                 by = c("Column", "Row"))
 
     ## probe intensities from GPR files
-    assaydat <- DataFrame(dplyr::select(assay_table, -Column, -Row, -Name, -ID))
+    assaydat <- DataFrame(dplyr::select(assay_table, -Column, -Row))
     names(assaydat) <- paste0("s", 1:ncol(assaydat))
 
     ## row/probe-level metadata from GPR files
-    rowdat <- DataFrame(dplyr::select(assay_table, Column, Row, Name, ID))
+    rowdat <- DataFrame(dplyr::select(assay_table, Column, Row))
 
     ## add probes to metadata if provided
     if (!is.null(probes)) {
@@ -98,7 +98,7 @@ makePBMExperiment <- function(tab, useMean = FALSE, useBackground = FALSE, probe
 
 #' Read GPR File as Assay
 #' 
-#' Helper function for reading in each GPR file.
+#' Helper function for reading in a single GPR file.
 #'
 #' @param x path to GPR fle
 #' @param useMean logical whether to use mean fluorescent intensity
@@ -109,12 +109,14 @@ makePBMExperiment <- function(tab, useMean = FALSE, useBackground = FALSE, probe
 #'        (default = FALSE)
 #'
 #' @return
-#' SummarizedExperiment object with one assay with one column,
-#' and corresponding rowData
+#' tibble (data.frame-like) object of a single GPR file with three
+#' columns: 'Column', 'Row', 'intensity'. ('ID' and 'Name' columns are
+#' ignored as these may be incorrect in the GPR file.) 
 #' 
 #' @details
 #' Since the name of the value column can vary across samples,
-#' we pull it out using its index (5th column)
+#' we pull it out using its index. Therefore, if the order or number of
+#' columns in the GPR file is altered, reading may fail. 
 #'
 #' @importFrom readr read_tsv
 #' @importFrom dplyr select
@@ -122,7 +124,7 @@ makePBMExperiment <- function(tab, useMean = FALSE, useBackground = FALSE, probe
 readGPR <- function(x, useMean = FALSE, useBackground = FALSE) {
     colt <- rep("-", 45)
     colt[c(2, 3)] <- 'i'
-    colt[c(4, 5, 38, 40)] <- 'c'
+    colt[c(38, 40)] <- 'c'
 
     ## column corresponding to intensities
     if (useMean) {
@@ -134,8 +136,9 @@ readGPR <- function(x, useMean = FALSE, useBackground = FALSE) {
         value_idx <- value_idx + 25
     }
     colt[c(value_idx)] <- 'd'
+    colt <- paste(colt, collapse = "")
 
-    vals <- readr::read_tsv(x, skip = 35, col_types = paste(colt, collapse = ""))
-    names(vals)[5] <- 'intensity'
-    vals %>% dplyr::select(Column, Row, Name, ID, intensity)
+    vals <- readr::read_tsv(x, skip = 35, col_types = colt)
+    names(vals)[3] <- 'intensity'
+    vals
 }

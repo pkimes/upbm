@@ -45,11 +45,6 @@ spatiallyAdjust <- function(se, k = 15, returnBias = TRUE) {
     ## extract intensities for easier manipulation
     raw_intensity <- assay(se, "gpr")
    
-    ## ## if ID column present, only use de Bruijn probes (mask others)
-    ## if ("ID" %in% names(rowData(se))) {
-    ##     raw_intensity[grepl("^dBr_", rowData(se)$ID), ] <- NA_real_
-    ## }
-
     ## add row/column indicies
     raw_intensity <- cbind(rowData(se)[, c("Row", "Column")], raw_intensity)
 

@@ -26,7 +26,7 @@ these values will be added to the rowData of the returned
 SummarizedExperiment object (default = NULL)}
 }
 \value{
-a SummarizedExperiment object with a single assay, 'gpr', containing the probe
+SummarizedExperiment object with a single assay, 'gpr', containing the probe
 intensities for the samples specified in the input 'tab'.
 }
 \description{

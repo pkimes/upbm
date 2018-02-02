@@ -18,15 +18,17 @@ intensity rather than non-subtracted intensity
 (default = FALSE)}
 }
 \value{
-SummarizedExperiment object with one assay with one column,
-and corresponding rowData
+tibble (data.frame-like) object of a single GPR file with three
+columns: 'Column', 'Row', 'intensity'. ('ID' and 'Name' columns are
+ignored as these may be incorrect in the GPR file.)
 }
 \description{
-Helper function for reading in each GPR file.
+Helper function for reading in a single GPR file.
 }
 \details{
 Since the name of the value column can vary across samples,
-we pull it out using its index (5th column)
+we pull it out using its index. Therefore, if the order or number of
+columns in the GPR file is altered, reading may fail.
 }
 \author{
 Patrick Kimes

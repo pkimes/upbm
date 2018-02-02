@@ -64,7 +64,8 @@ predictkmers <- function(se, kmers = NULL, stdArray = TRUE, verbose = FALSE, ...
                  "contains ", nrow(se), " rows, and the default probe set includes ", nrow(pbm_8x60k_v1), " rows.\n",
                  "The unique 'Sequence' information must be added to the rowData to use this command.")
         }
-        ovnames <- intersect(names(pbm_8x60k_v1), names(rowData(se)))
+        ##ovnames <- intersect(names(pbm_8x60k_v1), names(rowData(se)))
+        ovnames <- c("Column", "Row")
         rdat <- dplyr::left_join(as.data.frame(rowData(se)), dplyr::distinct(pbm_8x60k_v1),
                                  by = ovnames)
         rowData(se) <- DataFrame(rdat)
