@@ -30,9 +30,6 @@ ggplot object
 \description{
 Densities of all probe-level intensities are plotted.
 }
-\details{
-
-}
 \author{
 Patrick Kimes
 }

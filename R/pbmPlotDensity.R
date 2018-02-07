@@ -17,9 +17,6 @@
 #' @return
 #' ggplot object
 #'
-#' @details
-#' 
-#'
 #' @importFrom dplyr select
 #' @import ggplot2 SummarizedExperiment
 #' @export
