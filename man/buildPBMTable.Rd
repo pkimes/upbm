@@ -4,10 +4,13 @@
 \alias{buildPBMTable}
 \title{Build PBM Sample Table}
 \usage{
-buildPBMTable(gpr_dir)
+buildPBMTable(gpr_dir, gpr_type = "Alexa488")
 }
 \arguments{
-\item{gpr_dir}{path to directory containing 'gpr'}
+\item{gpr_dir}{path to directory containing GPR files.}
+
+\item{gpr_type}{string value specifying type of GPR files to find; must
+be one of: "Alexa488", "Cy3", "Masliner", "all". (default = "Alexa488")}
 }
 \value{
 tibble with each row corresponding to a sample GPR file.
