@@ -1,4 +1,4 @@
-#' Make PBM Sample Table
+#' Build PBM Sample Table
 #'
 #' Helper function to create table of GPR sample files from specified directory path.
 #' Parsing of file names is based on previously observed patterns and may not be exact.
@@ -14,7 +14,7 @@
 #' @importFrom dplyr left_join filter select
 #' @export
 #' @author Patrick Kimes
-makePBMTable <- function(gpr_dir, gpr_type = "Alexa488") {
+buildPBMTable <- function(gpr_dir, gpr_type = "Alexa488") {
     stopifnot(gpr_type %in% c("Alexa488", "Masliner", "Cy3", "all"))
     
     ## find all GPR file types

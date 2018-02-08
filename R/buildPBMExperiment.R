@@ -29,8 +29,8 @@
 #' @importFrom tibble as_tibble
 #' @export
 #' @author Patrick Kimes
-makePBMExperiment <- function(tab, useMean = FALSE, useBackground = FALSE, filterFlags = TRUE,
-                              probes = NULL) {
+buildPBMExperiment <- function(tab, useMean = FALSE, useBackground = FALSE, filterFlags = TRUE,
+                               probes = NULL) {
     ## check validity of inputs
     stopifnot(is.data.frame(tab))
     stopifnot(c("vers", "gpr") %in% names(tab))
