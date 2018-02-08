@@ -159,7 +159,7 @@ readGPR <- function(x, useMean = FALSE, useBackground = FALSE,
     ## remove negative (low quality) flagged probes
     if (filterFlags) {
         vals$intensity[vals$Flags < 0] <- NA_real_
-        vals <- dplyr::select(-Flags)
+        vals <- dplyr::select(vals, -Flags)
     }
     vals
 }
