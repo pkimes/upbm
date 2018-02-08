@@ -31,8 +31,8 @@ The function supports the following levels of filtering.
 All filtering is progressive, i.e. setting level = 2 will
 also include filtering at level = 1.
 \itemize{
-\item{0}{no filtering}
-\item{1}{filter on de Bruijn probes}
+\item \strong{0}: no filtering.
+\item \strong{1}: filter on de Bruijn probes.
 }
 }
 \author{

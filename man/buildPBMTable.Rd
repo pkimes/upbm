@@ -18,6 +18,16 @@ tibble with each row corresponding to a sample GPR file.
 \description{
 Helper function to create table of GPR sample files from specified directory path.
 Parsing of file names is based on previously observed patterns and may not be exact.
+Expected naming conventions of GPR files are described in the Details below.
+}
+\details{
+For the three types of GPR files currently supported, files are assumed to be named
+according to the following conventions:
+\itemize{
+\item \strong{Alexa488}: \code{{date}_{version}_{runID}_{condition1}_...} \cr \code{_{condition8}_Alexa488_lp{laser}pg{gain}_{index}_8.gpr}
+\item \strong{Masliner}: \code{{date}_{version}_{runID}_{condition1}_...} \cr \code{_{condition8}_Alexa488_MaslinerOutput_{index}_8.gpr}
+\item \strong{Cy3}: \code{{date}_{version}_{runID}_{miscellaneous}_Cy3_lp{laser}pg{gain}_{index}_8.gpr}
+}
 }
 \author{
 Patrick Kimes

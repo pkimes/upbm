@@ -2,6 +2,7 @@
 #'
 #' Helper function to create table of GPR sample files from specified directory path.
 #' Parsing of file names is based on previously observed patterns and may not be exact.
+#' Expected naming conventions of GPR files are described in the Details below. 
 #' 
 #' @param gpr_dir path to directory containing GPR files.
 #' @param gpr_type string value specifying type of GPR files to find; must
@@ -10,6 +11,14 @@
 #' @return
 #' tibble with each row corresponding to a sample GPR file.
 #'
+#' @details
+#' For the three types of GPR files currently supported, files are assumed to be named
+#' according to the following conventions:  
+#' * **Alexa488**: `{date}_{version}_{runID}_{condition1}_...` \cr `_{condition8}_Alexa488_lp{laser}pg{gain}_{index}_8.gpr`
+#' * **Masliner**: `{date}_{version}_{runID}_{condition1}_...` \cr `_{condition8}_Alexa488_MaslinerOutput_{index}_8.gpr`
+#' * **Cy3**: `{date}_{version}_{runID}_{miscellaneous}_Cy3_lp{laser}pg{gain}_{index}_8.gpr`
+#'
+#' @md
 #' @importFrom tibble tibble
 #' @importFrom dplyr left_join filter select
 #' @export
