@@ -29,14 +29,14 @@
 #' @author Patrick Kimes
 pbmFilterProbes <- function(se, assay_name, level = 0L) {
 
-    if (level > 0 & ! "ID" %in% rowData(se)) {
+    if (level > 0L && ! "ID" %in% names(rowData(se))) {
         warning("Must have 'ID' column in rowData to use filter level > 0")
         level <- 0L
     }
-
+    
     if (level > 0L) {
         se <- se[grepl("^dBr_", rowData(se)$ID), ]
     }
-
+    
     return(se)
 }
