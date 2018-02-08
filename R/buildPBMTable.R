@@ -1,4 +1,4 @@
-#' Build PBM Sample Table
+#' Make PBM Sample Table
 #'
 #' Helper function to create table of GPR sample files from specified directory path.
 #' Parsing of file names is based on previously observed patterns and may not be exact.
@@ -14,7 +14,7 @@
 #' @importFrom dplyr left_join filter select
 #' @export
 #' @author Patrick Kimes
-buildPBMTable <- function(gpr_dir, gpr_type = "Alexa488") {
+makePBMTable <- function(gpr_dir, gpr_type = "Alexa488") {
     stopifnot(gpr_type %in% c("Alexa488", "Masliner", "Cy3", "all"))
     
     ## find all GPR file types
@@ -22,8 +22,8 @@ buildPBMTable <- function(gpr_dir, gpr_type = "Alexa488") {
 
     ## determine Cy3, Alexa488 GPRs
     flcy3 <- grep("_Cy3_", basename(flfull), ignore.case = TRUE)
-    fl488 <- grep("_Alexa488_(?!Masliner)", basename(flfull), ignore.case = TRUE, perl = TRUE)
-    flmas <- grep("_MaslinerOutput_", basename(flfull), ignore.case = TRUE)
+    fl488 <- grep("_Alexa488_(?!.*MaslinerOutput)", basename(flfull), ignore.case = TRUE, perl = TRUE)
+    flmas <- grep("MaslinerOutput", basename(flfull), ignore.case = TRUE)
     
     if (length(intersect(flcy3, fl488)) > 0) { 
         stop("Can't tell if some files are Alexa488 or Cy3 scans: \n",
@@ -56,12 +56,6 @@ buildPBMTable <- function(gpr_dir, gpr_type = "Alexa488") {
         flfull <- flfull[fl_type == gpr_type]
         fl_type <- rep(gpr_type, length(flfull))
     }
-
-    ## ## only keep Cy3, Alexa488 GPRs
-    ## flfull <- flfull[sort(c(flcy3, fl488))]
-    ## ## re-determine Cy3, Alexa488 GPRs
-    ## flcy3 <- grep("_Cy3_", flfull, ignore.case = FALSE)
-    ## fl488 <- setdiff(1:length(flfull), flcy3)
     
     ## trim off common tail
     fl <- gsub("\\.gpr", "", basename(flfull), ignore.case = TRUE)
@@ -98,10 +92,8 @@ buildPBMTable <- function(gpr_dir, gpr_type = "Alexa488") {
     if (any(fl_type != "Cy3")) {
         fl_name[fl_type != "Cy3"] <- mapply(`[`, fl[fl_type != "Cy3"], fl_idx[fl_type != "Cy3"] + 3)
     }
-    
-    ## fl_scan <- rep("Cy3", length(flfull))
-    ## fl_scan[fl488] <- "Alexa488"
-    
+
+    ## construct primary sample table 
     tab <- tibble::tibble(date = fl_date, vers = fl_vers, id = fl_id, idx = fl_idx,
                           condition = fl_name, lp = fl_lp, pg = fl_pg, scan = fl_type,
                           gpr = flfull)
