@@ -4,21 +4,24 @@
 \alias{readGPR}
 \title{Read GPR File as Assay}
 \usage{
-readGPR(x, useMean = FALSE, useBackground = FALSE, filterFlags = TRUE)
+readGPR(gpr_path, gpr_type, useMean = FALSE, useBackground = FALSE,
+  filterFlags = TRUE)
 }
 \arguments{
-\item{x}{path to GPR fle}
+\item{gpr_path}{path to GPR fle.}
+
+\item{gpr_type}{scan type; one of "Alexa488", "Cy3", "Masliner".}
 
 \item{useMean}{logical whether to use mean fluorescent intensity
-for each probe rather than median fluorescent intensity
+for each probe rather than median fluorescent intensity.
 (default = FALSE)}
 
 \item{useBackground}{logical whether to use background subtracted
-intensity rather than non-subtracted intensity
+intensity rather than non-subtracted intensity.
 (default = FALSE)}
 
 \item{filterFlags}{logical whether to replace intensity values at probes
-flagged manually or automatically as being low quality
+flagged manually or automatically as being low quality.
  ('Bad': -100, 'Absent': -75, 'Not Found': -50) with NA. (default = TRUE)}
 }
 \value{

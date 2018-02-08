@@ -44,8 +44,10 @@ buildPBMExperiment <- function(tab, useMean = FALSE, useBackground = FALSE, filt
     }
 
     ## read in all GPR scans
-    assay_table <- lapply(tab$gpr, readGPR, useMean = useMean, useBackground = useBackground,
-                          filterFlags = filterFlags)
+    assay_table <- mapply(readGPR, gpr_path = tab$gpr, gpr_type = tab$scan,
+                          useMean = useMean, useBackground = useBackground,
+                          filterFlags = filterFlags,
+                          SIMPLIFY = FALSE)
     assay_table <- purrr::reduce(assay_table, left_join,
                                  by = c("Column", "Row"))
 
@@ -110,15 +112,16 @@ buildPBMExperiment <- function(tab, useMean = FALSE, useBackground = FALSE, filt
 #' 
 #' Helper function for reading in a single GPR file.
 #'
-#' @param x path to GPR fle
+#' @param gpr_path path to GPR fle.
+#' @param gpr_type scan type; one of "Alexa488", "Cy3", "Masliner".
 #' @param useMean logical whether to use mean fluorescent intensity
-#'        for each probe rather than median fluorescent intensity
+#'        for each probe rather than median fluorescent intensity.
 #'        (default = FALSE)
 #' @param useBackground logical whether to use background subtracted
-#'        intensity rather than non-subtracted intensity
+#'        intensity rather than non-subtracted intensity.
 #'        (default = FALSE)
 #' @param filterFlags logical whether to replace intensity values at probes
-#'        flagged manually or automatically as being low quality
+#'        flagged manually or automatically as being low quality.
 #'         ('Bad': -100, 'Absent': -75, 'Not Found': -50) with NA. (default = TRUE)
 #'
 #' @return
@@ -134,13 +137,19 @@ buildPBMExperiment <- function(tab, useMean = FALSE, useBackground = FALSE, filt
 #' @importFrom readr read_tsv
 #' @importFrom dplyr select
 #' @author Patrick Kimes
-readGPR <- function(x, useMean = FALSE, useBackground = FALSE,
-                    filterFlags = TRUE) {
-    colt <- rep("-", 45)
+readGPR <- function(gpr_path, gpr_type, useMean = FALSE,
+                    useBackground = FALSE, filterFlags = TRUE) {
+    ## determine number of columns
+    p <- 45
+    if (gpr_type == "Masliner") {
+        p <- 49
+    }
+
+    ## specify which columns to read in
+    colt <- rep("-", p)
     colt[c(2, 3)] <- 'i'
     if (filterFlags) {
         colt[38] <- 'i'
-        ##colt[40] <- 'c'
     }
     
     ## column corresponding to intensities
@@ -155,7 +164,7 @@ readGPR <- function(x, useMean = FALSE, useBackground = FALSE,
     colt[c(value_idx)] <- 'd'
     colt <- paste(colt, collapse = "")
 
-    vals <- readr::read_tsv(x, skip = 35, col_types = colt)
+    vals <- readr::read_tsv(gpr_path, skip = 35, col_types = colt)
     names(vals)[3] <- 'intensity'
 
     ## remove negative (low quality) flagged probes
