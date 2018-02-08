@@ -25,7 +25,8 @@
 #'
 #' @import SummarizedExperiment
 #' @importFrom purrr reduce
-#' @importFrom dplyr select
+#' @importFrom dplyr select left_join
+#' @importFrom tibble as_tibble
 #' @export
 #' @author Patrick Kimes
 makePBMExperiment <- function(tab, useMean = FALSE, useBackground = FALSE, filterFlags = TRUE,
@@ -53,7 +54,7 @@ makePBMExperiment <- function(tab, useMean = FALSE, useBackground = FALSE, filte
     names(assaydat) <- paste0("s", 1:ncol(assaydat))
 
     ## row/probe-level metadata from GPR files
-    rowdat <- DataFrame(dplyr::select(assay_table, Column, Row))
+    rowdat <- dplyr::select(assay_table, Column, Row)
 
     ## check probes
     if (!is.null(probes)) {
@@ -90,7 +91,8 @@ makePBMExperiment <- function(tab, useMean = FALSE, useBackground = FALSE, filte
                         "The probes will be matched using other columns.\n",
                         "WARNING: This may lead to incorrect joining.")
             }
-            rowdat <- merge(rowdat, probes, by = ovnames, all.x = TRUE)
+            rowdat <- dplyr::left_join(rowdat, tibble::as_tibble(as.data.frame(probes)),
+                                       by = ovnames)
         }
     }
     
