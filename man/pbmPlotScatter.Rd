@@ -4,12 +4,16 @@
 \alias{pbmPlotScatter}
 \title{Scatterplot of Intensities}
 \usage{
-pbmPlotScatter(se, stratify = condition, baseline = NULL,
-  log_scale = TRUE, maplot = FALSE, .method = "gam", .filter = 0)
+pbmPlotScatter(se, assay_name = "gpr", stratify = condition,
+  baseline = NULL, log_scale = TRUE, maplot = FALSE, .method = "gam",
+  .filter = 0)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing GPR
 intensity information.}
+
+\item{assay_name}{string name of the assay to plot.
+(default = "gpr")}
 
 \item{baseline}{string name of baseline condition to
 compare other conditions against; ignored if \code{se2}
@@ -28,10 +32,6 @@ fit to each scatter plot; to prevent any line, set NULL.
 
 \item{.filter}{integer specifying level of probe filtering to
 perform prior to plotting. (default = 0)}
-
-\item{se2}{optional second  SummarizedExperiment object
-containing GPR intensity information to be compared
-with first experiment. (default = NULL)}
 }
 \value{
 ggplot object
@@ -43,7 +43,7 @@ condition. Given a baseline condition specified with \code{baseline=}
 pairwise probe intensities are plotted with the identity line (x = y).
 }
 \details{
-Alternatively, if \code{ma} is TRUE, a MA plot is created with the
+Alternatively, if \code{maplot} is TRUE, a MA plot is created with the
 same data, plotting A (log-scale mean intensity) against M (log-scale
 difference in intensities).
 

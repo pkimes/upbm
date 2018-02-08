@@ -1,0 +1,179 @@
+#' Paired Scatterplot of Intensities
+#'
+#' Probe-level intensities plotted pairwise between two replicates which
+#' are matched using the \code{match_by} column of the colData. Only pairs of
+#' samples which are present in both experiments are plotted. 
+#'
+#' As with \code{pbmPlotScatter}, if \code{maplot} is TRUE, a MA plot is created
+#' with the same data, plotting A (log-scale mean intensity) against M (log-scale
+#' difference in intensities).
+#' 
+#' @param se1 first SummarizedExperiment object containing GPR
+#'        intensity information.
+#' @param se2 second SummarizedExperiment object containing GPR
+#'        intensity information to be compared with first experiment.
+#' @param assay_name string name of the assay to plot.
+#'        (default = "gpr")
+#' @param baseline string name of baseline condition to
+#'        compare other conditions against; ignored if \code{se2}
+#'        is also provided. (default = "Ref")
+#' @param log_scale logical whether to plot the intensities
+#'        on the log-scale. (default = TRUE)
+#' @param .method value passed to \code{method = } parameter of the
+#'        \code{ggplot2::geom_smooth} function for adding a smoothed
+#'        fit to each scatter plot; to prevent any line, set NULL.
+#'        (default = "auto")
+#' @param .filter integer specifying level of probe filtering to
+#'        perform prior to plotting. (default = 0)
+#' @param ma logical whether to plot MA plot rather than standard
+#'        scatter plot. (default = FALSE)
+#'
+#' @return
+#' ggplot object
+#'
+#' @details
+#' Currently, function only includes capability of plotting
+#' pairwise comparison of two experiment sets. This was initially
+#' implemented with the understanding that rarely more than
+#' two replicates of a set of experiments are performed with
+#' the PBM technology. If the need becomes clear, this function
+#' will be extended to accept an arbitrary number of
+#' SummarizedExperiment objects.
+#'
+#' @importFrom tidyr spread gather
+#' @importFrom dplyr mutate select left_join rename bind_rows
+#' @importFrom rlang enquo quo_name UQ
+#' @import ggplot2 SummarizedExperiment
+#' @export
+#' @author Patrick Kimes
+pbmPlotComparison <- function(se1, se2, assay_name  = "gpr", match_by = condition,
+                              log_scale = TRUE,  maplot = FALSE,
+                              .method = "auto", .filter = 0) {
+    stopifnot(assay_name %in% assayNames(se1))
+    stopifnot("Row" %in% names(rowData(se1)))
+    stopifnot("Column" %in% names(rowData(se1)))
+    stopifnot(assay_name %in% assayNames(se2))
+    stopifnot("Row" %in% names(rowData(se2)))
+    stopifnot("Column" %in% names(rowData(se2)))
+
+    match_by <- rlang::enquo(match_by)
+    match_by_str <- rlang::quo_name(match_by)
+    
+    ## check validity of matching colData column
+    stopifnot(match_by_str %in% names(colData(se1)))
+    stopifnot(match_by_str %in% names(colData(se2)))
+    match_vals1 <- colData(se1)[[match_by_str]]
+    match_vals2 <- colData(se2)[[match_by_str]]
+    if (any(duplicated(match_vals1))| any(duplicated(match_vals2))) {
+        stop("Matching variable '", match_by_str, "' is not unique across samples.\n",
+             "Specify a different column in colData.")
+    }
+
+    match_overlap <- intersect(match_vals1, match_vals2)
+    match_diff1 <- setdiff(match_vals1, match_vals2)
+    match_diff2 <- setdiff(match_vals2, match_vals1)
+    
+    if (length(match_overlap) == 0) {
+        stop("No samples matched across the specified two experiments.")
+    }
+    if (length(match_diff1) > 0) {
+        warning("Dropping samples from se1:\n  ", paste(match_diff1, collapse = ", "))
+    }
+    if (length(match_diff2) > 0) {
+        warning("Dropping samples from se2:\n  ", paste(match_diff2, collapse = ", "))
+    }
+
+    ## filter samples
+    se1 <- se1[, colData(se1)[[match_by_str]] %in% match_overlap]
+    se2 <- se2[, colData(se2)[[match_by_str]] %in% match_overlap]
+    
+    ## filter probes
+    se1 <- pbmFilterProbes(se1, assay_name, .filter) 
+    se2 <- pbmFilterProbes(se2, assay_name, .filter) 
+
+    ## condition must be a unique column for faceting plot
+    coldat1 <- as.data.frame(colData(se1))
+    coldat1 <- tibble::rownames_to_column(coldat1, "sample")
+    coldat1 <- dplyr::mutate(coldat1, Match = rlang::UQ(match_by))
+    coldat1 <- dplyr::select(coldat1, sample, Match)
+
+    coldat2 <- as.data.frame(colData(se2))
+    coldat2 <- tibble::rownames_to_column(coldat2, "sample")
+    coldat2 <- dplyr::mutate(coldat2, Match = rlang::UQ(match_by))
+    coldat2 <- dplyr::select(coldat2, sample, Match)
+    
+    ## extract intensities
+    pdat1 <- cbind(assay(se1, assay_name), rowData(se1)[, c("Column", "Row")])
+    pdat1 <- data.frame(pdat1, stringsAsFactors = FALSE)
+    pdat1 <- tibble::as_tibble(pdat1)
+    pdat1 <- tidyr::gather(pdat1, sample, value, -Column, -Row)
+    pdat1 <- dplyr::left_join(pdat1, coldat1, by = "sample")
+    pdat1 <- dplyr::select(pdat1, -sample)
+    pdat2 <- cbind(assay(se2, assay_name), rowData(se1)[, c("Column", "Row")])
+    pdat2 <- data.frame(pdat2, stringsAsFactors = FALSE)
+    pdat2 <- tibble::as_tibble(pdat2)
+    pdat2 <- tidyr::gather(pdat2, sample, value, -Column, -Row)
+    pdat2 <- dplyr::left_join(pdat2, coldat2, by = "sample")
+    pdat2 <- dplyr::select(pdat2, -sample)
+    
+    ## check for negative values
+    pdat1_pnegative <- mean(pdat1$value < 0, na.rm = TRUE)
+    pdat2_pnegative <- mean(pdat2$value < 0, na.rm = TRUE)
+
+    ## warn user about dropped values
+    if (log_scale && pdat1_pnegative + pdat2_pnegative > 0) {
+        warning("Log-scaling will drop ",
+                round(pdat1_pnegative * 100, 2), "% and ",
+                round(pdat2_pnegative * 100, 2), "% of values.")
+    }
+    
+    ## handle log-scale plotting if requested
+    if (maplot) {
+        ptitle <- paste0("PBM Intensity Comparison MA Plot (log2)")
+        pxaxis <- scale_x_continuous("A; mean (rep1 + rep2) / 2")
+        pyaxis <- scale_y_continuous("M; difference (rep1 - rep2)")
+        pline <- geom_hline(yintercept = 0, color = 'dodgerblue3')
+    } else {
+        if (log_scale) {
+            ptitle <- "PBM Intensity Comparison (log2)"
+            pxaxis <- scale_x_continuous("rep1 intensity (log)", breaks = 2^(0:100), trans = "log10")
+            pyaxis <- scale_y_continuous("rep2 intensity (log)", breaks = 2^(0:100), trans = "log10")
+        } else {
+            ptitle <- "PBM Intensity Comparison"
+            pxaxis <- scale_x_continuous("rep1 intensity")
+            pyaxis <- scale_y_continuous("rep2 intensity")
+        }
+        pline <- geom_abline(intercept = 0, slope = 1, color = 'dodgerblue3')
+    }
+
+    ## Spread gather to get reference condition in separate column
+    pdat <- dplyr::bind_rows(list(rep1 = pdat1, rep2 = pdat2), .id = "replicate")
+    pdat <- tidyr::spread(pdat, replicate, value)
+
+    ## calculate MA values if necessary and create base of plot
+    if (maplot) {
+        pdat <- dplyr::mutate(pdat,
+                              M = log2(rep1 / rep2),
+                              A = .5*log2(rep1 * rep2))
+        gp <- ggplot(pdat, aes(x = A, y = M))
+    } else {
+        gp <- ggplot(pdat, aes(x = rep1, y = rep2))
+    }
+
+    ## add common parts of plot
+    gp <- gp +
+        geom_point(alpha = 1/10) +
+        expand_limits(y = 0) +
+        theme_bw() +
+        facet_grid(. ~ Match, scales = "free_x") +
+        pxaxis +
+        pyaxis +
+        pline + 
+        ggtitle(ptitle)
+
+    if (!is.null(.method)) {
+        gp <- gp + geom_smooth(method = .method, se = FALSE)
+    }
+
+    gp
+}

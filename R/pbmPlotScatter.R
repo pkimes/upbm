@@ -5,15 +5,14 @@
 #' (which must map uniquely in the \code{stratify=} column of the colData),
 #' pairwise probe intensities are plotted with the identity line (x = y).
 #'
-#' Alternatively, if \code{ma} is TRUE, a MA plot is created with the
+#' Alternatively, if \code{maplot} is TRUE, a MA plot is created with the
 #' same data, plotting A (log-scale mean intensity) against M (log-scale
 #' difference in intensities).
 #' 
 #' @param se SummarizedExperiment object containing GPR
 #'        intensity information.
-#' @param se2 optional second  SummarizedExperiment object
-#'        containing GPR intensity information to be compared
-#'        with first experiment. (default = NULL)
+#' @param assay_name string name of the assay to plot.
+#'        (default = "gpr")
 #' @param baseline string name of baseline condition to
 #'        compare other conditions against; ignored if \code{se2}
 #'        is also provided. (default = "Ref")
@@ -40,8 +39,8 @@
 #' @import ggplot2 SummarizedExperiment
 #' @export
 #' @author Patrick Kimes
-pbmPlotScatter <- function(se, stratify = condition, baseline = NULL, log_scale = TRUE,
-                           maplot = FALSE, .method = "gam", .filter = 0) {
+pbmPlotScatter <- function(se, assay_name = "gpr", stratify = condition, baseline = NULL,
+                           log_scale = TRUE, maplot = FALSE, .method = "gam", .filter = 0) {
     stopifnot(assay_name %in% assayNames(se))
     stopifnot("Row" %in% names(rowData(se)))
     stopifnot("Column" %in% names(rowData(se)))
@@ -57,7 +56,7 @@ pbmPlotScatter <- function(se, stratify = condition, baseline = NULL, log_scale 
              "Specify a different column in colData.")
     }
         
-    ## determine baseline if necessary; check validty
+    ## determine baseline if necessary; check validity
     if (is.null(baseline)) {
         baseline <- grep("ref", strat_vals, value = TRUE, ignore.case = TRUE)
         if (length(baseline) > 1) {
