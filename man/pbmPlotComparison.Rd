@@ -5,7 +5,7 @@
 \title{Paired Scatterplot of Intensities}
 \usage{
 pbmPlotComparison(se1, se2, assay_name = "gpr", match_by = condition,
-  log_scale = TRUE, maplot = FALSE, .method = "auto", .filter = 0)
+  log_scale = TRUE, maplot = FALSE, .method = "auto", .filter = 1)
 }
 \arguments{
 \item{se1}{first SummarizedExperiment object containing GPR
@@ -34,7 +34,7 @@ fit to each scatter plot; to prevent any line, set NULL.
 (default = "auto")}
 
 \item{.filter}{integer specifying level of probe filtering to
-perform prior to plotting. (default = 0)}
+perform prior to plotting. (default = 1)}
 }
 \value{
 ggplot object

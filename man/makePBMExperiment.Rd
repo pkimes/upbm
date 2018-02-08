@@ -5,7 +5,7 @@
 \title{Read PBMExperiment Data}
 \usage{
 makePBMExperiment(tab, useMean = FALSE, useBackground = FALSE,
-  probes = NULL)
+  filterFlags = TRUE, probes = NULL)
 }
 \arguments{
 \item{tab}{table of samples with at least `gpr` and `vers` columns
@@ -19,6 +19,10 @@ for each probe rather than median fluorescent intensity
 \item{useBackground}{logical whether to use background subtracted
 intensity rather than non-subtracted intensity
 (default = FALSE)}
+
+\item{filterFlags}{logical whether to replace intensity values at probes
+flagged manually or automatically as being low quality
+ ('Bad': -100, 'Absent': -75, 'Not Found': -50) with NA. (default = TRUE)}
 
 \item{probes}{data.frame containing probe sequences in a column, 'Sequence',
 or a character vector specifying the probe sequences. If specified,

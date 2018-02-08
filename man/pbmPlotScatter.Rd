@@ -6,7 +6,7 @@
 \usage{
 pbmPlotScatter(se, assay_name = "gpr", stratify = condition,
   baseline = NULL, log_scale = TRUE, maplot = FALSE, .method = "auto",
-  .filter = 0)
+  .filter = 1)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing GPR
@@ -35,7 +35,7 @@ fit to each scatter plot; to prevent any line, set NULL.
 (default = "auto")}
 
 \item{.filter}{integer specifying level of probe filtering to
-perform prior to plotting. (default = 0)}
+perform prior to plotting. (default = 1)}
 }
 \value{
 ggplot object

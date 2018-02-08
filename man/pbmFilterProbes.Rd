@@ -4,7 +4,7 @@
 \alias{pbmFilterProbes}
 \title{Filter PBM Probes}
 \usage{
-pbmFilterProbes(se, assay_name, level = 0)
+pbmFilterProbes(se, assay_name, level = 0L)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing GPR
@@ -27,8 +27,13 @@ uninformative and low quality probes based on quality control
 metrics.
 }
 \details{
-This function will soon support multiple levels of filter.
-Currently, the function is simply a placeholder.
+The function supports the following levels of filtering.
+All filtering is progressive, i.e. setting level = 2 will
+also include filtering at level = 1.
+\itemize{
+\item{0}{no filtering}
+\item{1}{filter on de Bruijn probes}
+}
 }
 \author{
 Patrick Kimes

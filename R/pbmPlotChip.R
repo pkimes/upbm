@@ -15,7 +15,7 @@
 #'         the default 'condition' column from the colData of the
 #'         SummarizedExperiment. (default = TRUE)
 #' @param .filter integer specifying level of probe filtering to
-#'        perform prior to plotting. (default = 0)
+#'        perform prior to plotting. (default = 1)
 #'
 #' @return
 #' ggplot object
@@ -34,7 +34,7 @@
 #' @export
 #' @author Patrick Kimes
 pbmPlotChip <- function(se, assay_name = "gpr", log_scale = TRUE,
-                        .facet = TRUE, .filter = 0) {
+                        .facet = TRUE, .filter = 1) {
     stopifnot(assay_name %in% assayNames(se))
     stopifnot("Row" %in% names(rowData(se)))
     stopifnot("Column" %in% names(rowData(se)))
@@ -52,7 +52,7 @@ pbmPlotChip <- function(se, assay_name = "gpr", log_scale = TRUE,
     coldat <- tibble::rownames_to_column(coldat, "sample")
 
     ## extract intensities
-    pdat <- cbind(assay(se, assay_name), rowData(se))
+    pdat <- cbind(assay(se, assay_name), rowData(se)[, c("Column", "Row")])
     pdat <- data.frame(pdat, stringsAsFactors = FALSE)
     pdat <- tibble::as_tibble(pdat)
     pdat <- tidyr::gather(pdat, sample, value, -Column, -Row)

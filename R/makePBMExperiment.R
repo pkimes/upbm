@@ -11,6 +11,9 @@
 #' @param useBackground logical whether to use background subtracted
 #'        intensity rather than non-subtracted intensity
 #'        (default = FALSE)
+#' @param filterFlags logical whether to replace intensity values at probes
+#'        flagged manually or automatically as being low quality
+#'         ('Bad': -100, 'Absent': -75, 'Not Found': -50) with NA. (default = TRUE)
 #' @param probes data.frame containing probe sequences in a column, 'Sequence',
 #'        or a character vector specifying the probe sequences. If specified,
 #'        these values will be added to the rowData of the returned
@@ -25,12 +28,14 @@
 #' @importFrom dplyr select
 #' @export
 #' @author Patrick Kimes
-makePBMExperiment <- function(tab, useMean = FALSE, useBackground = FALSE, probes = NULL) {
+makePBMExperiment <- function(tab, useMean = FALSE, useBackground = FALSE, filterFlags = TRUE,
+                              probes = NULL) {
     ## check validity of inputs
     stopifnot(is.data.frame(tab))
     stopifnot(c("vers", "gpr") %in% names(tab))
     stopifnot(is.logical(useMean))
     stopifnot(is.logical(useBackground))
+    stopifnot(is.logical(filterFlags))
     
     ## currently only support all scans with same design
     if (length(unique(tab$vers)) > 1) {
@@ -38,7 +43,8 @@ makePBMExperiment <- function(tab, useMean = FALSE, useBackground = FALSE, probe
     }
 
     ## read in all GPR scans
-    assay_table <- lapply(tab$gpr, readGPR, useMean = useMean, useBackground = useBackground)
+    assay_table <- lapply(tab$gpr, readGPR, useMean = useMean, useBackground = useBackground,
+                          filterFlags = filterFlags)
     assay_table <- purrr::reduce(assay_table, left_join,
                                  by = c("Column", "Row"))
 
@@ -109,6 +115,9 @@ makePBMExperiment <- function(tab, useMean = FALSE, useBackground = FALSE, probe
 #' @param useBackground logical whether to use background subtracted
 #'        intensity rather than non-subtracted intensity
 #'        (default = FALSE)
+#' @param filterFlags logical whether to replace intensity values at probes
+#'        flagged manually or automatically as being low quality
+#'         ('Bad': -100, 'Absent': -75, 'Not Found': -50) with NA. (default = TRUE)
 #'
 #' @return
 #' tibble (data.frame-like) object of a single GPR file with three
@@ -123,11 +132,15 @@ makePBMExperiment <- function(tab, useMean = FALSE, useBackground = FALSE, probe
 #' @importFrom readr read_tsv
 #' @importFrom dplyr select
 #' @author Patrick Kimes
-readGPR <- function(x, useMean = FALSE, useBackground = FALSE) {
+readGPR <- function(x, useMean = FALSE, useBackground = FALSE,
+                    filterFlags = TRUE) {
     colt <- rep("-", 45)
     colt[c(2, 3)] <- 'i'
-    ##colt[c(38, 40)] <- 'c'
-
+    if (filterFlags) {
+        colt[38] <- 'i'
+        ##colt[40] <- 'c'
+    }
+    
     ## column corresponding to intensities
     if (useMean) {
         value_idx <- 10
@@ -142,5 +155,11 @@ readGPR <- function(x, useMean = FALSE, useBackground = FALSE) {
 
     vals <- readr::read_tsv(x, skip = 35, col_types = colt)
     names(vals)[3] <- 'intensity'
+
+    ## remove negative (low quality) flagged probes
+    if (filterFlags) {
+        vals$intensity[vals$Flags < 0] <- NA_real_
+        vals <- dplyr::select(-Flags)
+    }
     vals
 }

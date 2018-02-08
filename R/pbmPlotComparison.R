@@ -27,7 +27,7 @@
 #'        fit to each scatter plot; to prevent any line, set NULL.
 #'        (default = "auto")
 #' @param .filter integer specifying level of probe filtering to
-#'        perform prior to plotting. (default = 0)
+#'        perform prior to plotting. (default = 1)
 #'
 #' @return
 #' ggplot object
@@ -49,7 +49,7 @@
 #' @author Patrick Kimes
 pbmPlotComparison <- function(se1, se2, assay_name  = "gpr", match_by = condition,
                               log_scale = TRUE,  maplot = FALSE,
-                              .method = "auto", .filter = 0) {
+                              .method = "auto", .filter = 1) {
     stopifnot(assay_name %in% assayNames(se1))
     stopifnot("Row" %in% names(rowData(se1)))
     stopifnot("Column" %in% names(rowData(se1)))

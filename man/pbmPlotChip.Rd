@@ -5,7 +5,7 @@
 \title{Plot of Intensities on Grid}
 \usage{
 pbmPlotChip(se, assay_name = "gpr", log_scale = TRUE, .facet = TRUE,
-  .filter = 0)
+  .filter = 1)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing GPR
@@ -22,7 +22,7 @@ the default 'condition' column from the colData of the
 SummarizedExperiment. (default = TRUE)}
 
 \item{.filter}{integer specifying level of probe filtering to
-perform prior to plotting. (default = 0)}
+perform prior to plotting. (default = 1)}
 }
 \value{
 ggplot object

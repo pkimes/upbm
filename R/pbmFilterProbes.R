@@ -17,14 +17,26 @@
 #' SummarizedExperiment object
 #'
 #' @details
-#' This function will soon support multiple levels of filter.
-#' Currently, the function is simply a placeholder.
+#' The function supports the following levels of filtering.
+#' All filtering is progressive, i.e. setting level = 2 will
+#' also include filtering at level = 1.
+#' \itemize{
+#' \item{0}{no filtering}
+#' \item{1}{filter on de Bruijn probes}
+#' }
 #' 
 #' @export
 #' @author Patrick Kimes
-pbmFilterProbes <- function(se, assay_name, level = 0) {
+pbmFilterProbes <- function(se, assay_name, level = 0L) {
 
-    ## placeholder
+    if (level > 0 & ! "ID" %in% rowData(se)) {
+        warning("Must have 'ID' column in rowData to use filter level > 0")
+        level <- 0L
+    }
+
+    if (level > 0L) {
+        se <- se[grepl("^dBr_", rowData(se)$ID), ]
+    }
 
     return(se)
 }

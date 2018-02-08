@@ -12,7 +12,7 @@
 #'        the default 'condition' column from the colData of the
 #'        SummarizedExperiment. (default = TRUE)
 #' @param .filter integer specifying level of probe filtering to
-#'        perform prior to plotting. (default = 0)
+#'        perform prior to plotting. (default = 1)
 #'
 #' @return
 #' ggplot object
@@ -22,7 +22,7 @@
 #' @export
 #' @author Patrick Kimes
 pbmPlotDensity <- function(se, assay_name = "gpr", log_scale = TRUE,
-                           .facet = TRUE, .filter = 0) {
+                           .facet = TRUE, .filter = 1) {
     stopifnot(assay_name %in% assayNames(se))
 
     ## condition must be a unique column for faceting plot
