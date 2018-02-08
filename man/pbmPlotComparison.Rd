@@ -17,8 +17,16 @@ intensity information to be compared with first experiment.}
 \item{assay_name}{string name of the assay to plot.
 (default = "gpr")}
 
+\item{match_by}{unquoted name of column in colData of SummarizedExperiments
+to use for matching samples across the two experiments; values of
+column must be unique for each sample in each experiment.
+(default = condition)}
+
 \item{log_scale}{logical whether to plot the intensities
 on the log-scale. (default = TRUE)}
+
+\item{maplot}{logical whether to plot MA plot rather than standard
+scatter plot. (default = FALSE)}
 
 \item{.method}{value passed to \code{method = } parameter of the
 \code{ggplot2::geom_smooth} function for adding a smoothed
@@ -27,13 +35,6 @@ fit to each scatter plot; to prevent any line, set NULL.
 
 \item{.filter}{integer specifying level of probe filtering to
 perform prior to plotting. (default = 0)}
-
-\item{baseline}{string name of baseline condition to
-compare other conditions against; ignored if \code{se2}
-is also provided. (default = "Ref")}
-
-\item{ma}{logical whether to plot MA plot rather than standard
-scatter plot. (default = FALSE)}
 }
 \value{
 ggplot object

@@ -7,9 +7,9 @@
 predictKmers(se, kmers = NULL, stdArray = TRUE, verbose = FALSE, ...)
 }
 \arguments{
-\item{se}{SummarizedExperiment object containing PBM intensity data}
+\item{se}{SummarizedExperiment object containing PBM intensity data.}
 
-\item{kmers}{character vector of k-mers to predict}
+\item{kmers}{character vector of k-mers to predict.}
 
 \item{stdArray}{logical whether the array is a standard PBM array. If
 TRUE, then two processing steps will be applied prior to estimating
@@ -18,8 +18,11 @@ determined by the ID column of the SummarizedExperiment rowData, and
 2. trimming of sequences to only use the unique 36nt region.
 (default = TRUE)}
 
+\item{verbose}{logical whether to print extra messages during model fitting
+procedure. (default = FALSE)}
+
 \item{...}{parameters to be passed to glmnet call - will overwrite
-default paramaters}
+default paramaters.}
 }
 \value{
 SummarizedExperiment object with predicted affinities.

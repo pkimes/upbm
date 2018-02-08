@@ -2,16 +2,18 @@
 #'
 #' This function uses stuff to do stuff.
 #' 
-#' @param se SummarizedExperiment object containing PBM intensity data
-#' @param kmers character vector of k-mers to predict
+#' @param se SummarizedExperiment object containing PBM intensity data.
+#' @param kmers character vector of k-mers to predict.
 #' @param stdArray logical whether the array is a standard PBM array. If
 #'        TRUE, then two processing steps will be applied prior to estimating
 #'        k-mer intensities, namely: 1. subsetting on de Bruijn sequences as
 #'        determined by the ID column of the SummarizedExperiment rowData, and
 #'        2. trimming of sequences to only use the unique 36nt region.
 #'        (default = TRUE)
+#' @param verbose logical whether to print extra messages during model fitting
+#'        procedure. (default = FALSE) 
 #' @param ... parameters to be passed to glmnet call - will overwrite
-#'        default paramaters
+#'        default paramaters.
 #' 
 #' @return
 #' SummarizedExperiment object with predicted affinities.

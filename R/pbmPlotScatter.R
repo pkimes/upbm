@@ -13,9 +13,12 @@
 #'        intensity information.
 #' @param assay_name string name of the assay to plot.
 #'        (default = "gpr")
+#' @param stratify unquoted name of column in colData of SummarizedExperiment (or
+#'        '\code{sample}') to use for comparing samples; values in column must be
+#'        unique for each sample. (default = condition)
 #' @param baseline string name of baseline condition to
-#'        compare other conditions against; ignored if \code{se2}
-#'        is also provided. (default = "Ref")
+#'        compare other conditions against; if not specified, guessed by looking for
+#'        'ref' in any value of the stratifying variable. (default = NULL)
 #' @param log_scale logical whether to plot the intensities
 #'        on the log-scale. (default = TRUE)
 #' @param maplot logical whether to plot MA plot rather than standard
@@ -23,7 +26,7 @@
 #' @param .method value passed to \code{method = } parameter of the
 #'        \code{ggplot2::geom_smooth} function for adding a smoothed
 #'        fit to each scatter plot; to prevent any line, set NULL.
-#'        (default = "gam")
+#'        (default = "auto")
 #' @param .filter integer specifying level of probe filtering to
 #'        perform prior to plotting. (default = 0)
 #'
@@ -40,7 +43,7 @@
 #' @export
 #' @author Patrick Kimes
 pbmPlotScatter <- function(se, assay_name = "gpr", stratify = condition, baseline = NULL,
-                           log_scale = TRUE, maplot = FALSE, .method = "gam", .filter = 0) {
+                           log_scale = TRUE, maplot = FALSE, .method = "auto", .filter = 0) {
     stopifnot(assay_name %in% assayNames(se))
     stopifnot("Row" %in% names(rowData(se)))
     stopifnot("Column" %in% names(rowData(se)))

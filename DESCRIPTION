@@ -15,7 +15,9 @@ Depends: R (>= 3.4.2),
          preprocessCore,
          tibble,
          tidyr,
-         purrr
+         purrr,
+         ggplot2,
+         rlang
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
