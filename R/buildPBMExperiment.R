@@ -43,8 +43,18 @@ buildPBMExperiment <- function(tab, useMean = FALSE, useBackground = FALSE, filt
         stop("All samples/scans must have the same assay design version")
     }
 
+    ## guess scan type if not specified - only care if Masliner or not
+    if ("scan" %in% names(tab)) {
+        tab_scan <- tab$scan
+    } else {
+        ## don't add to 'tab' since don't want in colData of output
+        tab_scan <- rep("Alexa488", nrow(tab))
+        tab_scan[grep("MaslinerOutput", tab$gpr,
+                      ignore.case = TRUE)] <- "Masliner"
+    }
+    
     ## read in all GPR scans
-    assay_table <- mapply(readGPR, gpr_path = tab$gpr, gpr_type = tab$scan,
+    assay_table <- mapply(readGPR, gpr_path = tab$gpr, gpr_type = tab_scan,
                           useMean = useMean, useBackground = useBackground,
                           filterFlags = filterFlags,
                           SIMPLIFY = FALSE)
