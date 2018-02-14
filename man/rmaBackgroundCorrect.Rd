@@ -4,10 +4,13 @@
 \alias{rmaBackgroundCorrect}
 \title{RMA Background Correction of Samples}
 \usage{
-rmaBackgroundCorrect(se)
+rmaBackgroundCorrect(se, .force = FALSE)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing PBM intensity data}
+
+\item{.force}{logical whether to run correction even if data
+has already been corrected for background. (default = FALSE)}
 }
 \value{
 SummarizedExperiment object with background corrected intensities.

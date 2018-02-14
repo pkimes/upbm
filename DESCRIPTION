@@ -17,7 +17,10 @@ Depends: R (>= 3.4.2),
          tidyr,
          purrr,
          ggplot2,
-         rlang
+         rlang,
+         limma,
+         stats,
+         utils
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true

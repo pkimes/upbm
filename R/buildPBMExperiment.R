@@ -114,7 +114,11 @@ buildPBMExperiment <- function(tab, useMean = FALSE, useBackground = FALSE, filt
     
     ## SummarizedExperiment
     SummarizedExperiment(assays = list(gpr = assaydat),
-                         rowData = rowdat, colData = coldat)
+                         rowData = rowdat, colData = coldat,
+                         metadata = list(steps = list(),
+                                         spatialAdjustment = NULL,
+                                         backgroundCorrection = NULL,
+                                         betweenArrayNormalization = NULL))
 }
 
 

@@ -18,6 +18,8 @@
 #' @param returnBias logical whether to include the spatial bias as an
 #'        additional 'assay' (called 'spatialbias') in the returned
 #'        SummarizedExperiment object.
+#' @param .force logical whether to run adjustment even if data
+#'        has already been spatially adjusted. (default = FALSE)
 #' 
 #' @return
 #' SummarizedExperiment object with spatially adjusted intensities.
@@ -30,7 +32,13 @@
 #' @importFrom dplyr select mutate select_ do group_by left_join
 #' @export
 #' @author Patrick Kimes
-spatiallyAdjust <- function(se, k = 15, returnBias = TRUE) {
+spatiallyAdjust <- function(se, k = 15, returnBias = TRUE, .force = FALSE) {
+
+    ## check if already adjusted
+    if (!.force) {
+        stopifnot(is.null(metadata(se)$spatialAdjustment))
+    }
+
     if (k %% 2 == 0) {
         stop("Local window size, k, must be an odd value.")
     }
@@ -88,11 +96,15 @@ spatiallyAdjust <- function(se, k = 15, returnBias = TRUE) {
         assay(se, "spatialbias") <- med_intensity
     }
     
-    ## add step to list
-    if (! "steps" %in% names(metadata(se))) {
-        metadata(se)$steps <- list()
+    ## add step to metadata
+    method_str <- "BlockMedianDetrend"
+    metadata(se)$steps <- c(metadata(se)$steps, method_str)
+    if (.force) {
+        metadata(se)$spatialAdjustment <-
+                       c(metadata(se)$spatialAdjustment, method_str)
+    } else {
+        metadata(se)$spatialAdjustment <- method_str
     }
-    metadata(se)$steps <- c(metadata(se)$steps, "spatial adjustment")
     
     return(se) 
 }

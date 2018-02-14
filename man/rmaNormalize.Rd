@@ -4,10 +4,13 @@
 \alias{rmaNormalize}
 \title{RMA Normalization of Samples}
 \usage{
-rmaNormalize(se)
+rmaNormalize(se, .force = FALSE)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing PBM intensity data}
+
+\item{.force}{logical whether to run normalization even if data
+has already been normalized within arrays. (default = FALSE)}
 }
 \value{
 SummarizedExperiment object with normalized intensities.

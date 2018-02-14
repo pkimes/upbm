@@ -4,7 +4,7 @@
 \alias{spatiallyAdjust}
 \title{Spatial Adjustment of Samples}
 \usage{
-spatiallyAdjust(se, k = 15, returnBias = TRUE)
+spatiallyAdjust(se, k = 15, returnBias = TRUE, .force = FALSE)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing PBM intensity data}
@@ -15,6 +15,9 @@ local bias (default = 15)}
 \item{returnBias}{logical whether to include the spatial bias as an
 additional 'assay' (called 'spatialbias') in the returned
 SummarizedExperiment object.}
+
+\item{.force}{logical whether to run adjustment even if data
+has already been spatially adjusted. (default = FALSE)}
 }
 \value{
 SummarizedExperiment object with spatially adjusted intensities.
