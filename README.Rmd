@@ -11,7 +11,7 @@ output:
 ---
 
 ```{r echo = FALSE}
-gpr_dir <- ".../gpr_files"
+gpr_dir <- "../gpr_files"
 ```
 
 **THIS PACKAGE IS STILL UNDER ACTIVE DEVELOPMENT**
@@ -20,7 +20,7 @@ gpr_dir <- ".../gpr_files"
 
 This package provides tools for reading, plotting, and analyzing protein binding microarray (PBM) data in *R*. Currently, input data must be available as GenePix Results (GPR) files. A more stable and separate set of tools developed by Berger and Bulyk (Nature Protocols, 2009) for the analysis of PBMs is available for download at the [_Universal PBM Analysis Suite_ site](the_brain.bwh.harvard.edu/PBMAnalysisSuite/indexSep2017.html).
 
-Several functions for loading and preprocessing microarray data are available in *R* through the widely used [*affy*]() and [*limma*]() packages in Bioconductor. Additionally, the *limma* package also includes several functions for testing differential expression with gene expression arrays. Rather than reinventing the (entire) wheel, this package (*PBMExperiment*) includes several easy-to-use wrapper functions to the preprocessing functions implemented in both *affy* and *limma* (prefixed `rma*` and `limma*`, respectively). Due to the specialized nature of PBMs, the *PBMExperiment* package includes specialized procedures for probe-level quantification not implemented in either of the aforementioned packages. 
+Several functions for loading and preprocessing microarray data are available in *R* through the widely used [*affy*](https://www.bioconductor.org/packages/release/bioc/html/affy.html)) and [*limma*](http://bioconductor.org/packages/release/bioc/html/limma.html) packages. Additionally, the *limma* package also includes several functions for gene-level quantification and testing of differential expression with expression arrays. Rather than reinventing the wheel, this package (*PBMExperiment*) includes several easy-to-use wrappers to the pre-processing functions implemented in both *affy* and *limma* (prefixed `rma*` and `limma*`, respectively). Due to the specialized nature of PBMs, the *PBMExperiment* package includes specialized procedures for probe-level quantification not implemented in either of the aforementioned packages. 
 
 # Installation
 
@@ -34,7 +34,7 @@ If the package is already installed, there is no need to re-install the package 
 After installing, the package still needs to be loaded to make the functions available in R.
 
 ```{r}
-library("PBMExperiment")
+suppressPackageStartupMessages(library("PBMExperiment"))
 ```
 
 # Quickstart
@@ -54,12 +54,11 @@ pbm_adjusted <- spatiallyAdjust(pbmdata)
 ```
 
 ```{r, fig.width = 12, fig.height = 8}
-pbmPlotChip(pbm_adjusted, assay_name = "spatialbias",
-            log_scale = FALSE, .facet = FALSE) +
+pbmPlotChip(pbm_adjusted, assay_name = "spatialbias", log_scale = FALSE, .facet = FALSE) +
     facet_grid(lp ~ condition)
 ```
 
-For more details on the available plotting and analysis functions, read the more detailed sections below.
+More details on the available plotting and analysis functions are provided in the sections below.
 
 # Overview
 
@@ -69,12 +68,13 @@ Again, we start by identifying the set of sample GPRs in the directory, `gpr_dir
 
 ```{r}
 samples_all <- buildPBMTable(gpr_dir, gpr_type = "all")
+samples_all
 ```
 
 The GPR scan type is included in the `scan` column of the sample table.
 
 ```{r}
-samples_all$scan
+dplyr::count(samples_all, scan)
 ```
 
 Given the table of samples, we next load the GPR data into R according to the `gpr` column of the sample table. Depending on the number of samples, this may take a few seconds to a few minutes. For illustration, we only load a subset of the samples.
@@ -113,7 +113,13 @@ Similarly, the **column data** contains information about the columns (samples).
 colData(pbmdata)[1:5, ]
 ```
 
-Notice that when we loaded the GPR data, we also specified the probe design used in this experiment, `pbm_8x60k_v1`. This default probe set is included with the package. The probe information is matched with the GPR data according to Row and Column coordinates.
+Notice that when we loaded the GPR data, we also specified the probe design used in this experiment, `pbm_8x60k_v1`. This default probe set, along with out default data sets, are included with the package.
+
+```{r}
+show(data(package = "PBMExperiment"))
+```
+
+The probe information is matched with the GPR data according to Row and Column coordinates.
 
 ```{r}
 head(pbm_8x60k_v1)
@@ -205,7 +211,7 @@ For provenance, the correction step is also noted in the `metadata` of the objec
 metadata(pbmdata_bc)
 ```
 
-We next apply cross-sample normalization.
+We next apply cross-sample normalization. Since a primary objective of normalizing across samples is to put intensities on the same scale, we apply the procedure to only a subset of samples scanned at the same laser intensity. 
 
 ```{r}
 pbmdata500_norm <- limmaNormalizeBetweenArrays(pbmdata_bc[, colData(pbmdata)$lp == 500])
@@ -219,15 +225,50 @@ pbmPlotComparison(pbmdata_bc[, colData(pbmdata)$lp == 500],
                   maplot = TRUE)
 ```
 
-Next, we are ready to convert the probe-level intensities to candidate motif-level intensity estimates. 
+## Filtering GPR Data
+
+**Probe-level filtering procedures are still under investigation.**
 
 ## Quantifying GPR Data
 
+After applying pre-processing and filtering to probe-level intensities for each GPR file, we proceed to estimating candidate motif-level affinities. The package includes a single function, `predKmers` for predicting affinities for a specified set of K-mer sequences. By default, affinities are estimated for a set of `r length(pbm_8mers)` 8-mers included with the package.
+
+```{r}
+head(pbm_8mers)
+```
+
+The function can be run as follows.
+
+```{r}
+system.time({ pbm_predict <- predictKmers(pbmdata500_norm, verbose = TRUE) })
+```
+
+The returned object is again a SummarizedExperiment.
+
+```{r}
+pbm_predict
+```
+
+The array entries are the predicted k-mer intensities per-sample.
+
+```{r}
+rowData(pbm_predict)[1:5, ]
+assay(pbm_predict, "pred")[1:5, ]
+```
+
+The `colData` includes all of the same sample information as the probe-level objects.
+
+```{r, fig.width = 15, fig.height = 5}
+pbmPlotScatter(pbm_predict, assay_name = "pred")
+pbmPlotScatter(pbm_predict, assay_name = "pred", maplot = TRUE)
+```
 
 
 # References
 
-- [Berger MF and Bulyk ML. "Universal protein-binding microarrays for the comprehensive characterization of the DNA-binding specificities of transcription factors." Nature Protocols. (2009) 4(3):393-411.](http://the_brain.bwh.harvard.edu/pubs/uPBMs_NatProt09.pdf)
-- [Berger MF, Philippakis AA, Qureshi A, He FS, Estep PW III and Bulyk ML. "Compact, universal DNA microarrays to comprehensively determine transcription-factor binding site specificities." Nature Biotechnology. (2006) 24(11):1429-1435.](http://the_brain.bwh.harvard.edu/pubs/CompactDNAview.pdf)
+- [Berger MF and Bulyk ML (2009). "Universal protein-binding microarrays for the comprehensive characterization of the DNA-binding specificities of transcription factors." Nature Protocols, 4(3):393-411.](http://the_brain.bwh.harvard.edu/pubs/uPBMs_NatProt09.pdf)
+- [Berger MF, Philippakis AA, Qureshi A, He FS, Estep PW III and Bulyk ML (2006). "Compact, universal DNA microarrays to comprehensively determine transcription-factor binding site specificities." Nature Biotechnology, 24(11):1429-1435.](http://the_brain.bwh.harvard.edu/pubs/CompactDNAview.pdf)
 - [Universal PBM Analysis Suite](the_brain.bwh.harvard.edu/PBMAnalysisSuite/indexSep2017.html)
 - [Morgan M, Obenchain V, Hester J and Pagès H (2017). SummarizedExperiment: SummarizedExperiment container. R package version 1.8.1.](https://bioconductor.org/packages/release/bioc/html/SummarizedExperiment.html)
+- [Gautier L, Cope L, Bolstad BM and Irizarry RA (2004). "affy—analysis of Affymetrix GeneChip data at the probe level." Bioinformatics, 20(3):307–315.](https://www.bioconductor.org/packages/release/bioc/html/affy.html)
+- [Ritchie ME, Phipson B, Wu D, Hu Y, Law CW, Shi W and Smyth GK (2015). "limma powers differential expression analyses for RNA-sequencing and microarray studies." Nucleic Acids Research, 43(7):e47.](http://bioconductor.org/packages/release/bioc/html/limma.html)
