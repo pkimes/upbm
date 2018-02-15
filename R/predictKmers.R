@@ -132,6 +132,11 @@ predictKmers <- function(se, kmers = NULL, stdArray = TRUE, verbose = FALSE, ...
     vec_intensities <- matrix(vec_intensities, ncol = 1)
     vec_intensities <- log2(vec_intensities)
 
+    ## remove NAs
+    valid_idx <- which(!is.na(vec_intensities))
+    vec_intensities <- vec_intensities[valid_idx, ]
+    designmat <- designmat[valid_idx, ]
+    
     ## merge input parameters with default parameter for glmnet call
     glmnet_args <- list(x = designmat, y = vec_intensities,
                         family = 'gaussian', alpha = 0.5,
@@ -139,7 +144,7 @@ predictKmers <- function(se, kmers = NULL, stdArray = TRUE, verbose = FALSE, ...
                         lower.limits = 0, thresh = 1e-10)
     args_input <- list(...)
     glmnet_args <- replace(glmnet_args, names(args_input), args_input)
-
+    
     ## fit elastic net model, constraint to non-negative
     if (verbose) { print("starting glmnet fit ...") }
     efit <- do.call(glmnet, glmnet_args)
@@ -151,6 +156,8 @@ predictKmers <- function(se, kmers = NULL, stdArray = TRUE, verbose = FALSE, ...
     coefs_est <- matrix(coefs_all[ 1:(ncol(se) * nkmers) ],
                         ncol = ncol(se), nrow = nkmers)
 
+    ## need to be careful about dropped K-mers if too many NAs
+    
     ## turn coefficient estimates into table w/ rows = 8mers, cols = conditions
     coefs_est <- DataFrame(coefs_est)
     colnames(coefs_est) <- colnames(se)
