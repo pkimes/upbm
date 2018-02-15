@@ -45,9 +45,16 @@
 pbmPlotScatter <- function(se, assay_name = "gpr", stratify = condition, baseline = NULL,
                            log_scale = TRUE, maplot = FALSE, .method = "auto", .filter = 1) {
     stopifnot(assay_name %in% assayNames(se))
-    stopifnot("Row" %in% names(rowData(se)))
-    stopifnot("Column" %in% names(rowData(se)))
 
+    if (! "Row" %in% names(rowData(se)) || ! "Column" %in% names(rowData(se))) {
+        if ("kmer" %in% names(rowData(se))) {
+            rowData(se)$Row <- rowData(se)$kmer
+            rowData(se)$Column <- rowData(se)$kmer
+        } else {
+            stop("rowData must either contain 'Row','Column' columns or 'kmer' column.")
+        }
+    }
+        
     stratify <- rlang::enquo(stratify)
     stratify_str <- rlang::quo_name(stratify)
     

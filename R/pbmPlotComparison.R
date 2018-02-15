@@ -51,12 +51,25 @@ pbmPlotComparison <- function(se1, se2, assay_name  = "gpr", match_by = conditio
                               log_scale = TRUE,  maplot = FALSE,
                               .method = "auto", .filter = 1) {
     stopifnot(assay_name %in% assayNames(se1))
-    stopifnot("Row" %in% names(rowData(se1)))
-    stopifnot("Column" %in% names(rowData(se1)))
-    stopifnot(assay_name %in% assayNames(se2))
-    stopifnot("Row" %in% names(rowData(se2)))
-    stopifnot("Column" %in% names(rowData(se2)))
+    if (! "Row" %in% names(rowData(se1)) || ! "Column" %in% names(rowData(se1))) {
+        if ("kmer" %in% names(rowData(se1))) {
+            rowData(se1)$Row <- rowData(se1)$kmer
+            rowData(se1)$Column <- rowData(se1)$kmer
+        } else {
+            stop("rowData must either contain 'Row','Column' columns or 'kmer' column.")
+        }
+    }
 
+    stopifnot(assay_name %in% assayNames(se2))
+    if (! "Row" %in% names(rowData(se2)) || ! "Column" %in% names(rowData(se2))) {
+        if ("kmer" %in% names(rowData(se2))) {
+            rowData(se2)$Row <- rowData(se2)$kmer
+            rowData(se2)$Column <- rowData(se2)$kmer
+        } else {
+            stop("rowData must either contain 'Row','Column' columns or 'kmer' column.")
+        }
+    }
+    
     match_by <- rlang::enquo(match_by)
     match_by_str <- rlang::quo_name(match_by)
     
