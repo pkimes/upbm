@@ -103,7 +103,7 @@ predictKmers <- function(se, kmers = NULL, stdArray = TRUE, verbose = FALSE, ...
 
     ## find mapping between kmers and probes
     ovnames <- intersect(names(rowData(se)), c("Row", "Column", "ID", "Sequence"))
-    kmermap <- mapkmers(rowData(se)[, ovnames], kmers)
+    kmermap <- mapKmers(rowData(se)[, ovnames], kmers)
 
     ## use ordering from input 'kmers'
     kmermap$seq <- factor(kmermap$seq, levels = kmers)
