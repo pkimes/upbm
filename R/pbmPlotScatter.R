@@ -131,16 +131,18 @@ pbmPlotScatter <- function(se, assay_name = "gpr", stratify = condition, baselin
         pdat <- dplyr::mutate(pdat,
                               M = log2(value / Baseline),
                               A = .5*log2(value * Baseline))
-        gp <- ggplot(pdat, aes(x = A, y = M))
+        gp <- ggplot(pdat, aes(x = A, y = M)) +
+            theme_bw()
     } else {
-        gp <- ggplot(pdat, aes(x = Baseline, y = value))
+        gp <- ggplot(pdat, aes(x = Baseline, y = value)) +
+            theme_bw() +
+            theme(axis.text.x = element_text(angle = 90, vjust = 1/2, hjust = 1))
     }
 
     ## add common parts of plot
     gp <- gp + 
         geom_point(alpha = 1/10) +
         expand_limits(y = 0) +
-        theme_bw() +
         facet_grid(. ~ Stratify, scales = "free_x") +
         pxaxis +
         pyaxis +

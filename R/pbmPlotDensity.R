@@ -65,6 +65,7 @@ pbmPlotDensity <- function(se, assay_name = "gpr", log_scale = TRUE,
     gp <- ggplot(pdat, aes(x = value)) +
         geom_density(color = 'black', fill = 'black', alpha = 1/4) +
         theme_bw() +
+        theme(axis.text.x = element_text(angle = 90, vjust = 1/2, hjust = 1)) +
         pxaxis +
         ggtitle(ptitle)
 

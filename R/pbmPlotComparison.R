@@ -156,16 +156,18 @@ pbmPlotComparison <- function(se1, se2, assay_name  = "gpr", match_by = conditio
         pdat <- dplyr::mutate(pdat,
                               M = log2(rep1 / rep2),
                               A = .5*log2(rep1 * rep2))
-        gp <- ggplot(pdat, aes(x = A, y = M))
+        gp <- ggplot(pdat, aes(x = A, y = M)) +
+            theme_bw()
     } else {
-        gp <- ggplot(pdat, aes(x = rep1, y = rep2))
+        gp <- ggplot(pdat, aes(x = rep1, y = rep2)) +
+            theme_bw() +
+            theme(axis.text.x = element_text(angle = 90, vjust = 1/2, hjust = 1))
     }
-
+    
     ## add common parts of plot
     gp <- gp +
         geom_point(alpha = 1/10) +
         expand_limits(y = 0) +
-        theme_bw() +
         facet_grid(. ~ Match, scales = "free_x") +
         pxaxis +
         pyaxis +
