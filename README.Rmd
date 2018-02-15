@@ -1,0 +1,233 @@
+---
+title: "PBMExperiment"
+author: Patrick Kimes
+output:
+  github_document:
+    toc: true
+    toc_depth: 2
+    fig_width: 12
+    fig_height: 4
+    dev: png
+---
+
+```{r echo = FALSE}
+gpr_dir <- ".../gpr_files"
+```
+
+**THIS PACKAGE IS STILL UNDER ACTIVE DEVELOPMENT**
+
+# Introduction
+
+This package provides tools for reading, plotting, and analyzing protein binding microarray (PBM) data in *R*. Currently, input data must be available as GenePix Results (GPR) files. A more stable and separate set of tools developed by Berger and Bulyk (Nature Protocols, 2009) for the analysis of PBMs is available for download at the [_Universal PBM Analysis Suite_ site](the_brain.bwh.harvard.edu/PBMAnalysisSuite/indexSep2017.html).
+
+Several functions for loading and preprocessing microarray data are available in *R* through the widely used [*affy*]() and [*limma*]() packages in Bioconductor. Additionally, the *limma* package also includes several functions for testing differential expression with gene expression arrays. Rather than reinventing the (entire) wheel, this package (*PBMExperiment*) includes several easy-to-use wrapper functions to the preprocessing functions implemented in both *affy* and *limma* (prefixed `rma*` and `limma*`, respectively). Due to the specialized nature of PBMs, the *PBMExperiment* package includes specialized procedures for probe-level quantification not implemented in either of the aforementioned packages. 
+
+# Installation
+
+To install the latest version of this package from GitHub, use the following command from the `devtools` package:
+
+```{r, eval = FALSE}
+devtools::install_github("pkimes/PBMExperiment")
+```
+
+If the package is already installed, there is no need to re-install the package except to check for updates.
+After installing, the package still needs to be loaded to make the functions available in R.
+
+```{r}
+library("PBMExperiment")
+```
+
+# Quickstart
+
+Suppose we have a folder, `gpr_dir`, containing GPR files for a single experiment. We first determine the set of samples in that folder with `buildPBMTable`, and then read in the samples using `buildPBMExperiment`.
+
+```{r}
+samples <- buildPBMTable(gpr_dir)
+pbmdata <- buildPBMExperiment(samples, probes = pbm_8x60k_v1)
+```
+
+The data is now available for plotting and analysis.
+Here, we show an example of computing the spatial bias in each sample, and plotting the bias across the grid of probe coordinates.
+
+```{r}
+pbm_adjusted <- spatiallyAdjust(pbmdata)
+```
+
+```{r, fig.width = 12, fig.height = 8}
+pbmPlotChip(pbm_adjusted, assay_name = "spatialbias",
+            log_scale = FALSE, .facet = FALSE) +
+    facet_grid(lp ~ condition)
+```
+
+For more details on the available plotting and analysis functions, read the more detailed sections below.
+
+# Overview
+
+## Reading GPR Data
+
+Again, we start by identifying the set of sample GPRs in the directory, `gpr_dir`. In the quickstart example above, only raw `"Alexa488"` GPR scans were captured (by default). However, there may also be Cy3 and Masliner GPR files in the same directory. To also capture these samples, we can change the `gpr_type=` parameter to any of `"Masliner"`, `"Cy3"`, or `"all"`.
+
+```{r}
+samples_all <- buildPBMTable(gpr_dir, gpr_type = "all")
+```
+
+The GPR scan type is included in the `scan` column of the sample table.
+
+```{r}
+samples_all$scan
+```
+
+Given the table of samples, we next load the GPR data into R according to the `gpr` column of the sample table. Depending on the number of samples, this may take a few seconds to a few minutes. For illustration, we only load a subset of the samples.
+
+```{r}
+condition_set <- c("HOXD13-REF", "HOXD13-Q325R", "HOXD13-I322L")
+pbmdata <- buildPBMExperiment(samples_all[samples_all$lp %in% c(500, 550) &
+                                          samples_all$scan == "Alexa488" &
+                                          samples_all$condition %in% condition_set, ],
+                              probes = pbm_8x60k_v1)
+```
+
+The sample data is stored as a [_SummarizedExperiment_](https://bioconductor.org/packages/release/bioc/html/SummarizedExperiment.html), a common structure for storing genomic data in [Bioconductor](http://bioconductor.org/).
+
+```{r}
+pbmdata
+```
+
+A _SummarizedExperiment_ is made up of three parts: **1.** assays (primary data), **2.** row data, and **3.** column data.  
+
+Naturally, the probe-level intensities from the GPRs are available in the `"gpr"` **assay** as a DataFrame with rows and columns corresponding to probes and samples.
+
+```{r}
+assay(pbmdata, "gpr")[1:5, 1:5]
+```
+
+The **row data** contains information about the rows (probes).
+
+```{r}
+rowData(pbmdata)[1:5, ]
+```
+
+Similarly, the **column data** contains information about the columns (samples).
+
+```{r}
+colData(pbmdata)[1:5, ]
+```
+
+Notice that when we loaded the GPR data, we also specified the probe design used in this experiment, `pbm_8x60k_v1`. This default probe set is included with the package. The probe information is matched with the GPR data according to Row and Column coordinates.
+
+```{r}
+head(pbm_8x60k_v1)
+```
+
+Notice that this information is included in the row data shown above.  
+
+## Plotting GPR Data
+
+Now that we have the data, we can use plots to visually explore the distributions of probe intensities across samples. Currently, the following functions are available for plotting GPR data: `pbmPlotDensity()`, `pbmPlotChip()`, `pbmPlotScatter()`, and `pbmPlotComparison()`. Each function returns a `ggplot2` object that can be customized to generate more specialized plots. By default, each function plots each sample separately ("facets") according to the `condition` column of the `colData`.
+
+```{r}
+colData(pbmdata)$condition
+```
+
+If `condition` is not unique to each sample, as is the case here, we can set `.facet = FALSE` in the function, and explicitly facet the returned plot. Faceting can be performed using any of the columns in the `colData` of the SummarizedExperiment.
+
+```{r}
+colData(pbmdata)
+```
+
+In this example, laser power (`lp`) and `condition` uniquely identify each sample, and can be used for faceting the samples.  
+
+First, we use `lp` and `condition` to facet a plot of the distribution of probe intensities for each sample. 
+
+```{r, fig.width = 10, fig.height = 6}
+pbmPlotDensity(pbmdata, .facet = FALSE) +
+    facet_grid(lp ~ condition)
+```
+
+Similarly, we can plot probe intensities for each sample across the coordinates of the array. 
+
+```{r, fig.width = 10, fig.height = 6}
+pbmPlotDensity(pbmdata, .facet = FALSE) +
+    facet_grid(lp ~ condition)
+```
+
+Since these experiments typically include a reference sample, another useful view of the data is to plot probe intensities across conditions against a reference sample. This may be useful to, for example, compare across conditions for a fixed laser power (`lp`) or across laser powers for a single condition (`condition`). Since the ultimate goal is to compare across samples, we plot the former. To do this, we simply subset the samples (columns) according to the `colData`, and call the plotting function. 
+
+```{r, fig.width = 10, fig.height = 6}
+pbmPlotScatter(pbmdata[, colData(pbmdata)$lp == 500])
+```
+
+A similar but alternative view of the data is the [MA plot](https://en.wikipedia.org/wiki/MA_plot), which plots the mean log-intensity against the difference in log-intensity for each pair of samples.
+
+```{r, fig.width = 15, fig.height = 5}
+pbmPlotScatter(pbmdata[, colData(pbmdata)$lp == 500], maplot = TRUE)
+```
+
+Finally, often, we may be interested in comparing across replicates of the same experiment. Here, we illustrate the functionality by comparing conditions across two laser powers. Each sample is matched using a column in the `colData` specified by `match_by = `. Note that the input to `match_by = ` should *not* be quoted.
+
+```{r, fig.width = 15, fig.height = 5}
+pbmPlotComparison(pbmdata[, colData(pbmdata)$lp == 500],
+                  pbmdata[, colData(pbmdata)$lp == 550],
+                  match_by = condition)
+```
+
+As above, MA plots are also implemented.
+
+```{r, fig.width = 15, fig.height = 5}
+pbmPlotComparison(pbmdata[, colData(pbmdata)$lp == 500],
+                  pbmdata[, colData(pbmdata)$lp == 550],
+                  match_by = condition,
+                  maplot = TRUE)
+```
+
+## Pre-Processing GPR Data
+
+**Choice of pre-processing steps for PBM data is still under investigation.**
+
+Approaches for pre-processing of microarray intensities has been widely studied over the past 15 years. Several popular and successful approaches, including RMA, have been implemented and made available through the *affy* and *limma* packages. However, the functions implemented within these packages expect slightly different inputs and generate slighlty different outputs, making it difficult to directly apply the methods to our data stored in *SummarizedExperiment* class. To make access to these functions easier, we have written several wrapper functions to pre-processing functions implemented in both packages.
+
+Single-channal pre-processing includes two primary steps: **within-sample background correction** and **between-sample normalization**. The corresponding functions implemented in *limma* are wrapped as `limmaBackgroundCorrection` and `limmaNormalizeBetweenSamples`. Each function returns the same *SummarizedExperiment* object, but with normalized expression estimates.
+
+```{r}
+pbmdata_bc <- limmaBackgroundCorrect(pbmdata)
+```
+
+Since the returned object is again a SummarizedExperiment, we can easily plot the data using the functions described above. Here, we compare the background corrected and original data for scans at laser power 500.
+
+```{r, fig.width = 15, fig.height = 5}
+pbmPlotComparison(pbmdata[, colData(pbmdata)$lp == 500],
+                  pbmdata_bc[, colData(pbmdata_bc)$lp == 500])
+```
+
+For provenance, the correction step is also noted in the `metadata` of the object.
+
+```{r}
+metadata(pbmdata_bc)
+```
+
+We next apply cross-sample normalization.
+
+```{r}
+pbmdata500_norm <- limmaNormalizeBetweenArrays(pbmdata_bc[, colData(pbmdata)$lp == 500])
+```
+
+Again, we compare the normalized data against the original data.
+
+```{r, fig.width = 15, fig.height = 5}
+pbmPlotComparison(pbmdata_bc[, colData(pbmdata)$lp == 500],
+                  pbmdata500_norm,
+                  maplot = TRUE)
+```
+
+Next, we are ready to convert the probe-level intensities to candidate motif-level intensity estimates. 
+
+## Quantifying GPR Data
+
+
+
+# References
+
+- [Berger MF and Bulyk ML. "Universal protein-binding microarrays for the comprehensive characterization of the DNA-binding specificities of transcription factors." Nature Protocols. (2009) 4(3):393-411.](http://the_brain.bwh.harvard.edu/pubs/uPBMs_NatProt09.pdf)
+- [Berger MF, Philippakis AA, Qureshi A, He FS, Estep PW III and Bulyk ML. "Compact, universal DNA microarrays to comprehensively determine transcription-factor binding site specificities." Nature Biotechnology. (2006) 24(11):1429-1435.](http://the_brain.bwh.harvard.edu/pubs/CompactDNAview.pdf)
+- [Universal PBM Analysis Suite](the_brain.bwh.harvard.edu/PBMAnalysisSuite/indexSep2017.html)
+- [Morgan M, Obenchain V, Hester J and Pagès H (2017). SummarizedExperiment: SummarizedExperiment container. R package version 1.8.1.](https://bioconductor.org/packages/release/bioc/html/SummarizedExperiment.html)
