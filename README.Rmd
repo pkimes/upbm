@@ -259,8 +259,8 @@ assay(pbm_predict, "pred")[1:5, ]
 The `colData` includes all of the same sample information as the probe-level objects.
 
 ```{r, fig.width = 15, fig.height = 5}
-pbmPlotScatter(pbm_predict, assay_name = "pred")
-pbmPlotScatter(pbm_predict, assay_name = "pred", maplot = TRUE)
+pbmPlotScatter(pbm_predict, assay_name = "pred", log_scale = FALSE)
+pbmPlotScatter(pbm_predict, assay_name = "pred", maplot = TRUE, log_scale = FALSE)
 ```
 
 
