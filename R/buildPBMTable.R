@@ -34,6 +34,7 @@ buildPBMTable <- function(gpr_dir, gpr_type = "Alexa488") {
     fl488 <- grep("_Alexa488_(?!.*MaslinerOutput)", basename(flfull), ignore.case = TRUE, perl = TRUE)
     flmas <- grep("MaslinerOutput", basename(flfull), ignore.case = TRUE)
     
+    ## check for any ambiguities if masliner or Cy3 desired
     if (length(intersect(flcy3, fl488)) > 0) { 
         stop("Can't tell if some files are Alexa488 or Cy3 scans: \n",
              paste(basename(flfull)[intersect(flcy3, fl488)], collapse = "\n"))
@@ -57,7 +58,6 @@ buildPBMTable <- function(gpr_dir, gpr_type = "Alexa488") {
     fl_type[fl488] <- "Alexa488"
     fl_type[flmas] <- "Masliner"
     
-    ## check for any ambiguities if masliner or cy3 desired
     if (gpr_type == "all") {
         flfull <- flfull[fl_type != ""]
         fl_type <- fl_type[fl_type != ""]
@@ -68,38 +68,56 @@ buildPBMTable <- function(gpr_dir, gpr_type = "Alexa488") {
     
     ## trim off common tail
     fl <- gsub("\\.gpr", "", basename(flfull), ignore.case = TRUE)
-    ## parse assuming "_" delimiters
-    fl <- strsplit(fl, "_")
-    ## throw error if any file doesn't match expected format
-    if (any(sapply(fl[fl_type != "Cy3"], length) != 14)) {
-        stop("file name doesn't match expectation")
+
+    ## peel off date prefix (if available)
+    fl_date <- gsub("(^.*?)_?v[[:digit:]]+.*", "\\1", fl, ignore.case = TRUE)
+    fl <- gsub("^.*?_?(v[[:digit:]]+.*)", "\\1", fl, ignore.case = TRUE)
+
+    ## peel off assay version (if available)
+    fl_vers <- tolower(gsub("(^v?[[:digit:]]+)_?.*", "\\1", fl))
+    fl <- gsub("^v?[[:digit:]]+_?(.*)", "\\1", fl)
+
+    ## peel off assay id (if available)
+    fl_id <- gsub("(^[[:digit:]_]*)[[:alpha:]]+.*", "\\1", fl)
+    fl_id <- gsub("_$", "", fl_id)
+    fl <- gsub("^[[:digit:]_]*([[:alpha:]]+.*)", "\\1", fl)
+
+    ## peel off index from tail (must be available)
+    if (!all(grepl("[[:digit:]]+-[[:digit:]]+$", fl))) {
+        stop("At least one sample file does not have expected index suffix.")
     }
+    fl_tot <- as(gsub("^.*?-([[:digit:]]+)$", "\\1", fl), "integer")
+    fl_idx <- as(gsub("^.*?([[:digit:]]+)-[[:digit:]]+$", "\\1", fl), "integer")
+    fl <- gsub("(^.*?)_?[[:digit:]]+-[[:digit:]]+$", "\\1", fl)
 
-    ## cy3 GPR file names can be of varying length
-    fl_nparts <- sapply(fl, length)
-    
-    ## metadata for experiment run 
-    fl_date <- sapply(fl, `[`, 1)
-    fl_vers <- tolower(sapply(fl, `[`, 2))
-    fl_id <- sapply(fl, `[`, 3)
-
-    ## index of sample/experiment on 8-plexed chip
-    fl_idx <- mapply(`[`, fl, fl_nparts)
-    fl_idx <-  as(gsub("(.*)-8", "\\1", fl_idx), "numeric")
-
-    ## laser power and power gain
+    ## peal off laser power and power gain from tail (if available)
     fl_lp <- rep(NA_real_, length(flfull))
     fl_pg <- rep(NA_real_, length(flfull))
     if (any(fl_type != "Masliner")) {
-        fl_lppg <- mapply(`[`, fl[fl_type != "Masliner"], fl_nparts[fl_type != "Masliner"] - 1)
-        fl_lp[fl_type != "Masliner"] <- as(gsub("lp([0-9]+)pg([0-9]+)", "\\1", fl_lppg), "numeric")
-        fl_pg[fl_type != "Masliner"] <- as(gsub("lp([0-9]+)pg([0-9]+)", "\\2", fl_lppg), "numeric")
+        fl_lp[fl_type != "Masliner"] <- gsub(".*lp([[:digit:]]+)pg([[:digit:]]+)$",
+                                             "\\1", fl[fl_type != "Masliner"])
+        fl_pg[fl_type != "Masliner"] <- gsub(".*lp([[:digit:]]+)pg([[:digit:]]+)$",
+                                             "\\2", fl[fl_type != "Masliner"])
+        fl_lp <- as(fl_lp, "numeric")
+        fl_pg <- as(fl_pg, "numeric")
+
+        fl[fl_type != "Masliner"] <- gsub("(.*?)_?lp[[:digit:]]+pg[[:digit:]]+$", "\\1",
+                                          fl[fl_type != "Masliner"])
     }
+    fl[fl_type == "Masliner"] <- gsub("(.*?)_?Maslin.*", "\\1", fl[fl_type != "Masliner"],
+                                      ignore.case = TRUE)
+
+    ## peal off last part of file (should be Alexa488 or Cy3)
+    fl <- gsub("(.*?)_?[[:alnum:]]+$", "\\1", fl)
+
+    ## parse remaining parts (should contain conditions)
+    fl <- strsplit(fl, "_")
+    fl_nparts <- sapply(fl, length)
     
-    ## extract condition names from file names (shift +3 for: date,vers,id)
-    fl_name <- rep("Cy3", length(flfull))
-    if (any(fl_type != "Cy3")) {
-        fl_name[fl_type != "Cy3"] <- mapply(`[`, fl[fl_type != "Cy3"], fl_idx[fl_type != "Cy3"] + 3)
+    ## extract condition names from file names (if available)
+    fl_name <- rep("unknown", length(flfull))
+    if (any(fl_nparts > 0)) {
+        fl_name[fl_nparts > 0] <- mapply(`[`, fl[fl_nparts > 0], fl_idx[fl_nparts > 0])
     }
 
     ## construct primary sample table 
@@ -108,7 +126,8 @@ buildPBMTable <- function(gpr_dir, gpr_type = "Alexa488") {
                           gpr = flfull)
 
     ## verify that version/id of experiment gives unique name:idx mapping 
-    idx2name <- dplyr::distinct(dplyr::filter(tab, scan == "Alexa488"), vers, id, idx, condition)
+    idx2name <- dplyr::distinct(dplyr::filter(tab, scan == "Alexa488", condition != "unknown"),
+                                vers, id, idx, condition)
     if (nrow(idx2name) != nrow(dplyr::distinct(idx2name, vers, id, idx))) {
         stop("Some version/id/idx values map to multiple condition names")
     }
