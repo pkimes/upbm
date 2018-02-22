@@ -153,38 +153,47 @@ buildPBMExperiment <- function(tab, useMean = FALSE, useBackground = FALSE, filt
 #' @author Patrick Kimes
 readGPR <- function(gpr_path, gpr_type, useMean = FALSE,
                     useBackground = FALSE, filterFlags = TRUE) {
+
+    ## number of rows to skip appears to be variable - determine from reading raw
+    header <- readr::read_lines(gpr_path, n_max = 50)
+    header_ln <- grep(".*Column.*Row.*Name.*", header)
+    header <- strsplit(header[header_ln], "\\t")[[1]]
+    if (length(header_ln) != 1) {
+        stop("After checking first 50 lines, cannot determine header row ",
+             "in file: \n", basename(gpr_path))
+    }
+
     ## determine number of columns
-    p <- 45
+    p <- length(header)
     if (gpr_type == "Masliner") {
-        p <- 49
+        p <- p + 4
     }
 
     ## specify which columns to read in
     colt <- rep("-", p)
     colt[c(2, 3)] <- 'i'
     if (filterFlags) {
-        colt[38] <- 'i'
+        colt[grep("\"Flags\"", header)] <- 'i'
     }
     
     ## column corresponding to intensities
     if (useMean) {
-        value_idx <- 10
+        if (useBackground) {
+            value_idx <- grep("^\"F[[:digit:]]* Mean - B[[:digit:]]*\"$", header)
+        } else {
+            value_idx <- grep("^\"F[[:digit:]]* Mean\"$", header)
+        }
     } else {
-        value_idx <- 9
-    }
-    if (useBackground) {
-        value_idx <- value_idx + 25
+        if (useBackground) {
+            value_idx <- grep("^\"F[[:digit:]]* Median - B[[:digit:]]*\"$", header)
+        } else {
+            value_idx <- grep("^\"F[[:digit:]]* Median\"$", header)
+        }
     }
     colt[c(value_idx)] <- 'd'
     colt <- paste(colt, collapse = "")
 
-    ## number of rows to skip appears to be variable - determine from reading raw
-    header <- grep(".*Column.*Row.*Name.*", readr::read_lines(gpr_path, n_max = 50))
-    if (length(header) != 1) {
-        stop("After checking first 50 lines, cannot determine header row ",
-             "in file: \n", basename(gpr_path))
-    }
-    vals <- readr::read_tsv(gpr_path, skip = header - 1, col_types = colt)
+    vals <- readr::read_tsv(gpr_path, skip = header_ln - 1, col_types = colt)
     names(vals)[3] <- 'intensity'
 
     ## remove negative (low quality) flagged probes
