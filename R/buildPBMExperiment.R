@@ -148,7 +148,7 @@ buildPBMExperiment <- function(tab, useMean = FALSE, useBackground = FALSE, filt
 #' we pull it out using its index. Therefore, if the order or number of
 #' columns in the GPR file is altered, reading may fail. 
 #'
-#' @importFrom readr read_tsv
+#' @importFrom readr read_tsv read_lines
 #' @importFrom dplyr select
 #' @author Patrick Kimes
 readGPR <- function(gpr_path, gpr_type, useMean = FALSE,
@@ -178,7 +178,13 @@ readGPR <- function(gpr_path, gpr_type, useMean = FALSE,
     colt[c(value_idx)] <- 'd'
     colt <- paste(colt, collapse = "")
 
-    vals <- readr::read_tsv(gpr_path, skip = 35, col_types = colt)
+    ## number of rows to skip appears to be variable - determine from reading raw
+    header <- grep(".*Column.*Row.*Name.*", readr::read_lines(gpr_path, n_max = 50))
+    if (length(header) != 1) {
+        stop("After checking first 50 lines, cannot determine header row ",
+             "in file: \n", basename(gpr_path))
+    }
+    vals <- readr::read_tsv(gpr_path, skip = header - 1, col_types = colt)
     names(vals)[3] <- 'intensity'
 
     ## remove negative (low quality) flagged probes
