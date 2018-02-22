@@ -6,7 +6,7 @@
 #' 
 #' @param gpr_dir path to directory containing GPR files.
 #' @param gpr_type string value specifying type of GPR files to find; must
-#'        be one of: "Alexa488", "Cy3", "Masliner", "all". (default = "Alexa488")
+#'        be one of: "Alexa", "Cy3", "Masliner", "all". (default = "Alexa")
 #' 
 #' @return
 #' tibble with each row corresponding to a sample GPR file.
@@ -14,8 +14,8 @@
 #' @details
 #' For the three types of GPR files currently supported, files are assumed to be named
 #' according to the following conventions:  
-#' * **Alexa488**: `{date}_{version}_{runID}_{condition1}_...` \cr `_{condition8}_Alexa488_lp{laser}pg{gain}_{index}_8.gpr`
-#' * **Masliner**: `{date}_{version}_{runID}_{condition1}_...` \cr `_{condition8}_Alexa488_MaslinerOutput_{index}_8.gpr`
+#' * **Alexa**: `{date}_{version}_{runID}_{condition1}_...` \cr `_{condition8}_Alexa[0-9]+_lp{laser}pg{gain}_{index}_8.gpr`
+#' * **Masliner**: `{date}_{version}_{runID}_{condition1}_...` \cr `_{condition8}_Alexa[0-9]+_MaslinerOutput_{index}_8.gpr`
 #' * **Cy3**: `{date}_{version}_{runID}_{miscellaneous}_Cy3_lp{laser}pg{gain}_{index}_8.gpr`
 #'
 #' @md
@@ -23,24 +23,24 @@
 #' @importFrom dplyr left_join filter select
 #' @export
 #' @author Patrick Kimes
-buildPBMTable <- function(gpr_dir, gpr_type = "Alexa488") {
-    stopifnot(gpr_type %in% c("Alexa488", "Masliner", "Cy3", "all"))
+buildPBMTable <- function(gpr_dir, gpr_type = "Alexa") {
+    stopifnot(gpr_type %in% c("Alexa", "Masliner", "Cy3", "all"))
     
     ## find all GPR file types
     flfull <- list.files(gpr_dir, pattern = "\\.gpr$", full.names = TRUE, ignore.case = TRUE)
 
     ## determine Cy3, Alexa488 GPRs
     flcy3 <- grep("_Cy3_", basename(flfull), ignore.case = TRUE)
-    fl488 <- grep("_Alexa488_(?!.*MaslinerOutput)", basename(flfull), ignore.case = TRUE, perl = TRUE)
+    fl488 <- grep("_Alexa[0-9]*_(?!.*MaslinerOutput)", basename(flfull), ignore.case = TRUE, perl = TRUE)
     flmas <- grep("MaslinerOutput", basename(flfull), ignore.case = TRUE)
     
     ## check for any ambiguities if masliner or Cy3 desired
     if (length(intersect(flcy3, fl488)) > 0) { 
-        stop("Can't tell if some files are Alexa488 or Cy3 scans: \n",
+        stop("Can't tell if some files are Alexa or Cy3 scans: \n",
              paste(basename(flfull)[intersect(flcy3, fl488)], collapse = "\n"))
     }
    if (length(intersect(flmas, fl488)) > 0) { 
-        stop("Can't tell if some files are Alexa488 or Masliner scans: \n",
+        stop("Can't tell if some files are Alexa or Masliner scans: \n",
              paste(basename(flfull)[intersect(flmas, fl488)], collapse = "\n"))
     }
    if (length(intersect(flcy3, flmas)) > 0) { 
@@ -49,13 +49,13 @@ buildPBMTable <- function(gpr_dir, gpr_type = "Alexa488") {
     }
     if (length(c(flcy3, fl488, flmas)) < length(flfull)) {
         fldrop <- setdiff(1:length(flfull), c(flcy3, fl488, flmas))
-        warning("Can't tell if following files were Alexa488, Cy3, or Masliner scans: \n",
+        warning("Can't tell if following files were Alexa, Cy3, or Masliner scans: \n",
                 paste(basename(flfull)[fldrop], collapse = "\n"))
     }
         
     fl_type <- rep("", length(flfull))
     fl_type[flcy3] <- "Cy3"
-    fl_type[fl488] <- "Alexa488"
+    fl_type[fl488] <- "Alexa"
     fl_type[flmas] <- "Masliner"
     
     if (gpr_type == "all") {
@@ -107,7 +107,7 @@ buildPBMTable <- function(gpr_dir, gpr_type = "Alexa488") {
     fl[fl_type == "Masliner"] <- gsub("(.*?)_?Maslin.*", "\\1", fl[fl_type != "Masliner"],
                                       ignore.case = TRUE)
 
-    ## peal off last part of file (should be Alexa488 or Cy3)
+    ## peal off last part of file (should be Alexa or Cy3)
     fl <- gsub("(.*?)_?[[:alnum:]]+$", "\\1", fl)
 
     ## parse remaining parts (should contain conditions)
@@ -126,7 +126,7 @@ buildPBMTable <- function(gpr_dir, gpr_type = "Alexa488") {
                           gpr = flfull)
 
     ## verify that version/id of experiment gives unique name:idx mapping 
-    idx2name <- dplyr::distinct(dplyr::filter(tab, scan == "Alexa488", condition != "unknown"),
+    idx2name <- dplyr::distinct(dplyr::filter(tab, scan == "Alexa", condition != "unknown"),
                                 vers, id, idx, condition)
     if (nrow(idx2name) != nrow(dplyr::distinct(idx2name, vers, id, idx))) {
         stop("Some version/id/idx values map to multiple condition names")

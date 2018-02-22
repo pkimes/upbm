@@ -4,13 +4,13 @@
 \alias{buildPBMTable}
 \title{Build PBM Sample Table}
 \usage{
-buildPBMTable(gpr_dir, gpr_type = "Alexa488")
+buildPBMTable(gpr_dir, gpr_type = "Alexa")
 }
 \arguments{
 \item{gpr_dir}{path to directory containing GPR files.}
 
 \item{gpr_type}{string value specifying type of GPR files to find; must
-be one of: "Alexa488", "Cy3", "Masliner", "all". (default = "Alexa488")}
+be one of: "Alexa", "Cy3", "Masliner", "all". (default = "Alexa")}
 }
 \value{
 tibble with each row corresponding to a sample GPR file.
@@ -24,8 +24,8 @@ Expected naming conventions of GPR files are described in the Details below.
 For the three types of GPR files currently supported, files are assumed to be named
 according to the following conventions:
 \itemize{
-\item \strong{Alexa488}: \code{{date}_{version}_{runID}_{condition1}_...} \cr \code{_{condition8}_Alexa488_lp{laser}pg{gain}_{index}_8.gpr}
-\item \strong{Masliner}: \code{{date}_{version}_{runID}_{condition1}_...} \cr \code{_{condition8}_Alexa488_MaslinerOutput_{index}_8.gpr}
+\item \strong{Alexa}: \code{{date}_{version}_{runID}_{condition1}_...} \cr \code{_{condition8}_Alexa[0-9]+_lp{laser}pg{gain}_{index}_8.gpr}
+\item \strong{Masliner}: \code{{date}_{version}_{runID}_{condition1}_...} \cr \code{_{condition8}_Alexa[0-9]+_MaslinerOutput_{index}_8.gpr}
 \item \strong{Cy3}: \code{{date}_{version}_{runID}_{miscellaneous}_Cy3_lp{laser}pg{gain}_{index}_8.gpr}
 }
 }
