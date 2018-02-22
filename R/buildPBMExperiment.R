@@ -179,15 +179,15 @@ readGPR <- function(gpr_path, gpr_type, useMean = FALSE,
     ## column corresponding to intensities
     if (useMean) {
         if (useBackground) {
-            value_idx <- grep("^\"F[[:digit:]]* Mean - B[[:digit:]]*\"$", header)
+            value_idx <- grep("^\"F.* Mean - B.*\"$", header)
         } else {
-            value_idx <- grep("^\"F[[:digit:]]* Mean\"$", header)
+            value_idx <- grep("^\"F.* Mean\"$", header)
         }
     } else {
         if (useBackground) {
-            value_idx <- grep("^\"F[[:digit:]]* Median - B[[:digit:]]*\"$", header)
+            value_idx <- grep("^\"F.* Median - B.*\"$", header)
         } else {
-            value_idx <- grep("^\"F[[:digit:]]* Median\"$", header)
+            value_idx <- grep("^\"F.* Median\"$", header)
         }
     }
     colt[c(value_idx)] <- 'd'
