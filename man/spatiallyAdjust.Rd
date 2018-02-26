@@ -4,7 +4,8 @@
 \alias{spatiallyAdjust}
 \title{Spatial Adjustment of Samples}
 \usage{
-spatiallyAdjust(se, k = 15, returnBias = TRUE, .force = FALSE)
+spatiallyAdjust(se, k = 15, returnBias = TRUE, log_scale = FALSE,
+  .force = FALSE)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing PBM intensity data}
@@ -15,6 +16,10 @@ local bias (default = 15)}
 \item{returnBias}{logical whether to include the spatial bias as an
 additional 'assay' (called 'spatialbias') in the returned
 SummarizedExperiment object.}
+
+\item{log_scale}{logical whether to perform adjustment on log2 scale
+intensities. Returned values will be transformed back to non-log scale.
+STILL TESTING. (default = FALSE)}
 
 \item{.force}{logical whether to run adjustment even if data
 has already been spatially adjusted. (default = FALSE)}

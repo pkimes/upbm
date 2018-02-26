@@ -18,6 +18,9 @@
 #' @param returnBias logical whether to include the spatial bias as an
 #'        additional 'assay' (called 'spatialbias') in the returned
 #'        SummarizedExperiment object.
+#' @param log_scale logical whether to perform adjustment on log2 scale
+#'        intensities. Returned values will be transformed back to non-log scale.
+#'        STILL TESTING. (default = FALSE)
 #' @param .force logical whether to run adjustment even if data
 #'        has already been spatially adjusted. (default = FALSE)
 #' 
@@ -32,7 +35,8 @@
 #' @importFrom dplyr select mutate select_ do group_by left_join
 #' @export
 #' @author Patrick Kimes
-spatiallyAdjust <- function(se, k = 15, returnBias = TRUE, .force = FALSE) {
+spatiallyAdjust <- function(se, k = 15, returnBias = TRUE, log_scale = FALSE,
+                            .force = FALSE) {
 
     ## check if already adjusted
     if (!.force) {
@@ -60,7 +64,7 @@ spatiallyAdjust <- function(se, k = 15, returnBias = TRUE, .force = FALSE) {
     raw_intensity <- tibble::as_tibble(as.data.frame(raw_intensity))
     raw_intensity <- tidyr::gather(raw_intensity, sample, value, -Row, -Column)
     med_intensity <- dplyr::group_by(raw_intensity, sample)
-    med_intensity <- dplyr::do(med_intensity, spatialmedian = .wrapSA(., k))
+    med_intensity <- dplyr::do(med_intensity, spatialmedian = .wrapSA(., k, log_scale))
     med_intensity <- tidyr::unnest(med_intensity)
 
     ## join median deviations w/ original raw intensities, subtract
@@ -69,7 +73,11 @@ spatiallyAdjust <- function(se, k = 15, returnBias = TRUE, .force = FALSE) {
                                       suffix = c(".raw", ".med"))
     ## only replace NA w/ 0 in median intensities - if NA in raw (i.e. non-dBr probe) want NA in output
     sub_intensity <- dplyr::mutate(sub_intensity, value.med = ifelse(is.na(value.med), 0, value.med))
-    sub_intensity <- dplyr::mutate(sub_intensity, value = value.raw - value.med)
+    if (log_scale) {
+        sub_intensity <- dplyr::mutate(sub_intensity, value = value.raw / 2^value.med)
+    } else {
+        sub_intensity <- dplyr::mutate(sub_intensity, value = value.raw - value.med)
+    }
     sub_intensity <- dplyr::select(sub_intensity, Row, Column, sample, value)
     
     ## spread back so samples are in separate columns
@@ -114,15 +122,19 @@ spatiallyAdjust <- function(se, k = 15, returnBias = TRUE, .force = FALSE) {
 ## surrounding each value, and returns the values as a similar data.frame
 ## with columns, 'value', 'Column', 'Row'.
 ##
-## @param x data.frame with columns 'value', 'Column', 'Row'
-## @param k size of local region for computing medians
-##
+## @param x data.frame with columns 'value', 'Column', 'Row'.
+## @param k size of local region for computing medians.
+## @param log_scale logical whether to adjust on log2 scale.
+## 
 ## @return
 ## a data.frame with columns 'value', 'Column', 'Row'
 ## 
 ## @author Patrick Kimes
-.wrapSA <- function(x, k) {
+.wrapSA <- function(x, k, log_scale) {
     y <- dplyr::select(x, value, Column, Row)
+    if (log_scale) {
+        y <- dplyr::mutate(y, value = log2(value + 1))
+    }
     y <- tidyr::spread(y, Column, value)
     y <- dplyr::select(y, -Row)
     y <- blockmedian(as.matrix(y), k, center = TRUE)
