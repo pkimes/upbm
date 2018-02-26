@@ -30,10 +30,15 @@ NumericMatrix blockmedian(NumericMatrix Xr, int w, bool center = true) {
             cmax = std::min(cmin + w - 1, p - 1);
             cmin = std::max(cmax - w + 1, 0);
             temp_v = arma::vectorise(X.submat(rmin, cmin, rmax, cmax));
-            try {
-                Xnew(i, j) = arma::median(temp_v.elem(arma::find_finite(temp_v)));
-            } catch (...) {
-                cout << "Error at i = " << i << ", j = " << j;
+            temp_v = temp_v.elem(arma::find_finite(temp_v));
+            if (temp_v.n_elem > 0) {
+                try {
+                    Xnew(i, j) = arma::median(temp_v);
+                } catch (...) {
+                    cout << "Error at i = " << i << ", j = " << j;
+                    Xnew(i, j) = arma::datum::nan;
+                };
+            } else {
                 Xnew(i, j) = arma::datum::nan;
             };
         };
