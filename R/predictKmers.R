@@ -31,7 +31,8 @@
 #' * option to select different regression models
 #' * option to return glmnet results for all alpha
 #' * frozen RMA-like pooled estimate?
-#' 
+#'
+#' @md
 #' @import Matrix glmnet SummarizedExperiment
 #' @importFrom Biostrings subseq
 #' @importFrom utils data

@@ -32,17 +32,21 @@ This function uses stuff to do stuff.
 }
 \details{
 Default signature for the glmnet call is:
-* family = 'gaussian'
-* alpha = 0.5
-* intercept = FALSE
-* lambda = rev(0:50)
-* lower.limits = 0
-* thresh = 1e-10
+\itemize{
+\item family = 'gaussian'
+\item alpha = 0.5
+\item intercept = FALSE
+\item lambda = rev(0:50)
+\item lower.limits = 0
+\item thresh = 1e-10
+}
 
 Features to be added:
-* option to select different regression models
-* option to return glmnet results for all alpha
-* frozen RMA-like pooled estimate?
+\itemize{
+\item option to select different regression models
+\item option to return glmnet results for all alpha
+\item frozen RMA-like pooled estimate?
+}
 }
 \author{
 Patrick Kimes
