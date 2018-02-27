@@ -12,7 +12,7 @@
 #' @param se SummarizedExperiment object containing GPR
 #'        intensity information.
 #' @param assay_name string name of the assay to plot.
-#'        (default = "gpr")
+#'        (default = "fore")
 #' @param stratify unquoted name of column in colData of SummarizedExperiment (or
 #'        '\code{sample}') to use for comparing samples; values in column must be
 #'        unique for each sample. (default = condition)
@@ -42,7 +42,7 @@
 #' @import ggplot2 SummarizedExperiment
 #' @export
 #' @author Patrick Kimes
-pbmPlotScatter <- function(se, assay_name = "gpr", stratify = condition, baseline = NULL,
+pbmPlotScatter <- function(se, assay_name = "fore", stratify = condition, baseline = NULL,
                            log_scale = TRUE, maplot = FALSE, .method = "auto", .filter = 1) {
     stopifnot(assay_name %in% assayNames(se))
 

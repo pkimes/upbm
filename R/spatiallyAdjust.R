@@ -13,6 +13,7 @@
 #' size of 15 x 15 (as used in the aforementioned publication). 
 #' 
 #' @param se SummarizedExperiment object containing PBM intensity data
+#' @param assay_name string name of the assay to adjust. (default = "fore")
 #' @param k odd integer specifying size of region to use to for computing
 #'        local bias (default = 15)
 #' @param returnBias logical whether to include the spatial bias as an
@@ -35,8 +36,13 @@
 #' @importFrom dplyr select mutate select_ do group_by left_join
 #' @export
 #' @author Patrick Kimes
-spatiallyAdjust <- function(se, k = 15, returnBias = TRUE, log_scale = FALSE,
-                            .force = FALSE) {
+spatiallyAdjust <- function(se, assay_name = "fore", k = 15, returnBias = TRUE,
+                            log_scale = FALSE, .force = FALSE) {
+
+    ## don't show progress when running `do` here
+    base_showprogress <- getOption("dplyr.show_progress")
+    options(dplyr.show_progress = FALSE)
+    on.exit(options(dplyr.show_progress = base_showprogress))
 
     ## check if already adjusted
     if (!.force) {
@@ -52,10 +58,10 @@ spatiallyAdjust <- function(se, k = 15, returnBias = TRUE, log_scale = FALSE,
              "'Row' and 'Column' information in rowData to perform ",
              "spatial adjustment")
     }
-    stopifnot("gpr" %in% assayNames(se))
+    stopifnot(assay_name %in% assayNames(se))
 
     ## extract intensities for easier manipulation
-    raw_intensity <- assay(se, "gpr")
+    raw_intensity <- assay(se, assay_name)
    
     ## add row/column indicies
     raw_intensity <- cbind(rowData(se)[, c("Row", "Column")], raw_intensity)
@@ -99,13 +105,13 @@ spatiallyAdjust <- function(se, k = 15, returnBias = TRUE, log_scale = FALSE,
     sub_intensity <- sub_intensity[, rownames(colData(se))]
 
     ## modify input SummarizedExperiment
-    assay(se, "gpr") <- sub_intensity
+    assay(se, assay_name) <- sub_intensity
     if (returnBias) {
         assay(se, "spatialbias") <- med_intensity
     }
     
     ## add step to metadata
-    method_str <- "BlockMedianDetrend"
+    method_str <- paste("BlockMedianDetrend ->", assay_name)
     metadata(se)$steps <- c(metadata(se)$steps, method_str)
     if (.force) {
         metadata(se)$spatialAdjustment <-

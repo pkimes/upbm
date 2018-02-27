@@ -4,10 +4,12 @@
 \alias{limmaNormalizeBetweenArrays}
 \title{SummarizedExperiment Wrapper for limma NormalizeBetweenArrays}
 \usage{
-limmaNormalizeBetweenArrays(se, ..., .force = FALSE)
+limmaNormalizeBetweenArrays(se, assay_name = "fore", ..., .force = FALSE)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing PBM intensity data}
+
+\item{assay_name}{string name of the assay to adjust. (default = "fore")}
 
 \item{...}{parameters to pass to \code{limma::normalizeBetweenArrays}.
 See details below for more information on main parameters.}

@@ -8,13 +8,11 @@
 #' 
 #' @param se SummarizedExperiment object containing GPR
 #'        intensity information.
-#' @param assay_name string name of the assay to plot.
-#'        (default = "gpr")
 #' @param level integer specifying level of probe filtering to
 #'        perform prior to plotting. (default = 0)
 #'
 #' @return
-#' SummarizedExperiment object
+#' SummarizedExperiment object.
 #'
 #' @details
 #' The function supports the following levels of filtering.
@@ -26,7 +24,7 @@
 #' @md
 #' @export
 #' @author Patrick Kimes
-pbmFilterProbes <- function(se, assay_name, level = 0L) {
+pbmFilterProbes <- function(se, level = 0L) {
 
     if (level > 0L && ! "ID" %in% names(rowData(se))) {
         warning("Must have 'ID' column in rowData to use filter level > 0")

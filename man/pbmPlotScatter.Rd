@@ -4,7 +4,7 @@
 \alias{pbmPlotScatter}
 \title{Scatterplot of Intensities}
 \usage{
-pbmPlotScatter(se, assay_name = "gpr", stratify = condition,
+pbmPlotScatter(se, assay_name = "fore", stratify = condition,
   baseline = NULL, log_scale = TRUE, maplot = FALSE, .method = "auto",
   .filter = 1)
 }
@@ -13,7 +13,7 @@ pbmPlotScatter(se, assay_name = "gpr", stratify = condition,
 intensity information.}
 
 \item{assay_name}{string name of the assay to plot.
-(default = "gpr")}
+(default = "fore")}
 
 \item{stratify}{unquoted name of column in colData of SummarizedExperiment (or
 '\code{sample}') to use for comparing samples; values in column must be

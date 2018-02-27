@@ -4,20 +4,17 @@
 \alias{pbmFilterProbes}
 \title{Filter PBM Probes}
 \usage{
-pbmFilterProbes(se, assay_name, level = 0L)
+pbmFilterProbes(se, level = 0L)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing GPR
 intensity information.}
 
-\item{assay_name}{string name of the assay to plot.
-(default = "gpr")}
-
 \item{level}{integer specifying level of probe filtering to
 perform prior to plotting. (default = 0)}
 }
 \value{
-SummarizedExperiment object
+SummarizedExperiment object.
 }
 \description{
 Not all probes in a PBM experiment should be used for analysis.

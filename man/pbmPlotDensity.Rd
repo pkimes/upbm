@@ -4,7 +4,7 @@
 \alias{pbmPlotDensity}
 \title{Plot of Intensity Densities}
 \usage{
-pbmPlotDensity(se, assay_name = "gpr", log_scale = TRUE, .facet = TRUE,
+pbmPlotDensity(se, assay_name = "fore", log_scale = TRUE, .facet = TRUE,
   .filter = 1)
 }
 \arguments{
@@ -12,7 +12,7 @@ pbmPlotDensity(se, assay_name = "gpr", log_scale = TRUE, .facet = TRUE,
 intensity information.}
 
 \item{assay_name}{string name of the assay to plot.
-(default = "gpr")}
+(default = "fore")}
 
 \item{log_scale}{logical whether to plot the intensities
 on the log-scale. (default = TRUE)}

@@ -4,8 +4,8 @@
 \alias{readGPR}
 \title{Read GPR File as Assay}
 \usage{
-readGPR(gpr_path, gpr_type, useMean = FALSE, useBackground = FALSE,
-  filterFlags = TRUE)
+readGPR(gpr_path, gpr_type, useMean = FALSE, filterFlags = TRUE,
+  readBackground = TRUE)
 }
 \arguments{
 \item{gpr_path}{path to GPR fle.}
@@ -16,26 +16,26 @@ readGPR(gpr_path, gpr_type, useMean = FALSE, useBackground = FALSE,
 for each probe rather than median fluorescent intensity.
 (default = FALSE)}
 
-\item{useBackground}{logical whether to use background subtracted
-intensity rather than non-subtracted intensity.
-(default = FALSE)}
-
 \item{filterFlags}{logical whether to replace intensity values at probes
 flagged manually or automatically as being low quality.
  ('Bad': -100, 'Absent': -75, 'Not Found': -50) with NA. (default = TRUE)}
+
+\item{readBackground}{logical whether to also read in probe background
+intensities. (default = TRUE)}
 }
 \value{
-tibble (data.frame-like) object of a single GPR file with three
-columns: 'Column', 'Row', 'intensity'. ('ID' and 'Name' columns are
-ignored as these may be incorrect in the GPR file.)
+tibble (data.frame-like) object of a single GPR file with three or four
+columns: 'Column', 'Row', 'foreground', (optionally) 'background'.
+('ID' and 'Name' columns are ignored as these may be incorrect in the GPR file.)
 }
 \description{
 Helper function for reading in a single GPR file.
 }
 \details{
-Since the name of the value column can vary across samples,
-we pull it out using its index. Therefore, if the order or number of
-columns in the GPR file is altered, reading may fail.
+Since the names of foreground and background columns can vary across samples,
+they are identified using regular expressions. Therefore, if the column names
+deviate from the expected format ("F.* Mean", "F.* Median". "B.* Mean", "B.* Median"),
+the function may fail to read the foreground and background intensities.
 }
 \author{
 Patrick Kimes

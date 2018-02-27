@@ -4,38 +4,39 @@
 #' 
 #' @param tab table of samples with at least `gpr` and `vers` columns
 #'        corresponding to GPR file paths and the corresponding PBM
-#'        design version
+#'        design version.
 #' @param useMean logical whether to use mean fluorescent intensity
-#'        for each probe rather than median fluorescent intensity
-#'        (default = FALSE)
-#' @param useBackground logical whether to use background subtracted
-#'        intensity rather than non-subtracted intensity
+#'        for each probe rather than median fluorescent intensity.
 #'        (default = FALSE)
 #' @param filterFlags logical whether to replace intensity values at probes
 #'        flagged manually or automatically as being low quality
 #'         ('Bad': -100, 'Absent': -75, 'Not Found': -50) with NA. (default = TRUE)
+#' @param readBackground logical whether to also read in probe background
+#'        intensities. (default = TRUE)
 #' @param probes data.frame containing probe sequences in a column, 'Sequence',
 #'        or a character vector specifying the probe sequences. If specified,
 #'        these values will be added to the rowData of the returned
-#'        SummarizedExperiment object (default = NULL)
+#'        SummarizedExperiment object. (default = NULL)
 #'
 #' @return
-#' SummarizedExperiment object with a single assay, 'gpr', containing the probe
-#' intensities for the samples specified in the input 'tab'.
-#'
+#' SummarizedExperiment object with assays containing intensities for the
+#' samples specified in the input 'tab'. The object currently includes the 
+#' following assays:
+#' * 'fore' - foreground probe intensities,
+#' * 'back' - background probe intensities (unless `readBackground = FALSE`).
+#' 
 #' @import SummarizedExperiment
 #' @importFrom purrr reduce
 #' @importFrom dplyr select left_join
 #' @importFrom tibble as_tibble
 #' @export
 #' @author Patrick Kimes
-buildPBMExperiment <- function(tab, useMean = FALSE, useBackground = FALSE, filterFlags = TRUE,
-                               probes = NULL) {
+buildPBMExperiment <- function(tab, useMean = FALSE, filterFlags = TRUE,
+                               readBackground = TRUE, probes = NULL) {
     ## check validity of inputs
     stopifnot(is.data.frame(tab))
     stopifnot(c("vers", "gpr") %in% names(tab))
     stopifnot(is.logical(useMean))
-    stopifnot(is.logical(useBackground))
     stopifnot(is.logical(filterFlags))
     
     ## currently only support all scans with same design
@@ -55,15 +56,24 @@ buildPBMExperiment <- function(tab, useMean = FALSE, useBackground = FALSE, filt
     
     ## read in all GPR scans
     assay_table <- mapply(readGPR, gpr_path = tab$gpr, gpr_type = tab_scan,
-                          useMean = useMean, useBackground = useBackground,
-                          filterFlags = filterFlags,
-                          SIMPLIFY = FALSE)
-    assay_table <- purrr::reduce(assay_table, left_join,
-                                 by = c("Column", "Row"))
+                          useMean = useMean, filterFlags = filterFlags,
+                          readBackground = readBackground, SIMPLIFY = FALSE)
+    
+    ## merge GPR data across samples
+    if (readBackground) {
+        assay_btable <- lapply(assay_table, `[`, c("Column", "Row", "background"))
+        assay_btable <- purrr::reduce(assay_btable, left_join, by = c("Column", "Row"))
+        assay_table <- lapply(assay_table, `[`, c("Column", "Row", "foreground"))
+    }
+    assay_table <- purrr::reduce(assay_table, left_join, by = c("Column", "Row"))
 
-    ## probe intensities from GPR files
-    assaydat <- DataFrame(dplyr::select(assay_table, -Column, -Row))
-    names(assaydat) <- paste0("s", 1:ncol(assaydat))
+    ## convert GPR data to list of DataFrames for SummarizedExperiment assay slot
+    assaydat <- list(fore = DataFrame(dplyr::select(assay_table, -Column, -Row)))
+    names(assaydat[["fore"]]) <- paste0("s", 1:ncol(assaydat[["fore"]]))
+    if (readBackground) {
+        assaydat[["back"]] <- DataFrame(dplyr::select(assay_btable, -Column, -Row))
+        names(assaydat[["back"]]) <- names(assaydat[["fore"]])
+    }
 
     ## row/probe-level metadata from GPR files
     rowdat <- dplyr::select(assay_table, Column, Row)
@@ -110,11 +120,10 @@ buildPBMExperiment <- function(tab, useMean = FALSE, useBackground = FALSE, filt
     
     ## column/condition-level metadata
     coldat <- DataFrame(dplyr::select(tab, -gpr))
-    rownames(coldat) <- names(assaydat)
+    rownames(coldat) <- names(assaydat[["fore"]])
     
     ## SummarizedExperiment
-    SummarizedExperiment(assays = list(gpr = assaydat),
-                         rowData = rowdat, colData = coldat,
+    SummarizedExperiment(assays = assaydat, rowData = rowdat, colData = coldat,
                          metadata = list(steps = list(),
                                          spatialAdjustment = NULL,
                                          backgroundCorrection = NULL,
@@ -131,29 +140,29 @@ buildPBMExperiment <- function(tab, useMean = FALSE, useBackground = FALSE, filt
 #' @param useMean logical whether to use mean fluorescent intensity
 #'        for each probe rather than median fluorescent intensity.
 #'        (default = FALSE)
-#' @param useBackground logical whether to use background subtracted
-#'        intensity rather than non-subtracted intensity.
-#'        (default = FALSE)
 #' @param filterFlags logical whether to replace intensity values at probes
 #'        flagged manually or automatically as being low quality.
 #'         ('Bad': -100, 'Absent': -75, 'Not Found': -50) with NA. (default = TRUE)
+#' @param readBackground logical whether to also read in probe background
+#'        intensities. (default = TRUE)
 #'
 #' @return
-#' tibble (data.frame-like) object of a single GPR file with three
-#' columns: 'Column', 'Row', 'intensity'. ('ID' and 'Name' columns are
-#' ignored as these may be incorrect in the GPR file.) 
+#' tibble (data.frame-like) object of a single GPR file with three or four
+#' columns: 'Column', 'Row', 'foreground', (optionally) 'background'.
+#' ('ID' and 'Name' columns are ignored as these may be incorrect in the GPR file.) 
 #' 
 #' @details
-#' Since the name of the value column can vary across samples,
-#' we pull it out using its index. Therefore, if the order or number of
-#' columns in the GPR file is altered, reading may fail. 
+#' Since the names of foreground and background columns can vary across samples,
+#' they are identified using regular expressions. Therefore, if the column names
+#' deviate from the expected format ("F.* Mean", "F.* Median". "B.* Mean", "B.* Median"),
+#' the function may fail to read the foreground and background intensities.
 #'
 #' @importFrom readr read_tsv read_lines
 #' @importFrom dplyr select
 #' @author Patrick Kimes
-readGPR <- function(gpr_path, gpr_type, useMean = FALSE,
-                    useBackground = FALSE, filterFlags = TRUE) {
-
+readGPR <- function(gpr_path, gpr_type, useMean = FALSE, filterFlags = TRUE,
+                    readBackground = TRUE) {
+    
     ## number of rows to skip appears to be variable - determine from reading raw
     header <- readr::read_lines(gpr_path, n_max = 50)
     header_ln <- grep(".*Column.*Row.*Name.*", header)
@@ -178,27 +187,39 @@ readGPR <- function(gpr_path, gpr_type, useMean = FALSE,
     
     ## column corresponding to intensities
     if (useMean) {
-        if (useBackground) {
-            value_idx <- grep("^\"F.* Mean - B.*\"$", header)
-        } else {
-            value_idx <- grep("^\"F.* Mean\"$", header)
-        }
+        fore_idx <- grep("^\"F.* Mean\"$", header)
+        back_idx <- grep("^\"B.* Mean\"$", header)
     } else {
-        if (useBackground) {
-            value_idx <- grep("^\"F.* Median - B.*\"$", header)
-        } else {
-            value_idx <- grep("^\"F.* Median\"$", header)
-        }
+        fore_idx <- grep("^\"F.* Median\"$", header)
+        back_idx <- grep("^\"B.* Median\"$", header)
     }
-    colt[c(value_idx)] <- 'd'
-    colt <- paste(colt, collapse = "")
+    if (length(fore_idx) == 0) {
+        stop("Foreground column could not be identified!")
+    }
+    colt[c(fore_idx)] <- 'd'
+    if (readBackground) {
+        if (length(back_idx) == 0) {
+            stop("Background column could not be identified! \n",
+                 "If background intensities are not needed, try rerunning ",
+                 "with readBackground = FALSE.")
+        }
+        colt[c(back_idx)] <- 'd'
+    }
 
-    vals <- readr::read_tsv(gpr_path, skip = header_ln - 1, col_types = colt)
-    names(vals)[3] <- 'intensity'
+    colts <- paste(colt, collapse = "")
+    vals <- readr::read_tsv(gpr_path, skip = header_ln - 1, col_types = colts,
+                            progress = FALSE)
+    names(vals)[which(which(colt != "-") == fore_idx)] <- 'foreground'
+    if (readBackground) {
+        names(vals)[which(which(colt != "-") == back_idx)] <- 'background'
+    }
 
     ## remove negative (low quality) flagged probes
     if (filterFlags) {
-        vals$intensity[vals$Flags < 0] <- NA_real_
+        vals$foreground[vals$Flags < 0] <- NA_real_
+        if (readBackground) {
+            vals$background[vals$Flags < 0] <- NA_real_
+        }
         vals <- dplyr::select(vals, -Flags)
     }
     vals

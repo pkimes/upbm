@@ -6,6 +6,9 @@
 #' SummarizedExperiment object with the background corrected intensities.
 #'
 #' @param se SummarizedExperiment object containing PBM intensity data
+#' @param assay_name string name of the assay to adjust. (default = "fore")
+#' @param assayb_name string name of the background assay to use for
+#'        adjustment. (default = NULL)
 #' @param ... parameters to pass to \code{limma::backgroundCorrect.matrix}.
 #'        See details below for more information on main parameters.
 #' @param .force logical whether to run correction even if data
@@ -27,9 +30,10 @@
 #' @importFrom limma backgroundCorrect.matrix
 #' @export 
 #' @author Patrick Kimes
-limmaBackgroundCorrect <- function(se, ..., .force = FALSE) {
+limmaBackgroundCorrect <- function(se, assay_name = "fore", assayb_name = NULL,
+                                   ..., .force = FALSE) {
     
-    new_assay <- as.matrix(assay(se, "gpr"))
+    new_assay <- as.matrix(assay(se, assay_name))
     
     ## check if already corrected
     if (!.force) {
@@ -37,15 +41,15 @@ limmaBackgroundCorrect <- function(se, ..., .force = FALSE) {
     }
 
     ## perform RMA background correction (normal, exponential mixture)
-    new_assay <- limma::backgroundCorrect.matrix(E = new_assay, ...)
+    new_assay <- limma::backgroundCorrect.matrix(E = new_assay, Eb = assayb_name, ...)
     new_assay <- DataFrame(new_assay)
     names(new_assay) <- rownames(colData(se))
     
     ## modify input SummarizedExperiment
-    assay(se, "gpr") <- new_assay
+    assay(se, assay_name) <- new_assay
     
     ## add step to metadata
-    method_str <- "limma::backgroundCorrect"
+    method_str <- paste("limma::backgroundCorrect ->", assay_name)
     metadata(se)$steps <- c(metadata(se)$steps, method_str)
     if (.force) {
         metadata(se)$backgroundCorrection <-
