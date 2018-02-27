@@ -4,10 +4,12 @@
 \alias{rmaNormalize}
 \title{RMA Normalization of Samples}
 \usage{
-rmaNormalize(se, .force = FALSE)
+rmaNormalize(se, assay_name = "fore", .force = FALSE)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing PBM intensity data}
+
+\item{assay_name}{string name of the assay to adjust. (default = "fore")}
 
 \item{.force}{logical whether to run normalization even if data
 has already been normalized within arrays. (default = FALSE)}

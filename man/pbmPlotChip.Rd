@@ -4,7 +4,7 @@
 \alias{pbmPlotChip}
 \title{Plot of Intensities on Grid}
 \usage{
-pbmPlotChip(se, assay_name = "gpr", log_scale = TRUE, .facet = TRUE,
+pbmPlotChip(se, assay_name = "fore", log_scale = TRUE, .facet = TRUE,
   .filter = 1)
 }
 \arguments{
@@ -12,7 +12,7 @@ pbmPlotChip(se, assay_name = "gpr", log_scale = TRUE, .facet = TRUE,
 intensity information.}
 
 \item{assay_name}{string name of the assay to plot.
-(default = "gpr")}
+(default = "fore")}
 
 \item{log_scale}{logical whether to plot the intensities
 on the log-scale. (default = TRUE)}

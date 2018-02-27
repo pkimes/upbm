@@ -4,10 +4,16 @@
 \alias{limmaBackgroundCorrect}
 \title{SummarizedExperiment Wrapper for limma backgroundCorrect}
 \usage{
-limmaBackgroundCorrect(se, ..., .force = FALSE)
+limmaBackgroundCorrect(se, assay_name = "fore", assayb_name = NULL, ...,
+  .force = FALSE)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing PBM intensity data}
+
+\item{assay_name}{string name of the assay to adjust. (default = "fore")}
+
+\item{assayb_name}{string name of the background assay to use for
+adjustment. (default = NULL)}
 
 \item{...}{parameters to pass to \code{limma::backgroundCorrect.matrix}.
 See details below for more information on main parameters.}

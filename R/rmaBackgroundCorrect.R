@@ -5,6 +5,7 @@
 #' same SummarizedExperiment object with the background corrected intensities.
 #' 
 #' @param se SummarizedExperiment object containing PBM intensity data
+#' @param assay_name string name of the assay to adjust. (default = "fore")
 #' @param .force logical whether to run correction even if data
 #'        has already been corrected for background. (default = FALSE)
 #'
@@ -15,9 +16,9 @@
 #' @importFrom preprocessCore rma.background.correct
 #' @export 
 #' @author Patrick Kimes
-rmaBackgroundCorrect <- function(se, .force = FALSE) {
+rmaBackgroundCorrect <- function(se, assay_name = "fore", .force = FALSE) {
 
-    new_assay <- as.matrix(assay(se, "gpr"))
+    new_assay <- as.matrix(assay(se, assay_name))
     
     ## check if already corrected
     if (!.force) {
@@ -30,10 +31,10 @@ rmaBackgroundCorrect <- function(se, .force = FALSE) {
     names(new_assay) <- rownames(colData(se))
     
     ## modify input SummarizedExperiment
-    assay(se, "gpr") <- new_assay
+    assay(se, assay_name) <- new_assay
     
     ## add step to metadata
-    method_str <- "preprocessCore::rma.background.correct"
+    method_str <- paste("preprocessCore::rma.background.correct ->", assay_name)
     metadata(se)$steps <- c(metadata(se)$steps, method_str)
     if (.force) {
         metadata(se)$backgroundCorrection <-

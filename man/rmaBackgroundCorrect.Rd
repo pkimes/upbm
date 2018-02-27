@@ -4,10 +4,12 @@
 \alias{rmaBackgroundCorrect}
 \title{RMA Background Correction of Samples}
 \usage{
-rmaBackgroundCorrect(se, .force = FALSE)
+rmaBackgroundCorrect(se, assay_name = "fore", .force = FALSE)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing PBM intensity data}
+
+\item{assay_name}{string name of the assay to adjust. (default = "fore")}
 
 \item{.force}{logical whether to run correction even if data
 has already been corrected for background. (default = FALSE)}

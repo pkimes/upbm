@@ -8,7 +8,7 @@
 #' @param se SummarizedExperiment object containing GPR
 #'        intensity information.
 #' @param assay_name string name of the assay to plot.
-#'        (default = "gpr")
+#'        (default = "fore")
 #' @param log_scale logical whether to plot the intensities
 #'        on the log-scale. (default = TRUE)
 #' @param .facet logical whether plot should be faceted using
@@ -33,7 +33,7 @@
 #' @import ggplot2 SummarizedExperiment
 #' @export
 #' @author Patrick Kimes
-pbmPlotChip <- function(se, assay_name = "gpr", log_scale = TRUE,
+pbmPlotChip <- function(se, assay_name = "fore", log_scale = TRUE,
                         .facet = TRUE, .filter = 1) {
     stopifnot(assay_name %in% assayNames(se))
     stopifnot("Row" %in% names(rowData(se)))

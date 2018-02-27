@@ -13,7 +13,7 @@
 #' @param se2 second SummarizedExperiment object containing GPR
 #'        intensity information to be compared with first experiment.
 #' @param assay_name string name of the assay to plot.
-#'        (default = "gpr")
+#'        (default = "fore")
 #' @param match_by unquoted name of column in colData of SummarizedExperiments
 #'        to use for matching samples across the two experiments; values of
 #'        column must be unique for each sample in each experiment.
@@ -47,7 +47,7 @@
 #' @import ggplot2 SummarizedExperiment
 #' @export
 #' @author Patrick Kimes
-pbmPlotComparison <- function(se1, se2, assay_name  = "gpr", match_by = condition,
+pbmPlotComparison <- function(se1, se2, assay_name  = "fore", match_by = condition,
                               log_scale = TRUE,  maplot = FALSE,
                               .method = "auto", .filter = 1) {
     stopifnot(assay_name %in% assayNames(se1))

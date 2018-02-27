@@ -6,6 +6,7 @@
 #' with the normalized intensities.
 #'
 #' @param se SummarizedExperiment object containing PBM intensity data
+#' @param assay_name string name of the assay to adjust. (default = "fore")
 #' @param .force logical whether to run normalization even if data
 #'        has already been normalized within arrays. (default = FALSE)
 #'
@@ -16,7 +17,7 @@
 #' @importFrom preprocessCore normalize.quantiles
 #' @export
 #' @author Patrick Kimes
-rmaNormalize <- function(se, .force = FALSE) {
+rmaNormalize <- function(se, assay_name = "fore", .force = FALSE) {
 
     ## check if already normalized
     if (!.force) {
@@ -24,15 +25,15 @@ rmaNormalize <- function(se, .force = FALSE) {
     }
 
     ## perform quantile normalization
-    new_assay <- preprocessCore::normalize.quantiles(as.matrix(assay(se, "gpr")))
+    new_assay <- preprocessCore::normalize.quantiles(as.matrix(assay(se, assay_name)))
     new_assay <- DataFrame(new_assay)
     names(new_assay) <- rownames(colData(se))
     
     ## modify input SummarizedExperiment
-    assay(se, "gpr") <- new_assay
+    assay(se, assay_name) <- new_assay
 
     ## add step to metadata
-    method_str <- "preprocessCore::normalize.quantiles"
+    method_str <- paste("preprocessCore::normalize.quantiles ->", assay_name)
     metadata(se)$steps <- c(metadata(se)$steps, method_str)
     if (.force) {
         metadata(se)$betweenArrayNormalization <-
