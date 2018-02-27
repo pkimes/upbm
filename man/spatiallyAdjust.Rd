@@ -4,11 +4,13 @@
 \alias{spatiallyAdjust}
 \title{Spatial Adjustment of Samples}
 \usage{
-spatiallyAdjust(se, k = 15, returnBias = TRUE, log_scale = FALSE,
-  .force = FALSE)
+spatiallyAdjust(se, assay_name = "fore", k = 15, returnBias = TRUE,
+  log_scale = FALSE, .force = FALSE)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing PBM intensity data}
+
+\item{assay_name}{string name of the assay to adjust. (default = "fore")}
 
 \item{k}{odd integer specifying size of region to use to for computing
 local bias (default = 15)}
