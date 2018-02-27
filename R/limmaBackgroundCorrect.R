@@ -41,7 +41,7 @@ limmaBackgroundCorrect <- function(se, assay_name = "fore", assayb_name = NULL,
     new_assay <- as.matrix(assay(se, assay_name))
 
     assayb <- NULL
-    if (!is.null(assayb_name) {
+    if (!is.null(assayb_name)) {
         stopifnot(assayb_name %in% assayNames(se))
         assayb <- as.matrix(assay(se, assayb_name))
     }
