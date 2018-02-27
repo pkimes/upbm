@@ -33,15 +33,21 @@
 limmaBackgroundCorrect <- function(se, assay_name = "fore", assayb_name = NULL,
                                    ..., .force = FALSE) {
     
-    new_assay <- as.matrix(assay(se, assay_name))
-    
     ## check if already corrected
     if (!.force) {
         stopifnot(is.null(metadata(se)$backgroundCorrection))
     }
+    stopifnot(assay_name %in% assayNames(se))
+    new_assay <- as.matrix(assay(se, assay_name))
 
+    assayb <- NULL
+    if (!is.null(assayb_name) {
+        stopifnot(assayb_name %in% assayNames(se))
+        assayb <- as.matrix(assay(se, assayb_name))
+    }
+    
     ## perform RMA background correction (normal, exponential mixture)
-    new_assay <- limma::backgroundCorrect.matrix(E = new_assay, Eb = assayb_name, ...)
+    new_assay <- limma::backgroundCorrect.matrix(E = new_assay, Eb = assayb, ...)
     new_assay <- DataFrame(new_assay)
     names(new_assay) <- rownames(colData(se))
     
