@@ -4,34 +4,36 @@
 \alias{buildPBMExperiment}
 \title{Read PBMExperiment Data}
 \usage{
-buildPBMExperiment(tab, useMean = FALSE, useBackground = FALSE,
-  filterFlags = TRUE, probes = NULL)
+buildPBMExperiment(tab, useMean = FALSE, filterFlags = TRUE,
+  readBackground = TRUE, probes = NULL)
 }
 \arguments{
 \item{tab}{table of samples with at least `gpr` and `vers` columns
 corresponding to GPR file paths and the corresponding PBM
-design version}
+design version.}
 
 \item{useMean}{logical whether to use mean fluorescent intensity
-for each probe rather than median fluorescent intensity
-(default = FALSE)}
-
-\item{useBackground}{logical whether to use background subtracted
-intensity rather than non-subtracted intensity
+for each probe rather than median fluorescent intensity.
 (default = FALSE)}
 
 \item{filterFlags}{logical whether to replace intensity values at probes
 flagged manually or automatically as being low quality
  ('Bad': -100, 'Absent': -75, 'Not Found': -50) with NA. (default = TRUE)}
 
+\item{readBackground}{logical whether to also read in probe background
+intensities. (default = TRUE)}
+
 \item{probes}{data.frame containing probe sequences in a column, 'Sequence',
 or a character vector specifying the probe sequences. If specified,
 these values will be added to the rowData of the returned
-SummarizedExperiment object (default = NULL)}
+SummarizedExperiment object. (default = NULL)}
 }
 \value{
-SummarizedExperiment object with a single assay, 'gpr', containing the probe
-intensities for the samples specified in the input 'tab'.
+SummarizedExperiment object with assays containing intensities for the
+samples specified in the input 'tab'. The object currently includes the 
+following assays:
+* 'fore' - foreground probe intensities,
+* 'back' - background probe intensities (unless `readBackground = FALSE`).
 }
 \description{
 Read PBM data from a table containing paths to GPR files.
