@@ -31,7 +31,7 @@ pbmPlotDensity <- function(se, assay_name = "fore", log_scale = TRUE,
     }
 
     ## filter probes
-    se <- pbmFilterProbes(se, assay_name, .filter) 
+    se <- pbmFilterProbes(se, .filter) 
 
     ## extract sample metadata
     coldat <- as.data.frame(colData(se))

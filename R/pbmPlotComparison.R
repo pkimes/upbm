@@ -102,8 +102,8 @@ pbmPlotComparison <- function(se1, se2, assay_name  = "fore", match_by = conditi
     se2 <- se2[, colData(se2)[[match_by_str]] %in% match_overlap]
     
     ## filter probes
-    se1 <- pbmFilterProbes(se1, assay_name, .filter) 
-    se2 <- pbmFilterProbes(se2, assay_name, .filter) 
+    se1 <- pbmFilterProbes(se1, .filter) 
+    se2 <- pbmFilterProbes(se2, .filter) 
 
     ## condition must be a unique column for faceting plot
     coldat1 <- as.data.frame(colData(se1))

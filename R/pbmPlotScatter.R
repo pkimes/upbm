@@ -82,7 +82,7 @@ pbmPlotScatter <- function(se, assay_name = "fore", stratify = condition, baseli
     } 
     
     ## filter probes
-    se <- pbmFilterProbes(se, assay_name, .filter) 
+    se <- pbmFilterProbes(se, .filter) 
 
     ## condition must be a unique column for faceting plot
     coldat <- as.data.frame(colData(se))
