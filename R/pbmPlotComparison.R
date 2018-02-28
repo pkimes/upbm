@@ -143,7 +143,14 @@ pbmPlotComparison <- function(se1, se2, assay_name  = "fore", match_by = conditi
     
     ## handle log-scale plotting if requested
     if (maplot) {
-        ptitle <- paste0("PBM Intensity Comparison MA Plot (log2)")
+        if (log_scale) {
+            ptitle <- paste0("PBM Intensity Comparison MA Plot (log2)")
+        } else {
+            warning("Note that MA plots are typically drawn on the log2 scale.\n",
+                    "Consider re-plotting with log_scale = TRUE if the original ",
+                    "values were not on the log2 scale.")
+            ptitle <- paste0("PBM Intensity Comparison MA Plot")
+        }
         pxaxis <- scale_x_continuous("A; mean (rep1 + rep2) / 2")
         pyaxis <- scale_y_continuous("M; difference (rep1 - rep2)")
         pline <- geom_hline(yintercept = 0, color = 'dodgerblue3')
@@ -166,9 +173,14 @@ pbmPlotComparison <- function(se1, se2, assay_name  = "fore", match_by = conditi
 
     ## calculate MA values if necessary and create base of plot
     if (maplot) {
+        if (log_scale) {
+            pdat <- dplyr::mutate(pdat,
+                                  rep1 = log2(rep1),
+                                  rep2 = log2(rep2))
+        }
         pdat <- dplyr::mutate(pdat,
-                              M = log2(rep1 / rep2),
-                              A = .5*log2(rep1 * rep2))
+                              M = rep1 - rep2,
+                              A = (rep1 + rep2) / 2)
         gp <- ggplot(pdat, aes(x = A, y = M)) +
             theme_bw()
     } else {

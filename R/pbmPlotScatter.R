@@ -109,7 +109,14 @@ pbmPlotScatter <- function(se, assay_name = "fore", stratify = condition, baseli
     
     ## handle log-scale plotting if requested
     if (maplot) {
-        ptitle <- paste0("PBM Intensity MA Plot (log2; reference = '", baseline, "')")
+        if (log_scale) {
+            ptitle <- paste0("PBM Intensity MA Plot (log2; reference = '", baseline, "')")
+        } else {
+            warning("Note that MA plots are typically drawn on the log2 scale.\n",
+                    "Consider re-plotting with log_scale = TRUE if the original ",
+                    "values were not on the log2 scale.")
+            ptitle <- paste0("PBM Intensity MA Plot (reference = '", baseline, "')")
+        }
         pxaxis <- scale_x_continuous("A; mean (condition + reference) / 2")
         pyaxis <- scale_y_continuous("M; difference (condition - reference)")
         pline <- geom_hline(yintercept = 0, color = 'dodgerblue3')
@@ -135,9 +142,14 @@ pbmPlotScatter <- function(se, assay_name = "fore", stratify = condition, baseli
 
     ## calculate MA values if necessary and create base of plot
     if (maplot) {
+        if (log_scale) {
+            pdat <- dplyr::mutate(pdat,
+                                  value = log2(value),
+                                  Baseline = log2(Baseline))
+        }
         pdat <- dplyr::mutate(pdat,
-                              M = log2(value / Baseline),
-                              A = .5*log2(value * Baseline))
+                              M = value - Baseline,
+                              A = (value + Baseline) / 2)
         gp <- ggplot(pdat, aes(x = A, y = M)) +
             theme_bw()
     } else {
