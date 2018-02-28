@@ -4,18 +4,18 @@
 \alias{predictKmers}
 \title{Estimation of K-Mer Intensities}
 \usage{
-predictKmers(se, kmers = NULL, stdArray = TRUE, verbose = FALSE, ...)
+predictKmers(se, kmers = NULL, assay_name = "fore", std_array = TRUE,
+  verbose = FALSE, ...)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing PBM intensity data.}
 
 \item{kmers}{character vector of k-mers to predict.}
 
-\item{stdArray}{logical whether the array is a standard PBM array. If
-TRUE, then two processing steps will be applied prior to estimating
-k-mer intensities, namely: 1. subsetting on de Bruijn sequences as
-determined by the ID column of the SummarizedExperiment rowData, and
-2. trimming of sequences to only use the unique 36nt region.
+\item{assay_name}{string name of the assay to use. (default = "fore")}
+
+\item{std_array}{logical whether the array is a standard PBM array.
+See Details for more information. (default = TRUE)
 (default = TRUE)}
 
 \item{verbose}{logical whether to print extra messages during model fitting
@@ -31,7 +31,12 @@ SummarizedExperiment object with predicted affinities.
 This function uses stuff to do stuff.
 }
 \details{
-Default signature for the glmnet call is:
+If \code{stdAssay} is TRUE, prior to estimating k-mer affinities,
+probes are subset to de Bruijn sequences as determined by the ID column
+of the rowData, and probe sequences are trimmed to only use the unique
+36nt region.
+
+The default signature for the glmnet call is:
 \itemize{
 \item family = 'gaussian'
 \item alpha = 0.5

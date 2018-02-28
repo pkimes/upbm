@@ -4,11 +4,9 @@
 #' 
 #' @param se SummarizedExperiment object containing PBM intensity data.
 #' @param kmers character vector of k-mers to predict.
-#' @param stdArray logical whether the array is a standard PBM array. If
-#'        TRUE, then two processing steps will be applied prior to estimating
-#'        k-mer intensities, namely: 1. subsetting on de Bruijn sequences as
-#'        determined by the ID column of the SummarizedExperiment rowData, and
-#'        2. trimming of sequences to only use the unique 36nt region.
+#' @param assay_name string name of the assay to use. (default = "fore")
+#' @param std_array logical whether the array is a standard PBM array.
+#'        See Details for more information. (default = TRUE)
 #'        (default = TRUE)
 #' @param verbose logical whether to print extra messages during model fitting
 #'        procedure. (default = FALSE) 
@@ -19,7 +17,12 @@
 #' SummarizedExperiment object with predicted affinities.
 #'
 #' @details
-#' Default signature for the glmnet call is:
+#' If \code{stdAssay} is TRUE, prior to estimating k-mer affinities,
+#' probes are subset to de Bruijn sequences as determined by the ID column
+#' of the rowData, and probe sequences are trimmed to only use the unique
+#' 36nt region.
+#' 
+#' The default signature for the glmnet call is:
 #' * family = 'gaussian'
 #' * alpha = 0.5
 #' * intercept = FALSE
@@ -40,7 +43,8 @@
 #' @importFrom methods as is
 #' @export
 #' @author Patrick Kimes
-predictKmers <- function(se, kmers = NULL, stdArray = TRUE, verbose = FALSE, ...) {
+predictKmers <- function(se, kmers = NULL, assay_name = "fore",
+                         std_array = TRUE, verbose = FALSE, ...) {
     if (is.null(kmers)) {
         data(pbm_8mers)
         kmers <- pbm_8mers
@@ -74,13 +78,13 @@ predictKmers <- function(se, kmers = NULL, stdArray = TRUE, verbose = FALSE, ...
         rowData(se) <- DataFrame(rdat)
     }
     
-    if (stdArray) {
+    if (std_array) {
         if (! "ID" %in% names(rowData(se))) {
             stop("Specified SummarizedExperiment object does not contain probe ID ",
                  "information in the rowData. This information must be provided as ",
                  "the 'ID' column in the rowData to filter on de Bruijn sequences.\n",
                  "If this is not a standard PBM array and no probe filtering or sequence",
-                 "trimming is necessary, re-run the analysis with 'stdArray = FALSE'.")
+                 "trimming is necessary, re-run the analysis with 'std_array = FALSE'.")
         }
         ## subset on de Bruijn sequence probes
         se <- se[grepl("^dBr_", rowData(se)$ID), ]
@@ -89,7 +93,7 @@ predictKmers <- function(se, kmers = NULL, stdArray = TRUE, verbose = FALSE, ...
         if (length(plens) > 1 || plens != 60) {
             stop("Not all probe sequences in specified SummarizedExperiment object are 60nt.\n",
                  "If this is not a standard PBM array and no probe filtering or sequence",
-                 "trimming is necessary, re-run the analysis with 'stdArray = FALSE'.")
+                 "trimming is necessary, re-run the analysis with 'std_array = FALSE'.")
         }
         tails <- Biostrings::subseq(rowData(se)$Sequence, 37, 60)
         tails <- unique(tails)
@@ -97,7 +101,7 @@ predictKmers <- function(se, kmers = NULL, stdArray = TRUE, verbose = FALSE, ...
             stop("Not all probe sequences in specified SummarizedExperiment object have the ",
                  "same 24nt primer sequence.\n",
                  "If this is not a standard PBM array and no probe filtering or sequence",
-                 "trimming is necessary, re-run the analysis with 'stdArray = FALSE'.")
+                 "trimming is necessary, re-run the analysis with 'std_array = FALSE'.")
         }
         rowData(se)$Sequence <- Biostrings::subseq(rowData(se)$Sequence, 1, 36)
     }
@@ -129,7 +133,7 @@ predictKmers <- function(se, kmers = NULL, stdArray = TRUE, verbose = FALSE, ...
     designmat <- cbind(designmat, diagmat)
 
     ## vectorize and log-transform intensities
-    vec_intensities <- as.matrix(assay(se, "gpr"))
+    vec_intensities <- as.matrix(assay(se, assay_name))
     vec_intensities <- matrix(vec_intensities, ncol = 1)
     vec_intensities <- log2(vec_intensities)
 
