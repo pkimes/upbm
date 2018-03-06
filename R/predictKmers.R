@@ -8,8 +8,10 @@
 #' @param std_array logical whether the array is a standard PBM array.
 #'        See Details for more information. (default = TRUE)
 #'        (default = TRUE)
+#' @param offset integer offset to add to intensities before log2 scaling to
+#'        prevent errors with zero intensities. (default = 1)
 #' @param verbose logical whether to print extra messages during model fitting
-#'        procedure. (default = FALSE) 
+#'        procedure. (default = FALSE)
 #' @param ... parameters to be passed to glmnet call - will overwrite
 #'        default paramaters.
 #' 
@@ -43,8 +45,8 @@
 #' @importFrom methods as is
 #' @export
 #' @author Patrick Kimes
-predictKmers <- function(se, kmers = NULL, assay_name = "fore",
-                         std_array = TRUE, verbose = FALSE, ...) {
+predictKmers <- function(se, kmers = NULL, assay_name = "fore", std_array = TRUE,
+                         offset = 1, verbose = FALSE, ...) {
     if (is.null(kmers)) {
         data(pbm_8mers)
         kmers <- pbm_8mers
@@ -135,7 +137,7 @@ predictKmers <- function(se, kmers = NULL, assay_name = "fore",
     ## vectorize and log-transform intensities
     vec_intensities <- as.matrix(assay(se, assay_name))
     vec_intensities <- matrix(vec_intensities, ncol = 1)
-    vec_intensities <- log2(vec_intensities)
+    vec_intensities <- log2(vec_intensities + offset)
 
     ## remove NAs
     valid_idx <- which(!is.na(vec_intensities))

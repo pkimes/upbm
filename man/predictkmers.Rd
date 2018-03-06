@@ -5,7 +5,7 @@
 \title{Estimation of K-Mer Intensities}
 \usage{
 predictKmers(se, kmers = NULL, assay_name = "fore", std_array = TRUE,
-  verbose = FALSE, ...)
+  offset = 1, verbose = FALSE, ...)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing PBM intensity data.}
@@ -17,6 +17,9 @@ predictKmers(se, kmers = NULL, assay_name = "fore", std_array = TRUE,
 \item{std_array}{logical whether the array is a standard PBM array.
 See Details for more information. (default = TRUE)
 (default = TRUE)}
+
+\item{offset}{integer offset to add to intensities before log2 scaling to
+prevent errors with zero intensities. (default = 1)}
 
 \item{verbose}{logical whether to print extra messages during model fitting
 procedure. (default = FALSE)}
