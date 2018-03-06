@@ -5,7 +5,7 @@
 \title{Spatial Adjustment of Samples}
 \usage{
 spatiallyAdjust(se, assay_name = "fore", k = 15, returnBias = TRUE,
-  log_scale = FALSE, .force = FALSE)
+  log_scale = FALSE, .force = FALSE, .nonnegative = TRUE)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing PBM intensity data}
@@ -25,6 +25,9 @@ STILL TESTING. (default = FALSE)}
 
 \item{.force}{logical whether to run adjustment even if data
 has already been spatially adjusted. (default = FALSE)}
+
+\item{.nonnegative}{logical whether to restrict intensities to non-negative
+values by setting negative values to NA. (default = TRUE)}
 }
 \value{
 SummarizedExperiment object with spatially adjusted intensities.

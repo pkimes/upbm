@@ -24,6 +24,8 @@
 #'        STILL TESTING. (default = FALSE)
 #' @param .force logical whether to run adjustment even if data
 #'        has already been spatially adjusted. (default = FALSE)
+#' @param .nonnegative logical whether to restrict intensities to non-negative
+#'        values by setting negative values to NA. (default = TRUE)
 #' 
 #' @return
 #' SummarizedExperiment object with spatially adjusted intensities.
@@ -37,7 +39,7 @@
 #' @export
 #' @author Patrick Kimes
 spatiallyAdjust <- function(se, assay_name = "fore", k = 15, returnBias = TRUE,
-                            log_scale = FALSE, .force = FALSE) {
+                            log_scale = FALSE, .force = FALSE, .nonnegative = TRUE) {
 
     ## don't show progress when running `do` here
     base_showprogress <- getOption("dplyr.show_progress")
@@ -85,6 +87,11 @@ spatiallyAdjust <- function(se, assay_name = "fore", k = 15, returnBias = TRUE,
         sub_intensity <- dplyr::mutate(sub_intensity, value = value.raw - value.med)
     }
     sub_intensity <- dplyr::select(sub_intensity, Row, Column, sample, value)
+
+    ## drop negative values if specified
+    if (.nonnegative) {
+        sub_intensity$value[sub_intensity$value < 0] <- NA
+    }
     
     ## spread back so samples are in separate columns
     med_intensity <- tidyr::spread(med_intensity, sample, value)
