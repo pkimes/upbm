@@ -64,7 +64,7 @@ More details on the available plotting and analysis functions are provided in th
 
 ## Reading GPR Data
 
-Again, we start by identifying the set of sample GPRs in the directory, `gpr_dir`. In the quickstart example above, only raw `"Alexa488"` GPR scans were captured (by default). However, there may also be Cy3 and Masliner GPR files in the same directory. To also capture these samples, we can change the `gpr_type=` parameter to any of `"Masliner"`, `"Cy3"`, or `"all"`.
+Again, we start by identifying the set of sample GPRs in the directory, `gpr_dir`. In the quickstart example above, only raw `"Alexa"` GPR scans were captured (by default). However, there may also be Cy3 and Masliner GPR files in the same directory. To also capture these samples, we can change the `gpr_type=` parameter to any of `"Masliner"`, `"Cy3"`, or `"all"`.
 
 ```{r}
 samples_all <- buildPBMTable(gpr_dir, gpr_type = "all")
@@ -82,7 +82,7 @@ Given the table of samples, we next load the GPR data into R according to the `g
 ```{r}
 condition_set <- c("HOXD13-REF", "HOXD13-Q325R", "HOXD13-I322L")
 pbmdata <- buildPBMExperiment(samples_all[samples_all$lp %in% c(500, 550) &
-                                          samples_all$scan == "Alexa488" &
+                                          samples_all$scan == "Alexa" &
                                           samples_all$condition %in% condition_set, ],
                               probes = pbm_8x60k_v1)
 ```
@@ -95,10 +95,11 @@ pbmdata
 
 A _SummarizedExperiment_ is made up of three parts: **1.** assays (primary data), **2.** row data, and **3.** column data.  
 
-Naturally, the probe-level intensities from the GPRs are available in the `"gpr"` **assay** as a DataFrame with rows and columns corresponding to probes and samples.
+Naturally, the probe-level intensities from the GPRs are available in the `"fore"` (foreground) **assay** as a DataFrame with rows and columns corresponding to probes and samples. A second assay, `"back"` (background) is also read in from the GPRs with the background intensities for each probe and sample.
 
 ```{r}
-assay(pbmdata, "gpr")[1:5, 1:5]
+assay(pbmdata, "fore")[1:5, 1:5]
+assay(pbmdata, "back")[1:5, 1:5]
 ```
 
 The **row data** contains information about the rows (probes).
@@ -186,15 +187,33 @@ pbmPlotComparison(pbmdata[, colData(pbmdata)$lp == 500],
                   maplot = TRUE)
 ```
 
+In each of the plots generated above, values are taken from the `"fore"` assay by default. However, background intensities (or any other _assay_) in the _SummarizedExperiment_ can also be plotted by specifying the `assay_name = ` parameter.
+
+```{r, fig.width = 15, fig.height = 5}
+pbmPlotDensity(pbmdata, assay_name = "back",
+               log_scale = TRUE, .facet = FALSE) +
+    facet_grid(lp ~ condition) +
+    ggtitle("PBM Background Intensity (log2)")
+```
+
 ## Pre-Processing GPR Data
 
 **Choice of pre-processing steps for PBM data is still under investigation.**
 
 Approaches for pre-processing of microarray intensities has been widely studied over the past 15 years. Several popular and successful approaches, including RMA, have been implemented and made available through the *affy* and *limma* packages. However, the functions implemented within these packages expect slightly different inputs and generate slighlty different outputs, making it difficult to directly apply the methods to our data stored in *SummarizedExperiment* class. To make access to these functions easier, we have written several wrapper functions to pre-processing functions implemented in both packages.
 
-Single-channal pre-processing includes two primary steps: **within-sample background correction** and **between-sample normalization**. The corresponding functions implemented in *limma* are wrapped as `limmaBackgroundCorrection` and `limmaNormalizeBetweenSamples`. Each function returns the same *SummarizedExperiment* object, but with normalized expression estimates.
+Single-channal pre-processing includes two primary steps: **within-sample background correction** and **between-sample normalization**. The corresponding functions implemented in *limma* are wrapped as `limmaBackgroundCorrect` and `limmaNormalizeBetweenSamples`. Each function returns the same *SummarizedExperiment* object, but with normalized expression estimates.
+
+The simplest background correction approach is to simply subtract the background intensities from the foreground intensities. This can be done by specifying the background assay name to `assayb_name = "back"` (and optionally `method = "subtract"`). **Currently, we recommend using the "subtract" approach when background intensities are available.**
 
 ```{r}
+pbmdata_bc <- limmaBackgroundCorrect(pbmdata, assayb_name = "back")
+```
+
+If the assay name for the background intensities is not specified, background noise will be estimated using a Normal-Exponential convolution model. (See `help(backgroundCorrect, package = limma)` for more details.)
+
+```{r, eval = FALSE}
+## NOT RUN - would use 'normexp' background correction approach
 pbmdata_bc <- limmaBackgroundCorrect(pbmdata)
 ```
 
@@ -205,13 +224,13 @@ pbmPlotComparison(pbmdata[, colData(pbmdata)$lp == 500],
                   pbmdata_bc[, colData(pbmdata_bc)$lp == 500])
 ```
 
-For provenance, the correction step is also noted in the `metadata` of the object.
+For provenance, the correction step (`limma::backgroundCorrect`) is also noted in the `metadata` of the object along with the name of the modified assay (`fore`). 
 
 ```{r}
 metadata(pbmdata_bc)
 ```
 
-We next apply cross-sample normalization. Since a primary objective of normalizing across samples is to put intensities on the same scale, we apply the procedure to only a subset of samples scanned at the same laser intensity. 
+We next apply cross-sample normalization. Since a primary objective of normalizing across samples is to put intensities on the same scale, we apply the procedure to only a subset of samples scanned at the same laser intensity. The default is currently to use quantile normalization. **However, based on the observation that samples may have fundamentally different distributional shapes, it is not yet clear if quantile normalization is the best approach for PBM data.** (Again, see `help(normalizeBetweenArrays, package = limma)` for more details.)
 
 ```{r}
 pbmdata500_norm <- limmaNormalizeBetweenArrays(pbmdata_bc[, colData(pbmdata)$lp == 500])
@@ -221,8 +240,7 @@ Again, we compare the normalized data against the original data.
 
 ```{r, fig.width = 15, fig.height = 5}
 pbmPlotComparison(pbmdata_bc[, colData(pbmdata)$lp == 500],
-                  pbmdata500_norm,
-                  maplot = TRUE)
+                  pbmdata500_norm, maplot = TRUE)
 ```
 
 ## Filtering GPR Data
