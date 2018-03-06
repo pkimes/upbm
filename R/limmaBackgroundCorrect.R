@@ -13,6 +13,8 @@
 #'        See details below for more information on main parameters.
 #' @param .force logical whether to run correction even if data
 #'        has already been corrected for background. (default = FALSE)
+#' @param .nonnegative logical whether to restrict intensities to non-negative
+#'        values by setting negative values to NA. (default = TRUE)
 #' 
 #' @return
 #' SummarizedExperiment object with background corrected intensities.
@@ -31,7 +33,7 @@
 #' @export 
 #' @author Patrick Kimes
 limmaBackgroundCorrect <- function(se, assay_name = "fore", assayb_name = NULL,
-                                   ..., .force = FALSE) {
+                                   ..., .force = FALSE, .nonnegative = TRUE) {
     
     ## check if already corrected
     if (!.force) {
@@ -48,6 +50,9 @@ limmaBackgroundCorrect <- function(se, assay_name = "fore", assayb_name = NULL,
     
     ## perform RMA background correction (normal, exponential mixture)
     new_assay <- limma::backgroundCorrect.matrix(E = new_assay, Eb = assayb, ...)
+    if (.nonnegative) {
+        new_assay[new_assay < 0] <- NA
+    }
     new_assay <- DataFrame(new_assay)
     names(new_assay) <- rownames(colData(se))
     
