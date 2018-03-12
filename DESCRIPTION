@@ -4,7 +4,7 @@ Version: 0.99.0
 Authors@R: person("Patrick", "Kimes", email = "patrick.kimes@gmail.com.com", role = c("aut", "cre"))
 Description: Classes and methods for the organization and analysis of transcription factor binding affinities
   quantified in vitro using single-channel Protein Binding Microarrays.
-Depends: R (>= 3.4.2),
+Depends: R (>= 3.4.1),
          SummarizedExperiment,
          S4Vectors,
          readr,
