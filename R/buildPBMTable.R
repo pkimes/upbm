@@ -37,7 +37,7 @@ buildPBMTable <- function(gpr_dir = NULL, gpr_type = "Alexa", gpr_files = NULL) 
     if (!is.null(gpr_dir)) {
         flfull <- list.files(gpr_dir, pattern = "\\.gpr$", full.names = TRUE, ignore.case = TRUE)
     } else {
-        if (!all(grepl(gpr_files, "\\.gpr$", ignore.case = TRUE))) {
+        if (!all(grepl("\\.gpr$", gpr_files, ignore.case = TRUE))) {
             stop("Files passed to 'gpr_files' must end in '.gpr'.")
         }
         flfull <- gpr_files
