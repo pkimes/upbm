@@ -1,12 +1,15 @@
 #' Build PBM Sample Table
 #'
-#' Helper function to create table of GPR sample files from specified directory path.
-#' Parsing of file names is based on previously observed patterns and may not be exact.
+#' Helper function to create table of GPR sample files from specified directory path or
+#' manually specified list of GPR file names. One of \code{gpr_dir} or \code{gpr_files}
+#' must be specified. Parsing of file names is based on previously observed patterns and may not be exact.
 #' Expected naming conventions of GPR files are described in the Details below. 
 #' 
-#' @param gpr_dir path to directory containing GPR files.
+#' @param gpr_dir path to directory containing GPR files. (default = NULL)
 #' @param gpr_type string value specifying type of GPR files to find; must
 #'        be one of: "Alexa", "Cy3", "Masliner", "all". (default = "Alexa")
+#' @param gpr_files alternatively, rather than specifying a directory containing
+#'        GPR files, can specify a vector of GPR file names. (default = NULL)
 #' 
 #' @return
 #' tibble with each row corresponding to a sample GPR file.
@@ -23,12 +26,23 @@
 #' @importFrom dplyr left_join filter select
 #' @export
 #' @author Patrick Kimes
-buildPBMTable <- function(gpr_dir, gpr_type = "Alexa") {
+buildPBMTable <- function(gpr_dir = NULL, gpr_type = "Alexa", gpr_files = NULL) {
     stopifnot(gpr_type %in% c("Alexa", "Masliner", "Cy3", "all"))
+    stopifnot(!is.null(gpr_dir) || !is.null(gpr_files))
+    if (!is.null(gpr_dir) && !is.null(gpr_files)) {
+        stop("Only one of 'gpr_dir' or 'gpr_files' should be specified.")
+    }
     
-    ## find all GPR file types
-    flfull <- list.files(gpr_dir, pattern = "\\.gpr$", full.names = TRUE, ignore.case = TRUE)
-
+    ## find all GPR files
+    if (!is.null(gpr_dir)) {
+        flfull <- list.files(gpr_dir, pattern = "\\.gpr$", full.names = TRUE, ignore.case = TRUE)
+    } else {
+        if (!all(grepl(gpr_files, "\\.gpr$", ignore.case = TRUE))) {
+            stop("Files passed to 'gpr_files' must end in '.gpr'.")
+        }
+        flfull <- gpr_files
+    }
+    
     ## determine Cy3, Alexa488 GPRs
     flcy3 <- grep("_Cy3_", basename(flfull), ignore.case = TRUE)
     fl488 <- grep("_Alexa[0-9]*_(?!.*MaslinerOutput)", basename(flfull), ignore.case = TRUE, perl = TRUE)

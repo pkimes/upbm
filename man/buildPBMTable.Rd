@@ -4,20 +4,24 @@
 \alias{buildPBMTable}
 \title{Build PBM Sample Table}
 \usage{
-buildPBMTable(gpr_dir, gpr_type = "Alexa")
+buildPBMTable(gpr_dir = NULL, gpr_type = "Alexa", gpr_files = NULL)
 }
 \arguments{
-\item{gpr_dir}{path to directory containing GPR files.}
+\item{gpr_dir}{path to directory containing GPR files. (default = NULL)}
 
 \item{gpr_type}{string value specifying type of GPR files to find; must
 be one of: "Alexa", "Cy3", "Masliner", "all". (default = "Alexa")}
+
+\item{gpr_files}{alternatively, rather than specifying a directory containing
+GPR files, can specify a vector of GPR file names. (default = NULL)}
 }
 \value{
 tibble with each row corresponding to a sample GPR file.
 }
 \description{
-Helper function to create table of GPR sample files from specified directory path.
-Parsing of file names is based on previously observed patterns and may not be exact.
+Helper function to create table of GPR sample files from specified directory path or
+manually specified list of GPR file names. One of \code{gpr_dir} or \code{gpr_files}
+must be specified. Parsing of file names is based on previously observed patterns and may not be exact.
 Expected naming conventions of GPR files are described in the Details below.
 }
 \details{
