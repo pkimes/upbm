@@ -64,12 +64,14 @@ spatiallyAdjust <- function(se, assay_name = "fore", k = 15, returnBias = TRUE,
 
     ## extract intensities for easier manipulation
     raw_intensity <- assay(se, assay_name)
-   
+    raw_intensity <- tibble::as_tibble(as.data.frame(raw_intensity, optional = TRUE))
+
     ## add row/column indicies
-    raw_intensity <- cbind(rowData(se)[, c("Row", "Column")], raw_intensity)
+    raw_intensity <- dplyr::mutate(raw_intensity,
+                                   Row = rowData(se)[, "Row"],
+                                   Column = rowData(se)[, "Column"])
 
     ## compute spatial adjustment 
-    raw_intensity <- tibble::as_tibble(as.data.frame(raw_intensity))
     raw_intensity <- tidyr::gather(raw_intensity, sample, value, -Row, -Column)
     med_intensity <- dplyr::group_by(raw_intensity, sample)
     med_intensity <- dplyr::do(med_intensity, spatialmedian = .wrapSA(., k, log_scale))
@@ -92,7 +94,7 @@ spatiallyAdjust <- function(se, assay_name = "fore", k = 15, returnBias = TRUE,
     if (.nonnegative) {
         sub_intensity$value[sub_intensity$value < 0] <- NA
     }
-    
+
     ## spread back so samples are in separate columns
     med_intensity <- tidyr::spread(med_intensity, sample, value)
     sub_intensity <- tidyr::spread(sub_intensity, sample, value)
@@ -106,9 +108,9 @@ spatiallyAdjust <- function(se, assay_name = "fore", k = 15, returnBias = TRUE,
     sub_intensity <- dplyr::select_(sub_intensity, .dots = paste0("-", names(rowData(se))))
 
     ## reorder columns to match original SummarizedExperiment
-    med_intensity <- DataFrame(med_intensity)
+    med_intensity <- DataFrame(med_intensity, check.names = FALSE)
     med_intensity <- med_intensity[, rownames(colData(se)), drop = FALSE]
-    sub_intensity <- DataFrame(sub_intensity)
+    sub_intensity <- DataFrame(sub_intensity, check.names = FALSE)
     sub_intensity <- sub_intensity[, rownames(colData(se)), drop = FALSE]
 
     ## modify input SummarizedExperiment
