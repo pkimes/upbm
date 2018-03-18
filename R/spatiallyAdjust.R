@@ -107,9 +107,9 @@ spatiallyAdjust <- function(se, assay_name = "fore", k = 15, returnBias = TRUE,
 
     ## reorder columns to match original SummarizedExperiment
     med_intensity <- DataFrame(med_intensity)
-    med_intensity <- med_intensity[, rownames(colData(se))]
+    med_intensity <- med_intensity[, rownames(colData(se)), drop = FALSE]
     sub_intensity <- DataFrame(sub_intensity)
-    sub_intensity <- sub_intensity[, rownames(colData(se))]
+    sub_intensity <- sub_intensity[, rownames(colData(se)), drop = FALSE]
 
     ## modify input SummarizedExperiment
     assay(se, assay_name) <- sub_intensity
