@@ -34,12 +34,13 @@ pbmPlotDensity <- function(se, assay_name = "fore", log_scale = TRUE,
     se <- pbmFilterProbes(se, .filter) 
 
     ## extract sample metadata
-    coldat <- as.data.frame(colData(se))
+    coldat <- data.frame(colData(se), check.names = FALSE,
+                         check.rows = FALSE, stringsAsFactors = FALSE)
     coldat <- tibble::rownames_to_column(coldat, "sample")
 
     ## extract intensities
     pdat <- assay(se, assay_name)
-    pdat <- data.frame(pdat, stringsAsFactors = FALSE)
+    pdat <- as.data.frame(pdat, optional = TRUE)
     pdat <- tibble::as_tibble(pdat)
     pdat <- tidyr::gather(pdat, sample, value)
     pdat <- dplyr::left_join(pdat, coldat, by = "sample")

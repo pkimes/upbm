@@ -98,35 +98,42 @@ pbmPlotComparison <- function(se1, se2, assay_name  = "fore", match_by = conditi
     }
 
     ## filter samples
-    se1 <- se1[, colData(se1)[[match_by_str]] %in% match_overlap]
-    se2 <- se2[, colData(se2)[[match_by_str]] %in% match_overlap]
+    se1 <- se1[, colData(se1)[[match_by_str]] %in% match_overlap, drop = FALSE]
+    se2 <- se2[, colData(se2)[[match_by_str]] %in% match_overlap, drop = FALSE]
     
     ## filter probes
     se1 <- pbmFilterProbes(se1, .filter) 
     se2 <- pbmFilterProbes(se2, .filter) 
 
     ## condition must be a unique column for faceting plot
-    coldat1 <- as.data.frame(colData(se1))
+    coldat1 <- data.frame(colData(se1), check.names = FALSE,
+                          check.rows = FALSE, stringsAsFactors = FALSE)
     coldat1 <- tibble::rownames_to_column(coldat1, "sample")
     coldat1 <- dplyr::mutate(coldat1, Match = rlang::UQ(match_by))
     coldat1 <- dplyr::select(coldat1, sample, Match)
 
-    coldat2 <- as.data.frame(colData(se2))
+    coldat2 <- data.frame(colData(se2), check.names = FALSE,
+                          check.rows = FALSE, stringsAsFactors = FALSE)
     coldat2 <- tibble::rownames_to_column(coldat2, "sample")
     coldat2 <- dplyr::mutate(coldat2, Match = rlang::UQ(match_by))
     coldat2 <- dplyr::select(coldat2, sample, Match)
     
     ## extract intensities
-    pdat1 <- cbind(assay(se1, assay_name), rowData(se1)[, c("Column", "Row")])
-    pdat1 <- data.frame(pdat1, stringsAsFactors = FALSE)
+    pdat1 <- assay(se1, assay_name)
+    pdat1 <- as.data.frame(pdat1, optional = TRUE)
     pdat1 <- tibble::as_tibble(pdat1)
-    pdat1 <- tidyr::gather(pdat1, sample, value, -Column, -Row)
+    pdat1 <- dplyr::mutate(pdat1,
+                           Row = rowData(se1)[, "Row"],
+                           Column = rowData(se1)[, "Column"])
     pdat1 <- dplyr::left_join(pdat1, coldat1, by = "sample")
     pdat1 <- dplyr::select(pdat1, -sample)
-    pdat2 <- cbind(assay(se2, assay_name), rowData(se1)[, c("Column", "Row")])
-    pdat2 <- data.frame(pdat2, stringsAsFactors = FALSE)
+
+    pdat2 <- assay(se2, assay_name)
+    pdat2 <- as.data.frame(pdat2, optional = TRUE)
     pdat2 <- tibble::as_tibble(pdat2)
-    pdat2 <- tidyr::gather(pdat2, sample, value, -Column, -Row)
+    pdat2 <- dplyr::mutate(pdat2,
+                           Row = rowData(se2)[, "Row"],
+                           Column = rowData(se2)[, "Column"])
     pdat2 <- dplyr::left_join(pdat2, coldat2, by = "sample")
     pdat2 <- dplyr::select(pdat2, -sample)
     

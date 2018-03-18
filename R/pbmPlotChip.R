@@ -48,16 +48,20 @@ pbmPlotChip <- function(se, assay_name = "fore", log_scale = TRUE,
     se <- pbmFilterProbes(se, .filter) 
 
     ## condition must be a unique column for faceting plot
-    coldat <- as.data.frame(colData(se))
+    coldat <- data.frame(colData(se), check.names = FALSE,
+                         check.rows = FALSE, stringsAsFactors = FALSE)
     coldat <- tibble::rownames_to_column(coldat, "sample")
 
     ## extract intensities
-    pdat <- cbind(assay(se, assay_name), rowData(se)[, c("Column", "Row")])
-    pdat <- data.frame(pdat, stringsAsFactors = FALSE)
+    pdat <- assay(se, assay_name)
+    pdat <- as.data.frame(pdat, optional = TRUE)
     pdat <- tibble::as_tibble(pdat)
+    pdat <- dplyr::mutate(pdat,
+                          Row = rowData(se)[, "Row"],
+                          Column = rowData(se)[, "Column"])
     pdat <- tidyr::gather(pdat, sample, value, -Column, -Row)
     pdat <- dplyr::left_join(pdat, coldat, by = "sample")
-
+    
     ## check for negative values
     pdat_negative <- (min(pdat$value, na.rm = TRUE) < 0)
     

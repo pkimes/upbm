@@ -64,8 +64,9 @@ spatiallyAdjust <- function(se, assay_name = "fore", k = 15, returnBias = TRUE,
 
     ## extract intensities for easier manipulation
     raw_intensity <- assay(se, assay_name)
-    raw_intensity <- tibble::as_tibble(as.data.frame(raw_intensity, optional = TRUE))
-
+    raw_intensity <- as.data.frame(raw_intensity, optional = TRUE)
+    raw_intensity <- tibble::as_tibble(raw_intensity)
+                
     ## add row/column indicies
     raw_intensity <- dplyr::mutate(raw_intensity,
                                    Row = rowData(se)[, "Row"],

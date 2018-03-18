@@ -85,15 +85,19 @@ pbmPlotScatter <- function(se, assay_name = "fore", stratify = condition, baseli
     se <- pbmFilterProbes(se, .filter) 
 
     ## condition must be a unique column for faceting plot
-    coldat <- as.data.frame(colData(se))
+    coldat <- data.frame(colData(se), check.names = FALSE,
+                         check.rows = FALSE, stringsAsFactors = FALSE)
     coldat <- tibble::rownames_to_column(coldat, "sample")
     coldat <- dplyr::mutate(coldat, Stratify = rlang::UQ(stratify))
     coldat <- dplyr::select(coldat, sample, Stratify)
         
     ## extract intensities
-    pdat <- cbind(assay(se, assay_name), rowData(se)[, c("Column", "Row")])
-    pdat <- data.frame(pdat, stringsAsFactors = FALSE)
+    pdat <- assay(se, assay_name)
+    pdat <- as.data.frame(pdat, optional = TRUE)
     pdat <- tibble::as_tibble(pdat)
+    pdat <- dplyr::mutate(pdat,
+                          Row = rowData(se)[, "Row"],
+                          Column = rowData(se)[, "Column"])
     pdat <- tidyr::gather(pdat, sample, value, -Column, -Row)
     pdat <- dplyr::left_join(pdat, coldat, by = "sample")
     pdat <- dplyr::select(pdat, -sample)
