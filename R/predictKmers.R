@@ -1,6 +1,9 @@
-#' Estimation of K-Mer Intensities
+#' Estimation of K-Mer Affinities
 #'
-#' This function uses stuff to do stuff.
+#' This function uses elastic net regularized least squares regression
+#' to estimate k-mer affinities from PBM data. The base model accounts
+#' estimates affinities across multiple samples with a shared probe-level
+#' effect. Estimates are reported on the scale of log2 relative affinity.
 #' 
 #' @param se SummarizedExperiment object containing PBM intensity data.
 #' @param kmers character vector of k-mers to predict.

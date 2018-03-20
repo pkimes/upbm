@@ -2,7 +2,7 @@
 % Please edit documentation in R/predictKmers.R
 \name{predictKmers}
 \alias{predictKmers}
-\title{Estimation of K-Mer Intensities}
+\title{Estimation of K-Mer Affinities}
 \usage{
 predictKmers(se, kmers = NULL, assay_name = "fore", std_array = TRUE,
   offset = 1, verbose = FALSE, ...)
@@ -31,7 +31,10 @@ default paramaters.}
 SummarizedExperiment object with predicted affinities.
 }
 \description{
-This function uses stuff to do stuff.
+This function uses elastic net regularized least squares regression
+to estimate k-mer affinities from PBM data. The base model accounts
+estimates affinities across multiple samples with a shared probe-level
+effect. Estimates are reported on the scale of log2 relative affinity.
 }
 \details{
 If \code{stdAssay} is TRUE, prior to estimating k-mer affinities,
