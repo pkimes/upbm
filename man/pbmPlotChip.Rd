@@ -5,8 +5,7 @@
 \title{Plot of Intensities on Grid}
 \usage{
 pbmPlotChip(se, assay_name = "fore", log_scale = TRUE,
-  relative_scale = NULL, relative_bound = Inf, .facet = TRUE,
-  .filter = 1)
+  relative_scale = NULL, bound = Inf, .facet = TRUE, .filter = 1)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing GPR
@@ -24,8 +23,9 @@ sample. This can be useful for plotting spatial bias of
 samples relative to the total intensity in the sample. 
 Ignored if NULL. (default = NULL)}
 
-\item{relative_bound}{if \code{relative_scale} is specified, 
-scaled values are bound to \code{(-relative_bound, relative_bound)}.
+\item{bound}{non-negative numeric value to use for bounding outliers.
+When specified, values are bound to \code{(-bound, bound)}.
+If set to 0L, results are binarized to positive, negative.
 Ignored if \code{Inf}. (default = Inf)}
 
 \item{.facet}{logical whether plot should be faceted using

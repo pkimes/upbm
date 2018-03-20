@@ -16,8 +16,9 @@
 #'        sample. This can be useful for plotting spatial bias of
 #'        samples relative to the total intensity in the sample. 
 #'        Ignored if NULL. (default = NULL)
-#' @param relative_bound if \code{relative_scale} is specified, 
-#'        scaled values are bound to \code{(-relative_bound, relative_bound)}.
+#' @param bound non-negative numeric value to use for bounding outliers.
+#'        When specified, values are bound to \code{(-bound, bound)}.
+#'        If set to 0L, results are binarized to positive, negative.
 #'        Ignored if \code{Inf}. (default = Inf)
 #' @param .facet logical whether plot should be faceted using
 #'        the default 'condition' column from the colData of the
@@ -42,9 +43,8 @@
 #' @import ggplot2 SummarizedExperiment
 #' @export
 #' @author Patrick Kimes
-pbmPlotChip <- function(se, assay_name = "fore", log_scale = TRUE,
-                        relative_scale = NULL, relative_bound = Inf,
-                        .facet = TRUE, .filter = 1) {
+pbmPlotChip <- function(se, assay_name = "fore", log_scale = TRUE, relative_scale = NULL,
+                        bound = Inf, .facet = TRUE, .filter = 1) {
     stopifnot(assay_name %in% assayNames(se))
     stopifnot("Row" %in% names(rowData(se)))
     stopifnot("Column" %in% names(rowData(se)))
@@ -71,22 +71,18 @@ pbmPlotChip <- function(se, assay_name = "fore", log_scale = TRUE,
                           Column = rowData(se)[, "Column"])
     pdat <- tidyr::gather(pdat, sample, value, -Column, -Row)
     pdat <- dplyr::left_join(pdat, coldat, by = "sample")
-    
-    ## check if scaling is valid
-    if (!is.null(relative_scale) && length(relative_scale) == 1 &&
-        (relative_scale %in% names(coldat))) {
-        warning("'relative_scale' should be length = 1 column name in colData.\n",
-                "valid names: ", paste(names(coldat), collapse = ", "), ".")
-        relative_scale <- NULL
-    }
 
     ## apply scaling and bounding
-    if (relative_scale) {
-        pdat <- dplyr::mutate(value = value / !! rlang::sym(relative_scale))
-        pdat <- dplyr::mutate(value = min(value, abs(b)),
-                              value = max(value, -abs(b)))
+    if (!is.null(relative_scale)) {
+        if (length(relative_scale) != 1 || !(relative_scale %in% names(coldat))) {
+            warning("'relative_scale' should be length = 1 column name in colData.\n",
+                    "valid names: ", paste(names(coldat), collapse = ", "), ".")
+            relative_scale <- NULL
+        } else {
+            pdat <- dplyr::mutate(pdat, value = value / !! rlang::sym(relative_scale))
+        }
     }
-    
+
     ## check for negative values
     pdat_negative <- (min(pdat$value, na.rm = TRUE) < 0)
     
@@ -109,15 +105,32 @@ pbmPlotChip <- function(se, assay_name = "fore", log_scale = TRUE,
         ptitle <- "PBM Intensity"
     }
 
+    ## bound values if 'bound' is finite
+    if (bound == 0L) {
+        pdat <- dplyr::mutate(pdat, value = ifelse(value > 0, 1, -1))
+    } else if (bound < Inf) {
+        pdat <- dplyr::mutate(pdat,
+                              value = pmin(value, abs(bound)),
+                              value = pmax(value, -abs(bound)))
+    }
+    
     ## handle fill-scales if negative values present 
     if (pdat_negative) {
         pfill <- scale_fill_gradient2(assay_name)
+        if (bound == 0L) {
+            pfill$limits <- c(-1, 1)
+        } else if (bound < Inf) {
+            pfill$limits <- c(-abs(bound), abs(bound))
+        }
     } else {
         if (log_scale) {
             pfill <- scale_fill_distiller(assay_name, direction = 1,
                                           labels = function(x) {2^as.numeric(x)})
         } else {
             pfill <- scale_fill_distiller(assay_name, direction = 1)
+        }
+        if (bound < Inf) {
+            pfill$limits <- c(0, abs(bound))
         }
     }
     
