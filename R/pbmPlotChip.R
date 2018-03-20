@@ -11,12 +11,20 @@
 #'        (default = "fore")
 #' @param log_scale logical whether to plot the intensities
 #'        on the log-scale. (default = TRUE)
+#' @param relative_scale string name of column to in \code{colData}
+#'        or numeric vector to use for scaling intensities in each
+#'        sample. This can be useful for plotting spatial bias of
+#'        samples relative to the total intensity in the sample. 
+#'        Ignored if NULL. (default = NULL)
+#' @param relative_bound if \code{relative_scale} is specified, 
+#'        scaled values are bound to \code{(-relative_bound, relative_bound)}.
+#'        Ignored if \code{Inf}. (default = Inf)
 #' @param .facet logical whether plot should be faceted using
-#'         the default 'condition' column from the colData of the
-#'         SummarizedExperiment. (default = TRUE)
+#'        the default 'condition' column from the colData of the
+#'        SummarizedExperiment. (default = TRUE)
 #' @param .filter integer specifying level of probe filtering to
 #'        perform prior to plotting. (default = 1)
-#'
+#' 
 #' @return
 #' ggplot object
 #'
@@ -30,10 +38,12 @@
 #' @importFrom tibble rownames_to_column as_tibble
 #' @importFrom tidyr gather
 #' @importFrom dplyr left_join
+#' @importFrom rlang sym
 #' @import ggplot2 SummarizedExperiment
 #' @export
 #' @author Patrick Kimes
 pbmPlotChip <- function(se, assay_name = "fore", log_scale = TRUE,
+                        relative_scale = NULL, relative_bound = Inf,
                         .facet = TRUE, .filter = 1) {
     stopifnot(assay_name %in% assayNames(se))
     stopifnot("Row" %in% names(rowData(se)))
@@ -62,10 +72,29 @@ pbmPlotChip <- function(se, assay_name = "fore", log_scale = TRUE,
     pdat <- tidyr::gather(pdat, sample, value, -Column, -Row)
     pdat <- dplyr::left_join(pdat, coldat, by = "sample")
     
+    ## check if scaling is valid
+    if (!is.null(relative_scale) && length(relative_scale) == 1 &&
+        (relative_scale %in% names(coldat))) {
+        warning("'relative_scale' should be length = 1 column name in colData.\n",
+                "valid names: ", paste(names(coldat), collapse = ", "), ".")
+        relative_scale <- NULL
+    }
+
+    ## apply scaling and bounding
+    if (relative_scale) {
+        pdat <- dplyr::mutate(value = value / !! rlang::sym(relative_scale))
+        pdat <- dplyr::mutate(value = min(value, abs(b)),
+                              value = max(value, -abs(b)))
+    }
+    
     ## check for negative values
     pdat_negative <- (min(pdat$value, na.rm = TRUE) < 0)
     
     ## check if log-scaling is valid
+    if (log_scale && !is.null(relative_scale)) {
+        warning("Ignoring log-scaling since relative plotting also specified.")
+        log_scale <- FALSE
+    }
     if (log_scale && pdat_negative) {
         warning("Ignoring log-scaling since min value is negative.")
         log_scale <- FALSE

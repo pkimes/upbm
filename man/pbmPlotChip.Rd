@@ -4,7 +4,8 @@
 \alias{pbmPlotChip}
 \title{Plot of Intensities on Grid}
 \usage{
-pbmPlotChip(se, assay_name = "fore", log_scale = TRUE, .facet = TRUE,
+pbmPlotChip(se, assay_name = "fore", log_scale = TRUE,
+  relative_scale = NULL, relative_bound = Inf, .facet = TRUE,
   .filter = 1)
 }
 \arguments{
@@ -16,6 +17,16 @@ intensity information.}
 
 \item{log_scale}{logical whether to plot the intensities
 on the log-scale. (default = TRUE)}
+
+\item{relative_scale}{string name of column to in \code{colData}
+or numeric vector to use for scaling intensities in each
+sample. This can be useful for plotting spatial bias of
+samples relative to the total intensity in the sample. 
+Ignored if NULL. (default = NULL)}
+
+\item{relative_bound}{if \code{relative_scale} is specified, 
+scaled values are bound to \code{(-relative_bound, relative_bound)}.
+Ignored if \code{Inf}. (default = Inf)}
 
 \item{.facet}{logical whether plot should be faceted using
 the default 'condition' column from the colData of the
