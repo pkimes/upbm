@@ -60,8 +60,11 @@ summarizeKmers <- function(se, assay_name = "fore", kmers = NULL, offset = 1,
         stat_set <- valid_stats[pmatch(stat_set, valid_stats)]
         stat_set <- stat_set[!is.na(stat_set)]
     }
-    stopifnot(length(stat_set) > 0)
-    
+    if (length(stat_set) == 0) {
+        stop("Please specify at least one valid statistic from: ",
+             paste0(valid_stats, collapse = ", "))
+    }
+
     ## check kmers specified
     kmers <- checkKmers(kmers, verbose)
 
@@ -99,7 +102,7 @@ summarizeKmers <- function(se, assay_name = "fore", kmers = NULL, offset = 1,
     pdat_seqs <- pdat_sets$seq
     pdat_sets <- dplyr::mutate(pdat_sets, data = lapply(data, as.matrix))
 
-    ## calculates number of probes
+    ## calculate number of probes
     pdatm <- dplyr::mutate(pdat_sets, m = lapply(data, nrow))
     n_vals <- unlist(pdatm$m)
     n_seqs <- pdatm$seq
@@ -112,38 +115,38 @@ summarizeKmers <- function(se, assay_name = "fore", kmers = NULL, offset = 1,
         pdatm <- dplyr::mutate(pdat_sets, m = lapply(data, matrixStats::colMedians, na.rm = TRUE))
         median_vals <- DataFrame(do.call(rbind, pdatm$m))
         names(median_vals) <- pdat_samples
-        stopifnot(all(pdat_seqs == pdatm$seq))
+        stopifnot(pdat_seqs == pdatm$seq)
         assay_list$medianIntensity <- median_vals
     }
     
-    ## calculates mean intensities
+    ## calculate mean intensities
     if ("mean" %in% stat_set) {
         pdatm <- dplyr::mutate(pdat_sets, m = lapply(data, matrixStats::colMeans2, na.rm = TRUE))
         mean_vals <- DataFrame(do.call(rbind, pdatm$m))
         names(mean_vals) <- pdat_samples
-        stopifnot(all(pdat_seqs == pdatm$seq))
+        stopifnot(pdat_seqs == pdatm$seq)
         assay_list$meanIntensity <- mean_vals
     }
     
-    ## calculates mad intensities
+    ## calculate mad intensities
     if ("mad" %in% stat_set) {
         pdatm <- dplyr::mutate(pdat_sets, m = lapply(data, matrixStats::colMads, na.rm = TRUE))
         mad_vals <- DataFrame(do.call(rbind, pdatm$m))
         names(mad_vals) <- pdat_samples
-        stopifnot(all(pdat_seqs == pdatm$seq))
+        stopifnot(pdat_seqs == pdatm$seq)
         assay_list$madIntensity <- mad_vals
     }
 
-    ## calculates SD intensities
+    ## calculate SD intensities
     if ("sd" %in% stat_set) {
         pdatm <- dplyr::mutate(pdat_sets, m = lapply(data, matrixStats::colSds, na.rm = TRUE))
         sd_vals <- DataFrame(do.call(rbind, pdatm$m))
         names(sd_vals) <- pdat_samples
-        stopifnot(all(pdat_seqs == pdatm$seq))
+        stopifnot(pdat_seqs == pdatm$seq)
         assay_list$sdIntensity <- sd_vals
     }
     
-    ## calculates log2 mean intensities
+    ## calculate log2 mean intensities
     if ("log2mean" %in% stat_set) {
         pdatm <- dplyr::mutate(pdat_sets,
                                m = lapply(data, function(x) {
@@ -151,11 +154,11 @@ summarizeKmers <- function(se, assay_name = "fore", kmers = NULL, offset = 1,
                                }))
         log2mean_vals <- DataFrame(do.call(rbind, pdatm$m))
         names(log2mean_vals) <- pdat_samples
-        stopifnot(all(pdat_seqs == pdatm$seq))
+        stopifnot(pdat_seqs == pdatm$seq)
         assay_list$log2meanIntensity <- log2mean_vals
     }
 
-    ## calculates log2 mad intensities
+    ## calculate log2 mad intensities
     if ("log2mad" %in% stat_set) {
         pdatm <- dplyr::mutate(pdat_sets,
                                m = lapply(data, function(x) {
@@ -163,33 +166,33 @@ summarizeKmers <- function(se, assay_name = "fore", kmers = NULL, offset = 1,
                                }))
         log2mad_vals <- DataFrame(do.call(rbind, pdatm$m))
         names(log2mad_vals) <- pdat_samples
-        stopifnot(all(pdat_seqs == pdatm$seq))
+        stopifnot(pdat_seqs == pdatm$seq)
         assay_list$log2madIntensity <- log2mad_vals
     }
     
-    ## calculates log2 SD intensities
+    ## calculate log2 SD intensities
     if ("log2sd" %in% stat_set) {
         pdatm <- dplyr::mutate(pdat_sets,
                                m = lapply(data, function(x) {
                                    matrixStats::colSds(log2(x + offset), na.rm = TRUE)
                                }))
         log2sd_vals <- DataFrame(do.call(rbind, pdatm$m))
-        stopifnot(all(pdat_seqs == pdatm$seq))
-        sd_seqs <- pdatm$seq
+        names(log2sd_vals) <- pdat_samples
+        stopifnot(pdat_seqs == pdatm$seq)
         assay_list$log2sdIntensity <- log2sd_vals
     }
         
-    ## calculates number of NAs
+    ## calculate number of NAs
     if ("na" %in% stat_set) {
         pdatm <- dplyr::mutate(pdat_sets, m = lapply(data, function(x) { colSums(is.na(x)) }))
         na_vals <- DataFrame(do.call(rbind, pdatm$m))
         names(na_vals) <- pdat_samples
-        stopifnot(all(pdat_seqs == pdatm$seq))
+        stopifnot(pdat_seqs == pdatm$seq)
         assay_list$naProbes <- na_vals
     }
     
     ## determine row data
-    rowdat <- DataFrame(kmer = median_seqs,
+    rowdat <- DataFrame(kmer = pdat_seqs,
                         nprobes = n_vals)
     
     ## create new SummarizedExperiment
