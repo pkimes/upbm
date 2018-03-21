@@ -1,4 +1,4 @@
-#' Estimation of K-Mer Affinities
+#' Estimate K-mer Affinities
 #'
 #' This function uses elastic net regularized least squares regression
 #' to estimate k-mer affinities from PBM data. The base model accounts
@@ -6,15 +6,19 @@
 #' effect. Estimates are reported on the scale of log2 relative affinity.
 #' 
 #' @param se SummarizedExperiment object containing PBM intensity data.
-#' @param kmers character vector of k-mers to predict.
 #' @param assay_name string name of the assay to use. (default = "fore")
-#' @param std_array logical whether the array is a standard PBM array.
-#'        See Details for more information. (default = TRUE)
-#'        (default = TRUE)
+#' @param kmers character vector of k-mers to predict.
 #' @param offset integer offset to add to intensities before log2 scaling to
 #'        prevent errors with zero intensities. (default = 1)
 #' @param verbose logical whether to print extra messages during model fitting
 #'        procedure. (default = FALSE)
+#' @param .filter integer specifying level of probe filtering to
+#'        perform prior to estimating affinities. See \code{pbmFilterProbes}
+#'        for more details on probe filter levels. (default = 1)
+#' @param .trim interger vector of length two specifying start and end
+#'        of probe sequence to be used. Default is based on the universal
+#'        PBM probe design where only leading 36nt should be used. 
+#'        Ignored if NULL. (default = c(1, 36))
 #' @param ... parameters to be passed to glmnet call - will overwrite
 #'        default paramaters.
 #' 
@@ -22,11 +26,6 @@
 #' SummarizedExperiment object with predicted affinities.
 #'
 #' @details
-#' If \code{stdAssay} is TRUE, prior to estimating k-mer affinities,
-#' probes are subset to de Bruijn sequences as determined by the ID column
-#' of the rowData, and probe sequences are trimmed to only use the unique
-#' 36nt region.
-#' 
 #' The default signature for the glmnet call is:
 #' * family = 'gaussian'
 #' * alpha = 0.5
@@ -46,70 +45,25 @@
 #' @importFrom utils data
 #' @importFrom stats coef
 #' @importFrom methods as is
+#' @importFrom dplyr left_join distinct 
 #' @export
 #' @author Patrick Kimes
-predictKmers <- function(se, kmers = NULL, assay_name = "fore", std_array = TRUE,
-                         offset = 1, verbose = FALSE, ...) {
-    if (is.null(kmers)) {
-        data(pbm_8mers)
-        kmers <- pbm_8mers
-        if (verbose) {
-            cat("!! Using the default 8mer set.\n")
-        }
-    } else if (!is.vector(kmers, mode = "character")) {
-        stop("If specified, 'kmers' must be a vector of nucleotide sequences to estimate.")
-    }
-
-    if (! "Sequence" %in% names(rowData(se))) {
-        if (verbose) {
-            cat("!! Specified SummarizedExperiment object does not contain probe sequence information in the rowData.\n",
-                "!! The included default data(pbm_8x60k_v1) will be used.\n", sep = "")
-        }
-        if (! all(c("Row", "Column") %in% names(rowData(se)))) {
-            stop("The default set of probe sequences could not be used because the specified SummarizedExperiment ",
-                 "object does not contain probe 'Row' and 'Column' information in the rowData.\n",
-                 "The unique 'Row' and 'Column' values (and 'Sequence') information must be added to the rowData.")
-        }
-        data(pbm_8x60k_v1)
-        if (nrow(se) != nrow(pbm_8x60k_v1)) {
-            stop("The default set of probe sequences could not be used because the specified SummarizedExperiment ",
-                 "contains ", nrow(se), " rows, and the default probe set includes ", nrow(pbm_8x60k_v1), " rows.\n",
-                 "The unique 'Sequence' information must be added to the rowData to use this command.")
-        }
-        ##ovnames <- intersect(names(pbm_8x60k_v1), names(rowData(se)))
-        ovnames <- c("Column", "Row")
-        rdat <- dplyr::left_join(as.data.frame(rowData(se)), dplyr::distinct(pbm_8x60k_v1),
-                                 by = ovnames)
-        rowData(se) <- DataFrame(rdat)
-    }
+predictKmers <- function(se, assay_name = "fore", kmers = NULL, offset = 1,
+                         verbose = FALSE, .filter = 1L,
+                         .trim = if (.filter > 0L) { c(1, 36) } else { NULL },
+                         ...) {
     
-    if (std_array) {
-        if (! "ID" %in% names(rowData(se))) {
-            stop("Specified SummarizedExperiment object does not contain probe ID ",
-                 "information in the rowData. This information must be provided as ",
-                 "the 'ID' column in the rowData to filter on de Bruijn sequences.\n",
-                 "If this is not a standard PBM array and no probe filtering or sequence",
-                 "trimming is necessary, re-run the analysis with 'std_array = FALSE'.")
-        }
-        ## subset on de Bruijn sequence probes
-        se <- se[grepl("^dBr_", rowData(se)$ID), ]
+    ## check kmers specified
+    kmers <- checkKmers(kmers, verbose)
 
-        plens <- unique(nchar(rowData(se)$Sequence))
-        if (length(plens) > 1 || plens != 60) {
-            stop("Not all probe sequences in specified SummarizedExperiment object are 60nt.\n",
-                 "If this is not a standard PBM array and no probe filtering or sequence",
-                 "trimming is necessary, re-run the analysis with 'std_array = FALSE'.")
-        }
-        tails <- Biostrings::subseq(rowData(se)$Sequence, 37, 60)
-        tails <- unique(tails)
-        if (length(tails) > 1) {
-            stop("Not all probe sequences in specified SummarizedExperiment object have the ",
-                 "same 24nt primer sequence.\n",
-                 "If this is not a standard PBM array and no probe filtering or sequence",
-                 "trimming is necessary, re-run the analysis with 'std_array = FALSE'.")
-        }
-        rowData(se)$Sequence <- Biostrings::subseq(rowData(se)$Sequence, 1, 36)
-    }
+    ## check Sequence info in rowData
+    se <- checkProbeSequences(se, verbose)
+    
+    ## filter probes
+    se <- pbmFilterProbes(se, .filter) 
+
+    ## trim probe sequences
+    se <- trimProbeSequences(se, .trim)
 
     ## find mapping between kmers and probes
     ovnames <- intersect(names(rowData(se)), c("Row", "Column", "ID", "Sequence"))
@@ -181,3 +135,72 @@ predictKmers <- function(se, kmers = NULL, assay_name = "fore", std_array = TRUE
 }
 
 
+## helper function to check if specified k-mer set is valid
+checkKmers <- function(kmers, verb) {
+    if (is.null(kmers)) {
+        if (verb) {
+            cat("!! Using the default 8-mer set.\n")
+        }
+        data(pbm_8mers)
+        return(pbm_8mers)
+    }
+    if (!is.vector(kmers, mode = "character")) {
+        stop("If specified, 'kmers' must be a vector of nucleotide sequences to estimate.")
+    }
+    return(kmers)
+}
+
+
+## helper function to check if probe sequences in SE are valid
+checkProbeSequences <- function(se, verb) {
+    if ("Sequence" %in% names(rowData(se))) {
+        return(se)
+    }
+
+    ## otherwise use default probe sequences
+    if (verb) {
+        cat("!! Using the default probe sequence set.\n")
+    }
+    if (! all(c("Row", "Column") %in% names(rowData(se)))) {
+        stop("The default set of probe sequences could not be used because the specified SummarizedExperiment ",
+             "object does not contain probe 'Row' and 'Column' information in the rowData.\n",
+             "The unique 'Row' and 'Column' values (and 'Sequence') information must be added to the rowData.")
+    }
+    data(pbm_8x60k_v1)
+    if (nrow(se) != nrow(pbm_8x60k_v1)) {
+        stop("The default set of probe sequences could not be used because the specified SummarizedExperiment ",
+             "contains ", nrow(se), " rows, and the default probe set includes ", nrow(pbm_8x60k_v1), " rows.\n",
+             "The unique 'Sequence' information must be added to the rowData to use this command.")
+    }
+    rdat <- dplyr::left_join(as.data.frame(rowData(se), optional = TRUE),
+                             dplyr::distinct(pbm_8x60k_v1),
+                             by = c("Column", "Row"))
+    rowData(se) <- DataFrame(rdat)
+
+    return(se)
+}
+
+
+## helper function to trim probe sequences in SE if specified
+trimProbeSequences <- function(se, .trim) {
+    if (is.null(.trim)) {
+        return(se)
+    }
+    
+    ## otherwise perform trimming
+    if (length(.trim) != 2 || !is.numeric(.trim)) {
+        stop("If probe sequences should be trimmed, set '.trim' to a vector of length ",
+             "2 corresponding to start and end of regions to be kept.")
+    }
+    if (.trim[1] > .trim[2] || .trim[1] < 1) {
+        stop("Invalid choice of '.trim'.")
+    }
+    plens <- nchar(rowData(se)$Sequence)
+    if (any(plens < .trim[2])) {
+        stop("Choice of '.trim' is longer than at least one sequence.")
+    }
+    
+    rowData(se)$Sequence <- Biostrings::subseq(rowData(se)$Sequence,
+                                               .trim[1], .trim[2])
+    return(se)
+}
