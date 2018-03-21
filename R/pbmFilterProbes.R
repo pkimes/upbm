@@ -27,7 +27,10 @@
 pbmFilterProbes <- function(se, level = 0L) {
 
     if (level > 0L && ! "ID" %in% names(rowData(se))) {
-        warning("Must have 'ID' column in rowData to use filter level > 0")
+        stop("Must have 'ID' column in rowData to use filter level > 0.\n",
+             "If **all** probes should be used, set .filter = 0.\n",
+             "If only a subset of probes (i.e. de Bruijn probes) should be used,",
+             "add 'ID' to rowData.")
         level <- 0L
     }
     
