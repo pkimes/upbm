@@ -5,8 +5,9 @@
 \title{Summarize K-mer Intensities}
 \usage{
 summarizeKmers(se, assay_name = "fore", kmers = NULL, offset = 1,
-  verbose = FALSE, .filter = 1L, .trim = if (.filter > 0L) {     c(1, 36)
-  } else {     NULL })
+  stat_set = c("median", "log2mad", "lo2sd", "na"), verbose = FALSE,
+  .filter = 1L, .trim = if (.filter > 0L) {     c(1, 36) } else {     NULL
+  })
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing PBM intensity data.}
@@ -17,6 +18,12 @@ summarizeKmers(se, assay_name = "fore", kmers = NULL, offset = 1,
 
 \item{offset}{integer offset to add to intensities before log2 scaling to
 prevent errors with zero intensities. (default = 1)}
+
+\item{stat_set}{caracter vector of statistics to calculate for each sample.
+The set of supported statistics are listed in the details. By default,
+only a subset of the total possible statistics are computed.
+If all supported statistics should be calculated, specify NULL.
+(default = \code{c("median", "log2mad", "lo2sd", "na")})}
 
 \item{verbose}{logical whether to print extra messages during model fitting
 procedure. (default = FALSE)}
@@ -31,12 +38,27 @@ PBM probe design where only leading 36nt should be used.
 Ignored if NULL. (default = c(1, 36))}
 }
 \value{
-SummarizedExperiment object with summarized intensity information in
-separate assays.
+SummarizedExperiment object with intensity information summarized for
+k-mers given in separate assays, with each row corresponding to a separate
+k-mer. k-mer sequences and number of corresponding probes are given
+in the rowdata of the SummarizedBenchmark.
 }
 \description{
 This function calculates k-mer intensity information from
 PBM data.
+}
+\details{
+The following statistics are currently supported.
+\itemize{
+\item \code{"median"}: median probe intensity
+\item \code{"mean"}: mean probe intensity
+\item \code{"mad"}: MAD probe intensity (scaled by 1.4826)
+\item \code{"sd"}: SD probe intensity
+\item \code{"log2mean"}: mean probe log2(intensity + shift)
+\item \code{"log2mad"}: MAD probe log2(intensity + shift)
+\item \code{"log2sd"}: SD probe log(intensity + shift)
+\item \code{"na"}: number of NA probes
+}
 }
 \author{
 Patrick Kimes
