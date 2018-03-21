@@ -93,19 +93,28 @@ summarizeKmers <- function(se, assay_name = "fore", kmers = NULL, offset = 1,
     sd_seqs <- pdatm$seq
 
     ## calculates log2 mean intensities
-    pdatm <- dplyr::mutate(pdat_sets, m = lapply(log2(data + offset), matrixStats::colMeans2, na.rm = TRUE))
+    pdatm <- dplyr::mutate(pdat_sets,
+                           m = lapply(data, function(x) {
+                               matrixStats::colMeans2(log2(x + offset), na.rm = TRUE)
+                           }))
     log2mean_vals <- DataFrame(do.call(rbind, pdatm$m))
     names(log2mean_vals) <- pdat_samples
     log2mean_seqs <- pdatm$seq
 
     ## calculates log2 mad intensities
-    pdatm <- dplyr::mutate(pdat_sets, m = lapply(log2(data + offset), matrixStats::colMads, na.rm = TRUE))
+    pdatm <- dplyr::mutate(pdat_sets,
+                           m = lapply(data, function(x) {
+                               matrixStats::colMads(log2(x + offset), na.rm = TRUE)
+                               }))
     log2mad_vals <- DataFrame(do.call(rbind, pdatm$m))
     names(log2mad_vals) <- pdat_samples
     log2mad_seqs <- pdatm$seq
-
+    
     ## calculates log2 SD intensities
-    pdatm <- dplyr::mutate(pdat_sets, m = lapply(log2(data + offset), matrixStats::colSds, na.rm = TRUE))
+    pdatm <- dplyr::mutate(pdat_sets,
+                           m = lapply(data, function(x) {
+                               matrixStats::colSds(log2(x + offset), na.rm = TRUE)
+                           }))
     log2sd_vals <- DataFrame(do.call(rbind, pdatm$m))
     names(log2sd_vals) <- pdat_samples
     sd_seqs <- pdatm$seq
@@ -116,7 +125,7 @@ summarizeKmers <- function(se, assay_name = "fore", kmers = NULL, offset = 1,
     n_seqs <- pdatm$seq
 
     ## calculates number of NAs
-    pdatm <- dplyr::mutate(pdat_sets, m = lapply(data, function(x) { colSums(is.na(as.matrix(x))) }))
+    pdatm <- dplyr::mutate(pdat_sets, m = lapply(data, function(x) { colSums(is.na(x)) }))
     na_vals <- DataFrame(do.call(rbind, pdatm$m))
     names(na_vals) <- pdat_samples
     na_seqs <- pdatm$seq
