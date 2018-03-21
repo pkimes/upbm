@@ -3,15 +3,20 @@
 #' This function calculates k-mer intensity information from
 #' PBM data. 
 #' 
-#' @param se SummarizedExperiment object containing GPR
-#'        intensity information.
-#' @param assay_name string name of the assay to plot.
-#'        (default = "fore")
-#' @param kmers character vector of k-mers to predict.
+#' @param se SummarizedExperiment object containing PBM intensity data.
 #' @param assay_name string name of the assay to use. (default = "fore")
-#' @param std_array logical whether the array is a standard PBM array.
-#'        See Details for more information. (default = TRUE)
-#'        (default = TRUE)
+#' @param kmers character vector of k-mers to predict.
+#' @param offset integer offset to add to intensities before log2 scaling to
+#'        prevent errors with zero intensities. (default = 1)
+#' @param verbose logical whether to print extra messages during model fitting
+#'        procedure. (default = FALSE)
+#' @param .filter integer specifying level of probe filtering to
+#'        perform prior to estimating affinities. See \code{pbmFilterProbes}
+#'        for more details on probe filter levels. (default = 1)
+#' @param .trim interger vector of length two specifying start and end
+#'        of probe sequence to be used. Default is based on the universal
+#'        PBM probe design where only leading 36nt should be used. 
+#'        Ignored if NULL. (default = c(1, 36))
 #' 
 #' @return
 #' SummarizedExperiment object with summarized intensity information in
@@ -23,10 +28,9 @@
 #' @importFrom matrixStats colMedians colMeans2 colSds colMads
 #' @export
 #' @author Patrick Kimes
-summarizeKmers <- function(se, assay_name = "fore", kmers = NULL, 
+summarizeKmers <- function(se, assay_name = "fore", kmers = NULL, offset = 1,
                            verbose = FALSE, .filter = 1L,
-                           .trim = if (.filter > 0L) { c(1, 36) } else { NULL },
-                           ...) {
+                           .trim = if (.filter > 0L) { c(1, 36) } else { NULL }) {
 
     ## check kmers specified
     kmers <- checkKmers(kmers, verbose)
@@ -75,24 +79,42 @@ summarizeKmers <- function(se, assay_name = "fore", kmers = NULL,
     mean_vals <- DataFrame(do.call(rbind, pdatm$m))
     names(mean_vals) <- pdat_samples
     mean_seqs <- pdatm$seq
-
+    
     ## calculates mad intensities
     pdatm <- dplyr::mutate(pdat_sets, m = lapply(data, matrixStats::colMads, na.rm = TRUE))
     mad_vals <- DataFrame(do.call(rbind, pdatm$m))
     names(mad_vals) <- pdat_samples
     mad_seqs <- pdatm$seq
-
+    
     ## calculates SD intensities
     pdatm <- dplyr::mutate(pdat_sets, m = lapply(data, matrixStats::colSds, na.rm = TRUE))
     sd_vals <- DataFrame(do.call(rbind, pdatm$m))
     names(sd_vals) <- pdat_samples
     sd_seqs <- pdatm$seq
 
+    ## calculates log2 mean intensities
+    pdatm <- dplyr::mutate(pdat_sets, m = lapply(log2(data + offset), matrixStats::colMeans2, na.rm = TRUE))
+    log2mean_vals <- DataFrame(do.call(rbind, pdatm$m))
+    names(log2mean_vals) <- pdat_samples
+    log2mean_seqs <- pdatm$seq
+
+    ## calculates log2 mad intensities
+    pdatm <- dplyr::mutate(pdat_sets, m = lapply(log2(data + offset), matrixStats::colMads, na.rm = TRUE))
+    log2mad_vals <- DataFrame(do.call(rbind, pdatm$m))
+    names(log2mad_vals) <- pdat_samples
+    log2mad_seqs <- pdatm$seq
+
+    ## calculates log2 SD intensities
+    pdatm <- dplyr::mutate(pdat_sets, m = lapply(log2(data + offset), matrixStats::colSds, na.rm = TRUE))
+    log2sd_vals <- DataFrame(do.call(rbind, pdatm$m))
+    names(log2sd_vals) <- pdat_samples
+    sd_seqs <- pdatm$seq
+    
     ## calculates number of probes
     pdatm <- dplyr::mutate(pdat_sets, m = lapply(data, nrow))
     n_vals <- unlist(pdatm$m)
     n_seqs <- pdatm$seq
-    
+
     ## calculates number of NAs
     pdatm <- dplyr::mutate(pdat_sets, m = lapply(data, function(x) { colSums(is.na(as.matrix(x))) }))
     na_vals <- DataFrame(do.call(rbind, pdatm$m))
@@ -105,6 +127,9 @@ summarizeKmers <- function(se, assay_name = "fore", kmers = NULL,
     stopifnot(all(median_seqs == sd_seqs))
     stopifnot(all(median_seqs == n_seqs))
     stopifnot(all(median_seqs == na_seqs))
+    stopifnot(all(median_seqs == log2mean_seqs))
+    stopifnot(all(median_seqs == log2mad_seqs))
+    stopifnot(all(median_seqs == log2sd_seqs))
     
     ## determine row data
     rowdat <- DataFrame(kmer = median_seqs,
@@ -116,5 +141,8 @@ summarizeKmers <- function(se, assay_name = "fore", kmers = NULL,
                                        madIntensity = mad_vals,
                                        sdIntensity = sd_vals,
                                        naProbes = na_vals),
+                                       log2MeanIntensity = log2mean_vals,
+                                       log2MadIntensity = log2mad_vals,
+                                       log2SdIntensity = log2sd_vals,
                          rowData = rowdat, colData = colData(se))
 }

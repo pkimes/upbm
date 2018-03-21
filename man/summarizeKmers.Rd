@@ -4,24 +4,31 @@
 \alias{summarizeKmers}
 \title{Summarize K-mer Intensities}
 \usage{
-summarizeKmers(se, assay_name = "fore", kmers = NULL, verbose = FALSE,
-  .filter = 1L, .trim = if (.filter > 0L) {     c(1, 36) } else {     NULL
-  }, ...)
+summarizeKmers(se, assay_name = "fore", kmers = NULL, offset = 1,
+  verbose = FALSE, .filter = 1L, .trim = if (.filter > 0L) {     c(1, 36)
+  } else {     NULL })
 }
 \arguments{
-\item{se}{SummarizedExperiment object containing GPR
-intensity information.}
-
-\item{assay_name}{string name of the assay to plot.
-(default = "fore")}
-
-\item{kmers}{character vector of k-mers to predict.}
+\item{se}{SummarizedExperiment object containing PBM intensity data.}
 
 \item{assay_name}{string name of the assay to use. (default = "fore")}
 
-\item{std_array}{logical whether the array is a standard PBM array.
-See Details for more information. (default = TRUE)
-(default = TRUE)}
+\item{kmers}{character vector of k-mers to predict.}
+
+\item{offset}{integer offset to add to intensities before log2 scaling to
+prevent errors with zero intensities. (default = 1)}
+
+\item{verbose}{logical whether to print extra messages during model fitting
+procedure. (default = FALSE)}
+
+\item{.filter}{integer specifying level of probe filtering to
+perform prior to estimating affinities. See \code{pbmFilterProbes}
+for more details on probe filter levels. (default = 1)}
+
+\item{.trim}{interger vector of length two specifying start and end
+of probe sequence to be used. Default is based on the universal
+PBM probe design where only leading 36nt should be used.
+Ignored if NULL. (default = c(1, 36))}
 }
 \value{
 SummarizedExperiment object with summarized intensity information in
