@@ -125,6 +125,7 @@ pbmPlotComparison <- function(se1, se2, assay_name  = "fore", match_by = conditi
     pdat1 <- dplyr::mutate(pdat1,
                            Row = rowData(se1)[, "Row"],
                            Column = rowData(se1)[, "Column"])
+    pdat1 <- tidyr::gather(pdat1, sample, value, -Column, -Row)
     pdat1 <- dplyr::left_join(pdat1, coldat1, by = "sample")
     pdat1 <- dplyr::select(pdat1, -sample)
 
@@ -134,6 +135,7 @@ pbmPlotComparison <- function(se1, se2, assay_name  = "fore", match_by = conditi
     pdat2 <- dplyr::mutate(pdat2,
                            Row = rowData(se2)[, "Row"],
                            Column = rowData(se2)[, "Column"])
+    pdat2 <- tidyr::gather(pdat2, sample, value, -Column, -Row)
     pdat2 <- dplyr::left_join(pdat2, coldat2, by = "sample")
     pdat2 <- dplyr::select(pdat2, -sample)
     
