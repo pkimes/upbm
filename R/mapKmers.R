@@ -16,7 +16,10 @@
 #' @return
 #' a table with 8mer sequences (seq), and probes, where each row
 #' corresponds to a unique occurrence of the sequence on a probe and on
-#' the array.
+#' the array. The table inclues all columns of the input \code{probes}
+#' table except for the \code{Sequences} column, as well as columns
+#' indicating the orientation (orient) and position (pos) of the k-mer
+#' in the probe. 
 #'
 #' @importFrom tibble tibble rownames_to_column
 #' @importFrom tidyr unnest
@@ -53,6 +56,11 @@ mapKmers <- function(probes, kmers) {
     ## count up occurrences of kmers - note: will do ALL kmers
     rolls <- lapply(probes$Sequence, substring, 1:(seql - k + 1), k:seql)
     rolls <- tibble::tibble(probe_idx = probes$probe_idx, fwd_seq = rolls)
+
+    ## add start position (1-indexed)
+    rolls <- dplyr::mutate(rolls, pos = list(1:(seql - k + 1)))
+
+    ## unnest and add reverse complement sequence
     rolls <- tidyr::unnest(rolls)
     rolls <- dplyr::mutate(rolls, rev_seq = as.character(Biostrings::reverseComplement(Biostrings::DNAStringSet(fwd_seq))))
     
@@ -63,7 +71,7 @@ mapKmers <- function(probes, kmers) {
     rolls_rev <- dplyr::mutate(rolls_rev, seq = rev_seq, orient = 'rev') 
     
     rolls <- dplyr::bind_rows(rolls_fwd, rolls_rev)
-    rolls <- dplyr::select(rolls, probe_idx, seq, orient)
+    rolls <- dplyr::select(rolls, probe_idx, seq, pos, orient)
     
     ## add all probe identifiers except for sequence
     if (length(probes) > 1) {

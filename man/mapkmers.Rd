@@ -18,7 +18,10 @@ probes should be mapped.}
 \value{
 a table with 8mer sequences (seq), and probes, where each row
 corresponds to a unique occurrence of the sequence on a probe and on
-the array.
+the array. The table inclues all columns of the input \code{probes}
+table except for the \code{Sequences} column, as well as columns
+indicating the orientation (orient) and position (pos) of the k-mer
+in the probe.
 }
 \description{
 This helper function takes a standardized PBM sequence design file,
