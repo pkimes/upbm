@@ -135,7 +135,7 @@ buildPBMExperiment <- function(tab, useMean = FALSE, filterFlags = TRUE,
 #' 
 #' Helper function for reading in a single GPR file.
 #'
-#' @param gpr_path path to GPR fle.
+#' @param gpr_path path to GPR file.
 #' @param gpr_type scan type; one of "Alexa488", "Cy3", "Masliner".
 #' @param useMean logical whether to use mean fluorescent intensity
 #'        for each probe rather than median fluorescent intensity.
@@ -174,9 +174,6 @@ readGPR <- function(gpr_path, gpr_type, useMean = FALSE, filterFlags = TRUE,
 
     ## determine number of columns
     p <- length(header)
-    if (gpr_type == "Masliner") {
-        p <- p + 4
-    }
 
     ## specify which columns to read in
     colt <- rep("-", p)
@@ -224,3 +221,4 @@ readGPR <- function(gpr_path, gpr_type, useMean = FALSE, filterFlags = TRUE,
     }
     vals
 }
+
