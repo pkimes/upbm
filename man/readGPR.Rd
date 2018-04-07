@@ -8,7 +8,7 @@ readGPR(gpr_path, gpr_type, useMean = FALSE, filterFlags = TRUE,
   readBackground = TRUE)
 }
 \arguments{
-\item{gpr_path}{path to GPR fle.}
+\item{gpr_path}{path to GPR file.}
 
 \item{gpr_type}{scan type; one of "Alexa488", "Cy3", "Masliner".}
 

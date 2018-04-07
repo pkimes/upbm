@@ -222,3 +222,101 @@ readGPR <- function(gpr_path, gpr_type, useMean = FALSE, filterFlags = TRUE,
     vals
 }
 
+
+#' Read 'RawData' File as Assay
+#' 
+#' Helper function for reading in a partially "cleaned" 'rawdata' file, e.g.
+#' available on the UniPROBE database.
+#' Raw GenePix scan output files typically include a 30 to 40 line header, as well
+#' as a large number of columns with various probe-level metrics. However, data uploaded
+#' to the UniPROBE database typically include a small subset of the columns, and no
+#' header. This function is written to read in raw GPR data stored in the latter format.
+#' Files in the first format can be read in using the \code{readGPR} function.
+#'
+#' @param gpr_path path to text file containing GPR data. See above description
+#'        for more information on how this differs from \code{readGPR}. 
+#' @param filterFlags logical whether to replace intensity values at probes
+#'        flagged manually or automatically as being low quality.
+#'        ('Bad': -100, 'Absent': -75, 'Not Found': -50) with NA.
+#'        (default = TRUE)
+#' 
+#' @return
+#' tibble (data.frame-like) object of a single GPR file with three
+#' columns: 'Column', 'Row', 'foreground'.
+#' ('ID' and 'Name' columns are ignored as these may be incorrect in the GPR file.) 
+#' 
+#' @details
+#' Columns included in 'rawdata' files on UniPROBE can vary substantially.
+#' Based on a scan of data sets available on the database, we assume that the
+#' Alexa488 intensity columns correspond to median background subtracted foreground
+#' intensities. The first column containing the string "flag" following the
+#' Alexa488 intensity column is assumed to be the corresponding flags for the
+#' Alexa488 scan.
+#' When possible, the scan type is inferred from the column names in the file.
+#'
+#' @importFrom readr read_tsv read_lines
+#' @importFrom dplyr select
+#' @author Patrick Kimes
+readRawData <- function(gpr_path, filterFlags = TRUE) {
+    
+    ## number of rows to skip appears to be variable - determine from reading raw
+    header <- readr::read_lines(gpr_path, n_max = 1)
+
+    ## verify that necessary columns are labeled
+    if (!grepl(".*Column.*Row.*ID.*", header, ignore.case = TRUE)) {
+        stop("header line does not include necessary ",
+             "'Column', 'Row', and 'ID' columns.")
+    }
+    header <- strsplit(header, "\\t")[[1]]
+
+    ## determine number of columns
+    p <- length(header)
+
+    ## determine column indicies
+    icol <- grep("column", header, ignore.case = TRUE) 
+    irow <- grep("row", header, ignore.case = TRUE)
+    ival <- grep("alexa", ifelse(grepl("flag", header, ignore.case = TRUE),
+                                 NA, header), ignore.case = TRUE)
+
+    ## make sure column, row, value indicies only occur once
+    stopifnot(sapply(list(icol, irow, ival), length) == 1)
+
+    ## subset flag column to be after alexa value column
+    if (filterFlags) {
+        iflag <- grep("flag", header, ignore.case = TRUE)
+        iflag <- iflag[iflag > ival]
+        if (length(iflag) == 0) {
+            warning("No valid 'Flag' column was found. Skipping filtering.")
+            filterFlags <- FALSE
+        } else if (length(iflag) > 1) {
+            warning("More than one 'Flag' column was found. Skipping filtering.")
+            filterFlags <- FALSE
+        }
+    }
+
+    ## specify which columns to read in
+    colt <- rep("-", p)
+    colt[c(icol, irow)] <- 'i'
+    colt[ival] <- 'd'
+    if (filterFlags) {
+        colt[iflag] <- 'i'
+    }
+
+    colts <- paste(colt, collapse = "")
+    vals <- readr::read_tsv(gpr_path, col_names = TRUE, col_types = colts,
+                            progress = FALSE)
+    names(vals)[which(which(colt != "-") == ival)] <- 'foreground'
+    names(vals)[which(which(colt != "-") == icol)] <- 'Column'
+    names(vals)[which(which(colt != "-") == irow)] <- 'Row'
+    if (filterFlags) {
+        names(vals)[which(which(colt != "-") == iflag)] <- 'Flags'
+    }
+
+    ## remove negative (low quality) flagged probes
+    if (filterFlags) {
+        vals$foreground[vals$Flags < 0] <- NA_real_
+        vals <- dplyr::select(vals, -Flags)
+    }
+    vals
+}
+
