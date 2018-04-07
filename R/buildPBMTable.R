@@ -118,7 +118,7 @@ buildPBMTable <- function(gpr_dir = NULL, gpr_type = "Alexa", gpr_files = NULL) 
         fl[fl_type != "Masliner"] <- gsub("(.*?)_?lp[[:digit:]]+pg[[:digit:]]+$", "\\1",
                                           fl[fl_type != "Masliner"])
     }
-    fl[fl_type == "Masliner"] <- gsub("(.*?)_?Maslin.*", "\\1", fl[fl_type != "Masliner"],
+    fl[fl_type == "Masliner"] <- gsub("(.*?)_?Maslin.*", "\\1", fl[fl_type == "Masliner"],
                                       ignore.case = TRUE)
 
     ## peal off last part of file (should be Alexa or Cy3)
