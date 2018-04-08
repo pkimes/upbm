@@ -8,9 +8,8 @@ buildPBMExperiment(tab, useMean = FALSE, filterFlags = TRUE,
   readBackground = TRUE, probes = NULL)
 }
 \arguments{
-\item{tab}{table of samples with at least `gpr` and `vers` columns
-corresponding to GPR file paths and the corresponding PBM
-design version.}
+\item{tab}{table of samples with at least a single `gpr` column
+corresponding to GPR file paths.}
 
 \item{useMean}{logical whether to use mean fluorescent intensity
 for each probe rather than median fluorescent intensity.

@@ -2,9 +2,8 @@
 #'
 #' Read PBM data from a table containing paths to GPR files. 
 #' 
-#' @param tab table of samples with at least `gpr` and `vers` columns
-#'        corresponding to GPR file paths and the corresponding PBM
-#'        design version.
+#' @param tab table of samples with at least a single `gpr` column
+#'        corresponding to GPR file paths.
 #' @param useMean logical whether to use mean fluorescent intensity
 #'        for each probe rather than median fluorescent intensity.
 #'        (default = FALSE)
@@ -35,27 +34,33 @@ buildPBMExperiment <- function(tab, useMean = FALSE, filterFlags = TRUE,
                                readBackground = TRUE, probes = NULL) {
     ## check validity of inputs
     stopifnot(is.data.frame(tab))
-    stopifnot(c("vers", "gpr") %in% names(tab))
+    stopifnot("gpr" %in% names(tab))
     stopifnot(is.logical(useMean))
     stopifnot(is.logical(filterFlags))
     
     ## currently only support all scans with same design
-    if (length(unique(tab$vers)) > 1) {
-        stop("All samples/scans must have the same assay design version")
+    if ("vers" %in% names(tab)) {
+        if (length(unique(tab$vers)) > 1) {
+            stop("All samples/scans must have the same assay design version")
+        }
     }
 
     ## guess scan type if not specified - only care if Masliner or not
     if ("scan" %in% names(tab)) {
         tab_scan <- tab$scan
+        if (!all(tab_scan %in% c("Alexa", "Cy3", "Masliner", "RawData"))) {
+            stop("\"scan\" column entries can only take the following values: \n",
+                 "\"Alexa\", \"Cy3\", \"Masliner\", \"RawData\".")
+        }
     } else {
         ## don't add to 'tab' since don't want in colData of output
-        tab_scan <- rep("Alexa488", nrow(tab))
+        tab_scan <- rep("Alexa", nrow(tab))
         tab_scan[grep("MaslinerOutput", tab$gpr,
                       ignore.case = TRUE)] <- "Masliner"
     }
     
-    ## read in all GPR scans
-    assay_table <- mapply(readGPR, gpr_path = tab$gpr, gpr_type = tab_scan,
+    ## read in all data files
+    assay_table <- mapply(readPBM, gpr_path = tab$gpr, gpr_type = tab_scan,
                           useMean = useMean, filterFlags = filterFlags,
                           readBackground = readBackground, SIMPLIFY = FALSE)
     
@@ -131,12 +136,51 @@ buildPBMExperiment <- function(tab, useMean = FALSE, filterFlags = TRUE,
 }
 
 
-#' Read GPR File as Assay
+#' Read PBM Data File
+#' 
+#' Helper function for reading in a single PBM raw data file either
+#' in GPR format or processed format, e.g. such as files uploaded
+#' to the UniPROBE database.
+#' If \code{gpr_type = "RawData"} is specified, \code{\link{readRawData}}
+#' is used to read in the specified file. Otherwise, \code{\link{readGPR}}
+#' is used. Parameters are passed directly to the appropriate function.
+#'
+#' @param gpr_path path to GPR file.
+#' @param gpr_type scan type; one of "Alexa", "Cy3", "Masliner", "RawData".
+#' @param useMean logical whether to use mean fluorescent intensity
+#'        for each probe rather than median fluorescent intensity.
+#'        Ignored if \code{gpr_type = "RawData"}. (default = FALSE)
+#' @param filterFlags logical whether to replace intensity values at probes
+#'        flagged manually or automatically as being low quality.
+#'         ('Bad': -100, 'Absent': -75, 'Not Found': -50) with NA. (default = TRUE)
+#' @param readBackground logical whether to also read in probe background
+#'        intensities. Ignored if \code{gpr_type = "RawData"}. (default = TRUE)
+#'
+#' @return
+#' See documentation for the appropriate function for more details.
+#'
+#' @seealso readGPR readRawData
+#' @author Patrick Kimes
+readPBM <- function(gpr_path, gpr_type, useMean = FALSE, filterFlags = TRUE,
+                    readBackground = TRUE) {
+    if (gpr_type == "RawData") {
+        dat <- readRawData(gpr_path, filterFlags)
+    } else if (gpr_type %in% c("Alexa", "Cy3", "Masliner")) {
+        dat <- readGPR(gpr_path, gpr_type, useMean = FALSE, filterFlags = TRUE,
+                       readBackground = TRUE)
+    } else {
+        stop("gpr_type must be one of: \"Alexa\", \"Cy3\", \"Masliner\", \"RawData\".")
+    }
+    return(dat)
+}
+
+
+#' Read GPR File
 #' 
 #' Helper function for reading in a single GPR file.
 #'
 #' @param gpr_path path to GPR file.
-#' @param gpr_type scan type; one of "Alexa488", "Cy3", "Masliner".
+#' @param gpr_type scan type; one of "Alexa", "Cy3", "Masliner".
 #' @param useMean logical whether to use mean fluorescent intensity
 #'        for each probe rather than median fluorescent intensity.
 #'        (default = FALSE)
@@ -191,7 +235,8 @@ readGPR <- function(gpr_path, gpr_type, useMean = FALSE, filterFlags = TRUE,
         back_idx <- grep("^\"B.* Median\"$", header)
     }
     if (length(fore_idx) == 0) {
-        stop("Foreground column could not be identified!")
+        stop("Foreground column could not be identified!\n",
+             "Try setting 'scan' column in sample table to 'RawData'.")
     }
     colt[c(fore_idx)] <- 'd'
     if (readBackground) {
@@ -223,7 +268,7 @@ readGPR <- function(gpr_path, gpr_type, useMean = FALSE, filterFlags = TRUE,
 }
 
 
-#' Read 'RawData' File as Assay
+#' Read Raw Data File
 #' 
 #' Helper function for reading in a partially "cleaned" 'rawdata' file, e.g.
 #' available on the UniPROBE database.
@@ -248,11 +293,10 @@ readGPR <- function(gpr_path, gpr_type, useMean = FALSE, filterFlags = TRUE,
 #' @details
 #' Columns included in 'rawdata' files on UniPROBE can vary substantially.
 #' Based on a scan of data sets available on the database, we assume that the
-#' Alexa488 intensity columns correspond to median background subtracted foreground
+#' Alexa intensity columns correspond to median background subtracted foreground
 #' intensities. The first column containing the string "flag" following the
-#' Alexa488 intensity column is assumed to be the corresponding flags for the
-#' Alexa488 scan.
-#' When possible, the scan type is inferred from the column names in the file.
+#' Alexa intensity column is assumed to be the corresponding flags for the
+#' Alexa scan.
 #'
 #' @importFrom readr read_tsv read_lines
 #' @importFrom dplyr select

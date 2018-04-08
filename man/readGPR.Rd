@@ -2,7 +2,7 @@
 % Please edit documentation in R/buildPBMExperiment.R
 \name{readGPR}
 \alias{readGPR}
-\title{Read GPR File as Assay}
+\title{Read GPR File}
 \usage{
 readGPR(gpr_path, gpr_type, useMean = FALSE, filterFlags = TRUE,
   readBackground = TRUE)
@@ -10,7 +10,7 @@ readGPR(gpr_path, gpr_type, useMean = FALSE, filterFlags = TRUE,
 \arguments{
 \item{gpr_path}{path to GPR file.}
 
-\item{gpr_type}{scan type; one of "Alexa488", "Cy3", "Masliner".}
+\item{gpr_type}{scan type; one of "Alexa", "Cy3", "Masliner".}
 
 \item{useMean}{logical whether to use mean fluorescent intensity
 for each probe rather than median fluorescent intensity.

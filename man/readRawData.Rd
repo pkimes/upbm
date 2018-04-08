@@ -2,7 +2,7 @@
 % Please edit documentation in R/buildPBMExperiment.R
 \name{readRawData}
 \alias{readRawData}
-\title{Read 'RawData' File as Assay}
+\title{Read Raw Data File}
 \usage{
 readRawData(gpr_path, filterFlags = TRUE)
 }
@@ -32,11 +32,10 @@ Files in the first format can be read in using the \code{readGPR} function.
 \details{
 Columns included in 'rawdata' files on UniPROBE can vary substantially.
 Based on a scan of data sets available on the database, we assume that the
-Alexa488 intensity columns correspond to median background subtracted foreground
+Alexa intensity columns correspond to median background subtracted foreground
 intensities. The first column containing the string "flag" following the
-Alexa488 intensity column is assumed to be the corresponding flags for the
-Alexa488 scan.
-When possible, the scan type is inferred from the column names in the file.
+Alexa intensity column is assumed to be the corresponding flags for the
+Alexa scan.
 }
 \author{
 Patrick Kimes
