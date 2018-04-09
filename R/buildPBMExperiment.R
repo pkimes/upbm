@@ -38,13 +38,6 @@ buildPBMExperiment <- function(tab, useMean = FALSE, filterFlags = TRUE,
     stopifnot(is.logical(useMean))
     stopifnot(is.logical(filterFlags))
     
-    ## currently only support all scans with same design
-    if ("vers" %in% names(tab)) {
-        if (length(unique(tab$vers)) > 1) {
-            stop("All samples/scans must have the same assay design version")
-        }
-    }
-
     ## guess scan type if not specified - only care if Masliner or not
     if ("scan" %in% names(tab)) {
         tab_scan <- tab$scan
@@ -75,11 +68,11 @@ buildPBMExperiment <- function(tab, useMean = FALSE, filterFlags = TRUE,
     ## convert GPR data to list of DataFrames for SummarizedExperiment assay slot
     assaydat <- list(fore = DataFrame(dplyr::select(assay_table, -Column, -Row)))
     names(assaydat[["fore"]]) <- paste0("s", 1:ncol(assaydat[["fore"]]))
-    if (readBackground) {
+    if (readBackground & !all(tab_scan == "RawData")) {
         assaydat[["back"]] <- DataFrame(dplyr::select(assay_btable, -Column, -Row))
         names(assaydat[["back"]]) <- names(assaydat[["fore"]])
     }
-
+    
     ## row/probe-level metadata from GPR files
     rowdat <- dplyr::select(assay_table, Column, Row)
 
@@ -355,7 +348,8 @@ readRawData <- function(gpr_path, filterFlags = TRUE) {
     if (filterFlags) {
         names(vals)[which(which(colt != "-") == iflag)] <- 'Flags'
     }
-
+    vals$background <- NA_real_
+    
     ## remove negative (low quality) flagged probes
     if (filterFlags) {
         vals$foreground[vals$Flags < 0] <- NA_real_
