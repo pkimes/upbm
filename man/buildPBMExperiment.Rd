@@ -37,6 +37,12 @@ following assays:
 \description{
 Read PBM data from a table containing paths to GPR files.
 }
+\details{
+If raw data files (cleaned GPR data files, e.g. uploaded to UniPROBE) include
+probe ID, Name, or Sequence information, this is compared across samples and
+an error is thrown if the probe-to-sequence mapping is not common across all
+samples.
+}
 \author{
 Patrick Kimes
 }
