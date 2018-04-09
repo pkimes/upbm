@@ -341,7 +341,7 @@ readGPR <- function(gpr_path, gpr_type, useMean = FALSE, filterFlags = TRUE,
 #' raw data files.
 #' 
 #' @details
-#' Columns included in \cpde{rawdata} files on UniPROBE can vary substantially.
+#' Columns included in \code{rawdata} files on UniPROBE can vary substantially.
 #' Based on a scan of data sets available on the database, we assume that the
 #' Alexa intensity columns correspond to median background subtracted foreground
 #' intensities. The first column containing the string "flag" following the
