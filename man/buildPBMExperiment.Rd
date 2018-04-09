@@ -8,9 +8,8 @@ buildPBMExperiment(tab, useMean = FALSE, filterFlags = TRUE,
   readBackground = TRUE, probes = NULL)
 }
 \arguments{
-\item{tab}{table of samples with at least `gpr` and `vers` columns
-corresponding to GPR file paths and the corresponding PBM
-design version.}
+\item{tab}{table of samples with at least a single `gpr` column
+corresponding to GPR file paths.}
 
 \item{useMean}{logical whether to use mean fluorescent intensity
 for each probe rather than median fluorescent intensity.
@@ -37,6 +36,12 @@ following assays:
 }
 \description{
 Read PBM data from a table containing paths to GPR files.
+}
+\details{
+If raw data files (cleaned GPR data files, e.g. uploaded to UniPROBE) include
+probe ID, Name, or Sequence information, this is compared across samples and
+an error is thrown if the probe-to-sequence mapping is not common across all
+samples.
 }
 \author{
 Patrick Kimes

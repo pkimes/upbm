@@ -2,9 +2,9 @@
 % Please edit documentation in R/buildPBMExperiment.R
 \name{readRawData}
 \alias{readRawData}
-\title{Read 'RawData' File as Assay}
+\title{Read Raw Data File}
 \usage{
-readRawData(gpr_path, filterFlags = TRUE)
+readRawData(gpr_path, filterFlags = TRUE, readBackground = TRUE)
 }
 \arguments{
 \item{gpr_path}{path to text file containing GPR data. See above description
@@ -14,11 +14,16 @@ for more information on how this differs from \code{readGPR}.}
 flagged manually or automatically as being low quality.
 ('Bad': -100, 'Absent': -75, 'Not Found': -50) with NA.
 (default = TRUE)}
+
+\item{readBackground}{logical whether output should include a column of NAs
+for background intensities. Only useful for matching column names with
+raw GPR data. (default = TRUE)}
 }
 \value{
-tibble (data.frame-like) object of a single GPR file with three
-columns: 'Column', 'Row', 'foreground'.
-('ID' and 'Name' columns are ignored as these may be incorrect in the GPR file.)
+tibble (data.frame-like) object of a single raw data file with between three to six
+columns: 'Column', 'Row', 'foreground', and if available, 'ID', 'Name', 'Sequence'.
+Unlike with raw GPR files, the ID and Name columns are assumed to be correct in
+raw data files.
 }
 \description{
 Helper function for reading in a partially "cleaned" 'rawdata' file, e.g.
@@ -30,13 +35,12 @@ header. This function is written to read in raw GPR data stored in the latter fo
 Files in the first format can be read in using the \code{readGPR} function.
 }
 \details{
-Columns included in 'rawdata' files on UniPROBE can vary substantially.
+Columns included in \code{rawdata} files on UniPROBE can vary substantially.
 Based on a scan of data sets available on the database, we assume that the
-Alexa488 intensity columns correspond to median background subtracted foreground
+Alexa intensity columns correspond to median background subtracted foreground
 intensities. The first column containing the string "flag" following the
-Alexa488 intensity column is assumed to be the corresponding flags for the
-Alexa488 scan.
-When possible, the scan type is inferred from the column names in the file.
+Alexa intensity column is assumed to be the corresponding flags for the
+Alexa scan.
 }
 \author{
 Patrick Kimes
