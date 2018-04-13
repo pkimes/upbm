@@ -7,12 +7,13 @@
 #' @param assay_name string name of the assay to use. (default = "fore")
 #' @param kmers character vector of k-mers to predict.
 #' @param offset integer offset to add to intensities before log2 scaling to
-#'        prevent errors with zero intensities. (default = 1)
+#'        prevent errors with zero intensities. If set to 0, probes with
+#'        zero intensities are dropped/ignored for log-scaled metrics. (default = 1)
 #' @param stat_set caracter vector of statistics to calculate for each sample.
 #'        The set of supported statistics are listed in the details. By default,
 #'        only a subset of the total possible statistics are computed.
 #'        If all supported statistics should be calculated, specify NULL.
-#'        (default = \code{c("median", "log2mad", "lo2sd", "na")})
+#'        (default = \code{c("median", "log2mad", "log2sd", "na")})
 #' @param verbose logical whether to print extra messages during model fitting
 #'        procedure. (default = FALSE)
 #' @param .filter integer specifying level of probe filtering to
@@ -29,9 +30,9 @@
 #' * \code{"mean"}: mean probe intensity
 #' * \code{"mad"}: MAD probe intensity (scaled by 1.4826)
 #' * \code{"sd"}: SD probe intensity
-#' * \code{"log2mean"}: mean probe log2(intensity + shift)
-#' * \code{"log2mad"}: MAD probe log2(intensity + shift)
-#' * \code{"log2sd"}: SD probe log(intensity + shift)
+#' * \code{"log2mean"}: mean probe log2(intensity + offset)
+#' * \code{"log2mad"}: MAD probe log2(intensity + offset)
+#' * \code{"log2sd"}: SD probe log(intensity + offset)
 #' * \code{"na"}: number of NA probes
 #' 
 #' @return
@@ -47,7 +48,7 @@
 #' @export
 #' @author Patrick Kimes
 summarizeKmers <- function(se, assay_name = "fore", kmers = NULL, offset = 1,
-                           stat_set = c("median", "log2mad", "lo2sd", "na"),
+                           stat_set = c("median", "log2mad", "log2sd", "na"),
                            verbose = FALSE, .filter = 1L,
                            .trim = if (.filter > 0L) { c(1, 36) } else { NULL }) {
 
@@ -148,10 +149,17 @@ summarizeKmers <- function(se, assay_name = "fore", kmers = NULL, offset = 1,
     
     ## calculate log2 mean intensities
     if ("log2mean" %in% stat_set) {
-        pdatm <- dplyr::mutate(pdat_sets,
-                               m = lapply(data, function(x) {
-                                   matrixStats::colMeans2(log2(x + offset), na.rm = TRUE)
-                               }))
+        if (offset <= 0) {  
+            pdatm <- dplyr::mutate(pdat_sets,
+                                   m = lapply(data, function(x) {
+                                       matrixStats::colMeans2(log2(x[x > 0]), na.rm = TRUE)
+                                   }))
+        } else {
+            pdatm <- dplyr::mutate(pdat_sets,
+                                   m = lapply(data, function(x) {
+                                       matrixStats::colMeans2(log2(x + offset), na.rm = TRUE)
+                                   }))
+        }
         log2mean_vals <- DataFrame(do.call(rbind, pdatm$m))
         names(log2mean_vals) <- pdat_samples
         stopifnot(pdat_seqs == pdatm$seq)
@@ -160,10 +168,17 @@ summarizeKmers <- function(se, assay_name = "fore", kmers = NULL, offset = 1,
 
     ## calculate log2 mad intensities
     if ("log2mad" %in% stat_set) {
-        pdatm <- dplyr::mutate(pdat_sets,
-                               m = lapply(data, function(x) {
-                                   matrixStats::colMads(log2(x + offset), na.rm = TRUE)
-                               }))
+        if (offset <= 0) {
+            pdatm <- dplyr::mutate(pdat_sets,
+                                   m = lapply(data, function(x) {
+                                       matrixStats::colMads(log2(x[x > 0]), na.rm = TRUE)
+                                   }))
+        } else {
+            pdatm <- dplyr::mutate(pdat_sets,
+                                   m = lapply(data, function(x) {
+                                       matrixStats::colMads(log2(x + offset), na.rm = TRUE)
+                                   }))
+        }
         log2mad_vals <- DataFrame(do.call(rbind, pdatm$m))
         names(log2mad_vals) <- pdat_samples
         stopifnot(pdat_seqs == pdatm$seq)
@@ -172,10 +187,17 @@ summarizeKmers <- function(se, assay_name = "fore", kmers = NULL, offset = 1,
     
     ## calculate log2 SD intensities
     if ("log2sd" %in% stat_set) {
-        pdatm <- dplyr::mutate(pdat_sets,
-                               m = lapply(data, function(x) {
-                                   matrixStats::colSds(log2(x + offset), na.rm = TRUE)
-                               }))
+        if (offset <= 0) {
+            pdatm <- dplyr::mutate(pdat_sets,
+                                   m = lapply(data, function(x) {
+                                       matrixStats::colSds(log2(x[x > 0]), na.rm = TRUE)
+                                   }))
+        } else {
+            pdatm <- dplyr::mutate(pdat_sets,
+                                   m = lapply(data, function(x) {
+                                       matrixStats::colSds(log2(x + offset), na.rm = TRUE)
+                                   }))
+        }
         log2sd_vals <- DataFrame(do.call(rbind, pdatm$m))
         names(log2sd_vals) <- pdat_samples
         stopifnot(pdat_seqs == pdatm$seq)

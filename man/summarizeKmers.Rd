@@ -5,7 +5,7 @@
 \title{Summarize K-mer Intensities}
 \usage{
 summarizeKmers(se, assay_name = "fore", kmers = NULL, offset = 1,
-  stat_set = c("median", "log2mad", "lo2sd", "na"), verbose = FALSE,
+  stat_set = c("median", "log2mad", "log2sd", "na"), verbose = FALSE,
   .filter = 1L, .trim = if (.filter > 0L) {     c(1, 36) } else {     NULL
   })
 }
@@ -17,13 +17,14 @@ summarizeKmers(se, assay_name = "fore", kmers = NULL, offset = 1,
 \item{kmers}{character vector of k-mers to predict.}
 
 \item{offset}{integer offset to add to intensities before log2 scaling to
-prevent errors with zero intensities. (default = 1)}
+prevent errors with zero intensities. If set to 0, probes with
+zero intensities are dropped/ignored for log-scaled metrics. (default = 1)}
 
 \item{stat_set}{caracter vector of statistics to calculate for each sample.
 The set of supported statistics are listed in the details. By default,
 only a subset of the total possible statistics are computed.
 If all supported statistics should be calculated, specify NULL.
-(default = \code{c("median", "log2mad", "lo2sd", "na")})}
+(default = \code{c("median", "log2mad", "log2sd", "na")})}
 
 \item{verbose}{logical whether to print extra messages during model fitting
 procedure. (default = FALSE)}
@@ -54,9 +55,9 @@ The following statistics are currently supported.
 \item \code{"mean"}: mean probe intensity
 \item \code{"mad"}: MAD probe intensity (scaled by 1.4826)
 \item \code{"sd"}: SD probe intensity
-\item \code{"log2mean"}: mean probe log2(intensity + shift)
-\item \code{"log2mad"}: MAD probe log2(intensity + shift)
-\item \code{"log2sd"}: SD probe log(intensity + shift)
+\item \code{"log2mean"}: mean probe log2(intensity + offset)
+\item \code{"log2mad"}: MAD probe log2(intensity + offset)
+\item \code{"log2sd"}: SD probe log(intensity + offset)
 \item \code{"na"}: number of NA probes
 }
 }

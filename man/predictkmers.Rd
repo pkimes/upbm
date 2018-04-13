@@ -16,7 +16,8 @@ predictKmers(se, assay_name = "fore", kmers = NULL, offset = 1,
 \item{kmers}{character vector of k-mers to predict.}
 
 \item{offset}{integer offset to add to intensities before log2 scaling to
-prevent errors with zero intensities. (default = 1)}
+prevent errors with zero intensities. If set to 0, probes with
+zero intensities are dropped/ignored in estimation. (default = 1)}
 
 \item{verbose}{logical whether to print extra messages during model fitting
 procedure. (default = FALSE)}

@@ -9,7 +9,8 @@
 #' @param assay_name string name of the assay to use. (default = "fore")
 #' @param kmers character vector of k-mers to predict.
 #' @param offset integer offset to add to intensities before log2 scaling to
-#'        prevent errors with zero intensities. (default = 1)
+#'        prevent errors with zero intensities. If set to 0, probes with
+#'        zero intensities are dropped/ignored in estimation. (default = 1)
 #' @param verbose logical whether to print extra messages during model fitting
 #'        procedure. (default = FALSE)
 #' @param .filter integer specifying level of probe filtering to
@@ -94,8 +95,13 @@ predictKmers <- function(se, assay_name = "fore", kmers = NULL, offset = 1,
     ## vectorize and log-transform intensities
     vec_intensities <- as.matrix(assay(se, assay_name))
     vec_intensities <- matrix(vec_intensities, ncol = 1)
-    vec_intensities <- log2(vec_intensities + offset)
-
+    if (offset <= 0) {
+        vec_intensities[vec_intensities <= 0] <- NA
+        vec_intensities <- log2(vec_intensities)
+    } else {
+        vec_intensities <- log2(vec_intensities + offset)
+    }
+    
     ## remove NAs
     valid_idx <- which(!is.na(vec_intensities))
     vec_intensities <- vec_intensities[valid_idx, ]
