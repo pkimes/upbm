@@ -155,7 +155,6 @@ pbmPlotScatter <- function(se, assay_name = "fore", stratify = condition, baseli
 
 .pbmCheckStratify <- function(s, strat, bl) {
     strat_str <- rlang::quo_name(strat)
-    print(strat_str)
 
     ## check validity of stratifying colData column
     stopifnot(strat_str %in% names(colData(s)))

@@ -101,7 +101,7 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, stratify = 
     stopifnot(colnames(new_assay) %in% colnames(se))
     new_assay <- new_assay[, colnames(se)]
 
-    assay(se, "scaled") <- DataFrame(new_assay)
+    assay(se, "scaled") <- DataFrame(new_assay, check.names = FALSE)
 
     return(se)
 }
