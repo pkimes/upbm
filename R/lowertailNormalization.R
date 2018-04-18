@@ -109,8 +109,13 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, stratify = 
     stopifnot(colnames(new_assay) %in% colnames(se))
     new_assay <- new_assay[, colnames(se)]
 
+    ## add new assay to se object
     assay(se, "scaled") <- DataFrame(new_assay, check.names = FALSE)
 
+    ## store reference mean, sd information
+    metadata(se)$ref_mean <- ref_mean
+    metadata(se)$ref_sd <- ref_sd
+    
     return(se)
 }
 
