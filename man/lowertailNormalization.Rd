@@ -35,10 +35,12 @@ new assay, \code{scaled}.
 \description{
 This is an experimental normalization procedure based on fitting
 a truncated normal distribution to the lower tail of log2-scale probe
-intensities to register intensities across experiments. The
-intensities are shift/scale transformed on the log2-scale to match
-a specified reference sample. \emph{This code is still under
-testing and not a finalized normalization procedure}.
+intensities to register intensities across experiments. The mean of
+the distribution is estimated using the \code{bg.parameters} function
+from the \code{affy} package, and only the standard deviation is estimated
+separately for the lower tail. The intensities are shift/scale transformed
+on the log2-scale to match a specified reference sample.
+\emph{This code is still under testing and not a finalized normalization procedure}.
 }
 \author{
 Patrick Kimes

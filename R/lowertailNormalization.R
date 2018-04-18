@@ -2,10 +2,12 @@
 #' 
 #' This is an experimental normalization procedure based on fitting
 #' a truncated normal distribution to the lower tail of log2-scale probe
-#' intensities to register intensities across experiments. The
-#' intensities are shift/scale transformed on the log2-scale to match
-#' a specified reference sample. \emph{This code is still under
-#' testing and not a finalized normalization procedure}.
+#' intensities to register intensities across experiments. The mean of
+#' the distribution is estimated using the \code{bg.parameters} function
+#' from the \code{affy} package, and only the standard deviation is estimated
+#' separately for the lower tail. The intensities are shift/scale transformed
+#' on the log2-scale to match a specified reference sample.
+#' \emph{This code is still under testing and not a finalized normalization procedure}.
 #'
 #' @param se SummarizedExperiment object containing GPR
 #'        intensity information.
@@ -30,6 +32,7 @@
 #' @importFrom dplyr as_tibble tibble mutate group_by filter do select ungroup left_join
 #' @importFrom tidyr gather spread nest
 #' @importFrom rlang enquo quo_name
+#' @importFrom affy bg.parameters
 #' @export
 #' @author Patrick Kimes
 lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, stratify = condition,
@@ -44,7 +47,8 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, stratify = 
         coldat <- strats$coldat
         baseline <- strats$baseline
     } else {
-        coldat <- dplyr::tibble(sample = colnames(se))
+        coldat <- dplyr::tibble(sample = colnames(se),
+                                Stratify = colnames(se))
     }
     
     new_assay <- as.data.frame(assay(se, assay_name), optional = TRUE)
@@ -58,17 +62,21 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, stratify = 
     new_assay <- dplyr::mutate(new_assay, ul = quantile(value, probs = q, na.rm = TRUE))
     new_assay <- dplyr::ungroup(new_assay)
 
-    assay_trunc <- dplyr::filter(new_assay, value <= ul, !is.na(value), value > 0)
-    assay_trunc <- dplyr::mutate(assay_trunc, value = log2(value), ul = log2(ul))
-    assay_trunc <- tidyr::nest(assay_trunc, -sample, -Stratify, -ul)
+    assay_fits <- dplyr::filter(new_assay, !is.na(value), value > 0)
+    assay_fits <- dplyr::mutate(assay_fits, value = log2(value), ul = log2(ul))
+    assay_fits <- tidyr::nest(assay_fits, -sample, -Stratify, -ul)
 
-    assay_fits <- dplyr::group_by(assay_trunc, sample, Stratify)
-    assay_fits <- dplyr::do(assay_fits, fit = .fit_tnorm(.$data[[1]]$value, .$ul))
-    assay_fits <- dplyr::ungroup(assay_fits)
     assay_fits <- dplyr::mutate(assay_fits,
-                                est_mean = sapply(fit, function(x) x$estimate["mean"]),
-                                est_sd = sapply(fit, function(x) x$estimate["sd"]))
-
+                                rma_fit = lapply(data, function(x) affy::bg.parameters(x$value)),
+                                rma_mean = sapply(rma_fit, function(x) x$mu),
+                                rma_sd = sapply(rma_fit, function(x) x$sigma))
+    assay_fits <- dplyr::mutate(assay_fits, data = mapply(function(x, y) { x[x$value <= y, ] }, data, ul, SIMPLIFY = FALSE))
+    assay_fits <- dplyr::mutate(assay_fits,
+                                re_fit = mapply(function(x, y, z) { .fit_tnorm(x$value, y, z) },
+                                                data, ul, rma_mean, SIMPLIFY = FALSE),
+                                est_mean = rma_mean,
+                                est_sd = sapply(re_fit, function(x) x$estimate["sd"]))
+    
     if (.fits) {
         return(assay_fits)
     }
@@ -78,7 +86,7 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, stratify = 
     ref_sd <- assay_fits$est_sd[assay_fits$Stratify == baseline]
 
     ## adjust to reference
-    assay_fits <- dplyr::select(assay_fits, -fit)
+    assay_fits <- dplyr::select(assay_fits, -rma_fit, -re_fit)
     new_assay <- dplyr::left_join(new_assay, assay_fits, by = c("sample", "Stratify"))
     new_assay <- mutate(new_assay, value = ifelse(value > 0, value, NA),
                         value = log2(value),
@@ -106,9 +114,8 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, stratify = 
     return(se)
 }
 
-.fit_tnorm <- function(vals, upper) {
+.fit_tnorm <- function(vals, upper, vbar) {
     fitdist(vals, distr = dtruncnorm,
-            fix.arg = list("a" = -20, "b" = upper), 
-            start = list(mean = mean(vals),
-                         sd = sd(vals)))
+            fix.arg = list("a" = -20, "b" = upper, "mean" = vbar), 
+            start = list(sd = sd(vals)))
 }

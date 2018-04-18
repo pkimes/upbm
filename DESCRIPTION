@@ -23,7 +23,8 @@ Depends: R (>= 3.4.1),
          utils,
          matrixStats,
          fitdistrplus,
-         truncnorm
+         truncnorm,
+         affy
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
