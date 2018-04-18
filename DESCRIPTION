@@ -21,7 +21,9 @@ Depends: R (>= 3.4.1),
          limma,
          stats,
          utils,
-         matrixStats
+         matrixStats,
+         fitdistrplus,
+         truncnorm
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true

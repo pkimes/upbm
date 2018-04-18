@@ -54,43 +54,16 @@ pbmPlotScatter <- function(se, assay_name = "fore", stratify = condition, baseli
             stop("rowData must either contain 'Row','Column' columns or 'kmer' column.")
         }
     }
-        
+
+    ## check plot stratification params
     stratify <- rlang::enquo(stratify)
-    stratify_str <- rlang::quo_name(stratify)
-    
-    ## check validity of stratifying colData column
-    stopifnot(stratify_str %in% names(colData(se)))
-    strat_vals <- colData(se)[[stratify_str]]
-    if (any(duplicated(strat_vals))) {
-        stop("Stratifying variable '", stratify_str, "' is not unique across samples.\n",
-             "Specify a different column in colData.")
-    }
-        
-    ## determine baseline if necessary; check validity
-    if (is.null(baseline)) {
-        baseline <- grep("ref", strat_vals, value = TRUE, ignore.case = TRUE)
-        if (length(baseline) > 1) {
-            stop("Too many candidate baseline states in '", stratify, "' column: ",
-                 paste0(baseline, collapse = ", "), ".\n",
-                 "Specify correct baseline condition w/ 'baseline'.")
-        }
-    } else {
-        if (! baseline %in% strat_vals) {
-            stop(baseline, " is not a value in '", stratify, "' column.\n",
-                 "Specify correct baseline condition w/ 'baseline'.")
-        }
-    } 
-    
+    strats <- .pbmCheckStratify(se, stratify, baseline)
+    coldat <- strats$coldat
+    baseline <- strats$baseline
+
     ## filter probes
     se <- pbmFilterProbes(se, .filter) 
-
-    ## condition must be a unique column for faceting plot
-    coldat <- data.frame(colData(se), check.names = FALSE,
-                         check.rows = FALSE, stringsAsFactors = FALSE)
-    coldat <- tibble::rownames_to_column(coldat, "sample")
-    coldat <- dplyr::mutate(coldat, Stratify = rlang::UQ(stratify))
-    coldat <- dplyr::select(coldat, sample, Stratify)
-        
+    
     ## extract intensities
     pdat <- assay(se, assay_name)
     pdat <- as.data.frame(pdat, optional = TRUE)
@@ -177,4 +150,41 @@ pbmPlotScatter <- function(se, assay_name = "fore", stratify = condition, baseli
     }
 
     gp
+}
+
+
+.pbmCheckStratify <- function(s, strat, bl) {
+    strat_str <- rlang::quo_name(strat)
+    print(strat_str)
+
+    ## check validity of stratifying colData column
+    stopifnot(strat_str %in% names(colData(s)))
+    strat_vals <- colData(s)[[strat_str]]
+    if (any(duplicated(strat_vals))) {
+        stop("Stratifying variable '", strat_str, "' is not unique across samples.\n",
+             "Specify a different column in colData.")
+    }
+
+    ## determine baseline if necessary; check validity
+    if (is.null(bl)) {
+        bl <- grep("ref", strat_vals, value = TRUE, ignore.case = TRUE)
+        if (length(bl) > 1) {
+            stop("Too many candidate baseline states in '", strat, "' column: ",
+                 paste0(bl, collapse = ", "), ".\n",
+                 "Specify correct baseline condition w/ 'baseline'.")
+        }
+    } else {
+        if (! bl %in% strat_vals) {
+            stop(bl, " is not a value in '", strat, "' column.\n",
+                 "Specify correct baseline condition w/ 'baseline'.")
+        }
+    } 
+    
+    ## condition must be a unique column for faceting plot
+    coldat <- data.frame(colData(s), check.names = FALSE,
+                         check.rows = FALSE, stringsAsFactors = FALSE)
+    coldat <- tibble::rownames_to_column(coldat, "sample")
+    coldat <- dplyr::mutate(coldat, Stratify = rlang::UQ(strat))
+    coldat <- dplyr::select(coldat, sample, Stratify)
+    return(list(coldat = coldat, baseline = bl))
 }
