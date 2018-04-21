@@ -45,7 +45,15 @@ mapKmers <- function(probes, kmers) {
              "Method currently only supports kmers of uniform length.")
     }
 
-    probes <- tibble::rownames_to_column(probes, "probe_idx")
+    if (! "probe_idx" %in% colnames(probes)) {
+        probes <- dplyr::mutate(probes, probe_idx = 1:n())
+    }  else {
+        if (any(duplicated(probes$probe_idx))) {
+            stop("Probe DataFrame has 'probe_idx' column with non-unique entries.\n",
+                 "If 'probe_idx' is specified, entries must be unique, ",
+                 "or column should be removed.")
+        }
+    }
     
     ## check if sequences are of uniform length
     seql <- unique(nchar(probes$Sequence))
