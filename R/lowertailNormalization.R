@@ -88,11 +88,11 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, stratify = 
     ## adjust to reference
     assay_fits <- dplyr::select(assay_fits, -rma_fit, -re_fit)
     new_assay <- dplyr::left_join(new_assay, assay_fits, by = c("sample", "Stratify"))
-    new_assay <- mutate(new_assay, value = ifelse(value > 0, value, NA),
-                        value = log2(value),
-                        value = (value - est_mean) / est_sd,
-                        value = ref_mean + value * ref_sd,
-                        value = 2^value)
+    new_assay <- dplyr::mutate(new_assay, value = ifelse(value > 0, value, NA))
+    new_assay <- dplyr::mutate(new_assay, value = log2(value))
+    new_assay <- dplyr::mutate(new_assay, value = (value - est_mean) / est_sd)
+    new_assay <- dplyr::mutate(new_assay, value = ref_mean + value * ref_sd)
+    new_assay <- dplyr::mutate(new_assay, value = 2^value)
 
     ## return to square assay shape
     new_assay <- dplyr::select(new_assay, sample, value, Row, Column)
