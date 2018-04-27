@@ -113,9 +113,8 @@ pbmPlotScatter <- function(se, assay_name = "fore", stratify = condition, baseli
     
     ## manipulate to get reference condition in separate column
     pdat <- tidyr::spread(pdat, Stratify, value)
-    pdat <- dplyr::select(pdat, -Row, -Column)
     pdat <- dplyr::rename(pdat, Baseline = rlang::UQ(baseline))
-    pdat <- tidyr::gather(pdat, Stratify, value, -Baseline)
+    pdat <- tidyr::gather(pdat, Stratify, value, -Baseline, -Row, -Column)
 
     ## calculate MA values if necessary and create base of plot
     if (maplot) {
