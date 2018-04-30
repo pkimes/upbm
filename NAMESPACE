@@ -2,7 +2,7 @@
 
 export(buildPBMExperiment)
 export(buildPBMTable)
-export(cy3factors)
+export(fitCy3Models)
 export(limmaBackgroundCorrect)
 export(limmaNormalizeBetweenArrays)
 export(lowertailNormalization)
