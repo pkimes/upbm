@@ -160,8 +160,8 @@ pbmPlotComparison <- function(se1, se2, assay_name  = "fore", match_by = conditi
                     "values were not on the log2 scale.")
             ptitle <- paste0("PBM Intensity Comparison MA Plot")
         }
-        pxaxis <- scale_x_continuous("A; mean (rep1 + rep2) / 2")
-        pyaxis <- scale_y_continuous("M; difference (rep1 - rep2)")
+        pxaxis <- xlab("A; mean (rep1 + rep2) / 2")
+        pyaxis <- ylab("M; difference (rep1 - rep2)")
         pline <- geom_hline(yintercept = 0, color = 'dodgerblue3')
     } else {
         if (log_scale) {
