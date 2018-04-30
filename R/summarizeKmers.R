@@ -9,11 +9,10 @@
 #' @param offset integer offset to add to intensities before log2 scaling to
 #'        prevent errors with zero intensities. If set to 0, probes with
 #'        zero intensities are dropped/ignored for log-scaled metrics. (default = 1)
-#' @param stat_set caracter vector of statistics to calculate for each sample.
+#' @param stat_set character vector of statistics to calculate for each sample.
 #'        The set of supported statistics are listed in the details. By default,
-#'        only a subset of the total possible statistics are computed.
-#'        If all supported statistics should be calculated, specify NULL.
-#'        (default = \code{c("median", "log2mad", "log2sd", "na")})
+#'        all possible statistics are computed. Details on available statistics are
+#'        given in details. (default = \code{c("median", "mean", "mad", "sd", "log2mean", "log2mad", "log2sd", "na")})
 #' @param verbose logical whether to print extra messages during model fitting
 #'        procedure. (default = FALSE)
 #' @param .filter integer specifying level of probe filtering to
@@ -48,22 +47,14 @@
 #' @export
 #' @author Patrick Kimes
 summarizeKmers <- function(se, assay_name = "fore", kmers = NULL, offset = 1,
-                           stat_set = c("median", "log2mad", "log2sd", "na"),
+                           stat_set = c("median", "mean", "mad", "sd", "log2mean", "log2mad", "log2sd", "na"),
                            verbose = FALSE, .filter = 1L,
                            .trim = if (.filter > 0L) { c(1, 36) } else { NULL }) {
 
     ## check stat statistics are valid
-    valid_stats <- c("median", "mean", "mad", "sd",
-                     "log2mean", "log2mad", "log2sd", "na")
-    if (is.null(stat_set)) {
-        stat_set <- valid_stats
-    } else {
-        stat_set <- valid_stats[pmatch(stat_set, valid_stats)]
-        stat_set <- stat_set[!is.na(stat_set)]
-    }
+    stat_set <- match.arg(stat_set, several.ok = TRUE)
     if (length(stat_set) == 0) {
-        stop("Please specify at least one valid statistic from: ",
-             paste0(valid_stats, collapse = ", "))
+        stop("Please specify at least one valid statistic.")
     }
 
     ## check kmers specified

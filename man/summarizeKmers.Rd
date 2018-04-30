@@ -5,9 +5,9 @@
 \title{Summarize K-mer Intensities}
 \usage{
 summarizeKmers(se, assay_name = "fore", kmers = NULL, offset = 1,
-  stat_set = c("median", "log2mad", "log2sd", "na"), verbose = FALSE,
-  .filter = 1L, .trim = if (.filter > 0L) {     c(1, 36) } else {     NULL
-  })
+  stat_set = c("median", "mean", "mad", "sd", "log2mean", "log2mad", "log2sd",
+  "na"), verbose = FALSE, .filter = 1L, .trim = if (.filter > 0L) {    
+  c(1, 36) } else {     NULL })
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing PBM intensity data.}
@@ -20,11 +20,10 @@ summarizeKmers(se, assay_name = "fore", kmers = NULL, offset = 1,
 prevent errors with zero intensities. If set to 0, probes with
 zero intensities are dropped/ignored for log-scaled metrics. (default = 1)}
 
-\item{stat_set}{caracter vector of statistics to calculate for each sample.
+\item{stat_set}{character vector of statistics to calculate for each sample.
 The set of supported statistics are listed in the details. By default,
-only a subset of the total possible statistics are computed.
-If all supported statistics should be calculated, specify NULL.
-(default = \code{c("median", "log2mad", "log2sd", "na")})}
+all possible statistics are computed. Details on available statistics are
+given in details. (default = \code{c("median", "mean", "mad", "sd", "log2mean", "log2mad", "log2sd", "na")})}
 
 \item{verbose}{logical whether to print extra messages during model fitting
 procedure. (default = FALSE)}
