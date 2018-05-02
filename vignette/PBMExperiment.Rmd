@@ -1,17 +1,25 @@
 ---
-title: "PBMExperiment"
-author: Patrick Kimes
+title: "PBMExperiment: Analysis of Protein Binding Microarrays in R"
+author: Patrick K. Kimes
+date: "`r BiocStyle::doc_date()`"
+package: "`r BiocStyle::pkg_ver('PBMExperiment')`"
 output:
-  github_document:
+  BiocStyle::html_document:
+    highlight: pygments
     toc: true
-    toc_depth: 2
     fig_width: 12
     fig_height: 4
-    dev: png
+vignette: >
+  %\VignetteIndexEntry{Analysis with PBMExperiment}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
 ---
 
-```{r echo = FALSE}
-gpr_dir <- "../gpr_files"
+```{r echo=FALSE, include=FALSE}
+knitr::opts_chunk$set(tidy = FALSE, cache = TRUE, dev = "png",
+                      message = FALSE, error = FALSE, warning = TRUE)
 ```
 
 **THIS PACKAGE IS STILL UNDER ACTIVE DEVELOPMENT**
@@ -41,21 +49,26 @@ suppressPackageStartupMessages(library("PBMExperiment"))
 
 Suppose we have a folder, `gpr_dir`, containing GPR files for a single experiment. We first determine the set of samples in that folder with `buildPBMTable`, and then read in the samples using `buildPBMExperiment`.
 
-```{r}
-samples <- buildPBMTable(gpr_dir)
-pbmdata <- buildPBMExperiment(samples, probes = pbm_8x60k_v1)
+```{r, eval = FALSE}
+pbmtab <- buildPBMTable(gpr_dir)
+pbmdat <- buildPBMExperiment(samples, probes = pbm_8x60k_v1)
 ```
 
-The data is now available for plotting and analysis.
-Here, we show an example of computing the spatial bias in each sample, and plotting the bias across the grid of probe coordinates.
+For this vignette, we just use a toy data set included with this package.
 
 ```{r}
-pbm_adjusted <- spatiallyAdjust(pbmdata)
+data(pbmtab)
+data(pbmdat)
 ```
 
-```{r, fig.width = 12, fig.height = 8}
-pbmPlotChip(pbm_adjusted, assay_name = "spatialbias", log_scale = FALSE, .facet = FALSE) +
-    facet_grid(lp ~ condition)
+The data is now available for plotting and analysis. Here, we show an example of computing the spatial bias in a subset of samples, and plotting the bias across the grid of probe coordinates.
+
+```{r}
+pbm_adjusted <- spatiallyAdjust(pbmdat[, 1:3])
+```
+
+```{r, fig.width = 12, fig.height = 4}
+pbmPlotChip(pbm_adjusted, assay_name = "spatialbias", log_scale = FALSE)
 ```
 
 More details on the available plotting and analysis functions are provided in the sections below.
@@ -64,27 +77,28 @@ More details on the available plotting and analysis functions are provided in th
 
 ## Reading GPR Data
 
-Again, we start by identifying the set of sample GPRs in the directory, `gpr_dir`. In the quickstart example above, only raw `"Alexa"` GPR scans were captured (by default). However, there may also be Cy3 and Masliner GPR files in the same directory. To also capture these samples, we can change the `gpr_type=` parameter to any of `"Masliner"`, `"Cy3"`, or `"all"`.
+We start by identifying the set of sample GPRs in the directory, `gpr_dir` using the `buildPBMTable` function.
+
+```{r, eval = FALSE}
+pbmtab <- buildPBMTable(gpr_dir)
+```
+
+Going back to the example data set, the table includes various sample meta data pulled from the file names according to an assumed convention described in the `buildPBMTable` function details.
 
 ```{r}
+pbmtab
+```
+
+By default, only raw `"Alexa"` GPR scans are captured. However, there may also be Cy3 and Masliner GPR files of interest in the same directory. To capture these samples as well, we can change the `gpr_type=` parameter to any of `"Masliner"`, `"Cy3"`, or `"all"`.
+
+```{r, eval = FALSE}
 samples_all <- buildPBMTable(gpr_dir, gpr_type = "all")
-samples_all
 ```
 
-The GPR scan type is included in the `scan` column of the sample table.
+Given the table of samples, we next load the GPR data into R using the `buildPBMExperiment` function. The function reads in GPR data for the files listed in the `gpr` column of the sample table. The `gpr` column is the only required column for input into the `buildPBMExperiment` function. While optional, if possible, the probe design should also be specified when loading the GPR data for easier downstream analysis. For convenience, the default "8x60k" probe design is included in this package as `pbm_8x60_v1`. (The `probes =` argument is described in further detail below.)
 
-```{r}
-dplyr::count(samples_all, scan)
-```
-
-Given the table of samples, we next load the GPR data into R according to the `gpr` column of the sample table. Depending on the number of samples, this may take a few seconds to a few minutes. For illustration, we only load a subset of the samples.
-
-```{r}
-condition_set <- c("HOXD13-REF", "HOXD13-Q325R", "HOXD13-I322L")
-pbmdata <- buildPBMExperiment(samples_all[samples_all$lp %in% c(500, 550) &
-                                          samples_all$scan == "Alexa" &
-                                          samples_all$condition %in% condition_set, ],
-                              probes = pbm_8x60k_v1)
+```{r, eval = FALSE}
+pbmdata <- buildPBMExperiment(samples_all, probes = pbm_8x60k_v1)
 ```
 
 The sample data is stored as a [_SummarizedExperiment_](https://bioconductor.org/packages/release/bioc/html/SummarizedExperiment.html), a common structure for storing genomic data in [Bioconductor](http://bioconductor.org/).
@@ -93,7 +107,7 @@ The sample data is stored as a [_SummarizedExperiment_](https://bioconductor.org
 pbmdata
 ```
 
-A _SummarizedExperiment_ is made up of three parts: **1.** assays (primary data), **2.** row data, and **3.** column data.  
+A _SummarizedExperiment_ is made up of three parts: **1.** assays (primary data), **2.** column data, and **3.** row data.  
 
 Naturally, the probe-level intensities from the GPRs are available in the `"fore"` (foreground) **assay** as a DataFrame with rows and columns corresponding to probes and samples. A second assay, `"back"` (background) is also read in from the GPRs with the background intensities for each probe and sample.
 
@@ -102,44 +116,36 @@ assay(pbmdata, "fore")[1:5, 1:5]
 assay(pbmdata, "back")[1:5, 1:5]
 ```
 
-The **row data** contains information about the rows (probes).
+The **column data** contains information about the columns (samples).
 
 ```{r}
-rowData(pbmdata)[1:5, ]
+colData(pbmdat)[1:5, ]
 ```
 
-Similarly, the **column data** contains information about the columns (samples).
+Similarly, the **row data** contains information about the rows (probes). Recall that when we loaded the GPR data, we also specified the probe design used in this experiment, `pbm_8x60k_v1`. This data is now stored as the row data. 
 
 ```{r}
-colData(pbmdata)[1:5, ]
+rowData(pbmdat)[1:5, ]
 ```
 
-Notice that when we loaded the GPR data, we also specified the probe design used in this experiment, `pbm_8x60k_v1`. This default probe set, along with out default data sets, are included with the package.
-
-```{r}
-show(data(package = "PBMExperiment"))
-```
-
-The probe information is matched with the GPR data according to Row and Column coordinates.
+The probe information in `pbm_8x60_v1` was matched with the GPR data according to `Row` and `Column` coordinates.
 
 ```{r}
 head(pbm_8x60k_v1)
 ```
-
-Notice that this information is included in the row data shown above.  
 
 ## Plotting GPR Data
 
 Now that we have the data, we can use plots to visually explore the distributions of probe intensities across samples. Currently, the following functions are available for plotting GPR data: `pbmPlotDensity()`, `pbmPlotChip()`, `pbmPlotScatter()`, and `pbmPlotComparison()`. Each function returns a `ggplot2` object that can be customized to generate more specialized plots. By default, each function plots each sample separately ("facets") according to the `condition` column of the `colData`.
 
 ```{r}
-colData(pbmdata)$condition
+colData(pbmdat)$condition
 ```
 
 If `condition` is not unique to each sample, as is the case here, we can set `.facet = FALSE` in the function, and explicitly facet the returned plot. Faceting can be performed using any of the columns in the `colData` of the SummarizedExperiment.
 
 ```{r}
-colData(pbmdata)
+colData(pbmdat)
 ```
 
 In this example, laser power (`lp`) and `condition` uniquely identify each sample, and can be used for faceting the samples.  
@@ -147,42 +153,42 @@ In this example, laser power (`lp`) and `condition` uniquely identify each sampl
 First, we use `lp` and `condition` to facet a plot of the distribution of probe intensities for each sample. 
 
 ```{r, fig.width = 10, fig.height = 6}
-pbmPlotDensity(pbmdata, .facet = FALSE) +
+pbmPlotDensity(pbmdat, .facet = FALSE) +
     facet_grid(lp ~ condition)
 ```
 
 Similarly, we can plot probe intensities for each sample across the coordinates of the array. 
 
 ```{r, fig.width = 10, fig.height = 6}
-pbmPlotDensity(pbmdata, .facet = FALSE) +
+pbmPlotDensity(pbmdat, .facet = FALSE) +
     facet_grid(lp ~ condition)
 ```
 
 Since these experiments typically include a reference sample, another useful view of the data is to plot probe intensities across conditions against a reference sample. This may be useful to, for example, compare across conditions for a fixed laser power (`lp`) or across laser powers for a single condition (`condition`). Since the ultimate goal is to compare across samples, we plot the former. To do this, we simply subset the samples (columns) according to the `colData`, and call the plotting function. 
 
 ```{r, fig.width = 10, fig.height = 6}
-pbmPlotScatter(pbmdata[, colData(pbmdata)$lp == 500])
+pbmPlotScatter(pbmdat[, colData(pbmdat)$lp == 400])
 ```
 
 A similar but alternative view of the data is the [MA plot](https://en.wikipedia.org/wiki/MA_plot), which plots the mean log-intensity against the difference in log-intensity for each pair of samples.
 
 ```{r, fig.width = 15, fig.height = 5}
-pbmPlotScatter(pbmdata[, colData(pbmdata)$lp == 500], maplot = TRUE)
+pbmPlotScatter(pbmdat[, colData(pbmdat)$lp == 400], maplot = TRUE)
 ```
 
 Finally, often, we may be interested in comparing across replicates of the same experiment. Here, we illustrate the functionality by comparing conditions across two laser powers. Each sample is matched using a column in the `colData` specified by `match_by = `. Note that the input to `match_by = ` should *not* be quoted.
 
 ```{r, fig.width = 15, fig.height = 5}
-pbmPlotComparison(pbmdata[, colData(pbmdata)$lp == 500],
-                  pbmdata[, colData(pbmdata)$lp == 550],
+pbmPlotComparison(pbmdat[, colData(pbmdat)$lp == 400],
+                  pbmdat[, colData(pbmdat)$lp == 475],
                   match_by = condition)
 ```
 
 As above, MA plots are also implemented.
 
 ```{r, fig.width = 15, fig.height = 5}
-pbmPlotComparison(pbmdata[, colData(pbmdata)$lp == 500],
-                  pbmdata[, colData(pbmdata)$lp == 550],
+pbmPlotComparison(pbmdat[, colData(pbmdat)$lp == 400],
+                  pbmdat[, colData(pbmdat)$lp == 475],
                   match_by = condition,
                   maplot = TRUE)
 ```
@@ -190,7 +196,7 @@ pbmPlotComparison(pbmdata[, colData(pbmdata)$lp == 500],
 In each of the plots generated above, values are taken from the `"fore"` assay by default. However, background intensities (or any other _assay_) in the _SummarizedExperiment_ can also be plotted by specifying the `assay_name = ` parameter.
 
 ```{r, fig.width = 15, fig.height = 5}
-pbmPlotDensity(pbmdata, assay_name = "back",
+pbmPlotDensity(pbmdat, assay_name = "back",
                log_scale = TRUE, .facet = FALSE) +
     facet_grid(lp ~ condition) +
     ggtitle("PBM Background Intensity (log2)")
@@ -207,40 +213,40 @@ Single-channal pre-processing includes two primary steps: **within-sample backgr
 The simplest background correction approach is to simply subtract the background intensities from the foreground intensities. This can be done by specifying the background assay name to `assayb_name = "back"` (and optionally `method = "subtract"`). **Currently, we recommend using the "subtract" approach when background intensities are available.**
 
 ```{r}
-pbmdata_bc <- limmaBackgroundCorrect(pbmdata, assayb_name = "back")
+pbmdat_bc <- limmaBackgroundCorrect(pbmdat, assayb_name = "back")
 ```
 
 If the assay name for the background intensities is not specified, background noise will be estimated using a Normal-Exponential convolution model. (See `help(backgroundCorrect, package = limma)` for more details.)
 
 ```{r, eval = FALSE}
 ## NOT RUN - would use 'normexp' background correction approach
-pbmdata_bc <- limmaBackgroundCorrect(pbmdata)
+pbmdat_bc <- limmaBackgroundCorrect(pbmdat)
 ```
 
 Since the returned object is again a SummarizedExperiment, we can easily plot the data using the functions described above. Here, we compare the background corrected and original data for scans at laser power 500.
 
 ```{r, fig.width = 15, fig.height = 5}
-pbmPlotComparison(pbmdata[, colData(pbmdata)$lp == 500],
-                  pbmdata_bc[, colData(pbmdata_bc)$lp == 500])
+pbmPlotComparison(pbmdat[, colData(pbmdat)$lp == 400],
+                  pbmdat_bc[, colData(pbmdat_bc)$lp == 400])
 ```
 
 For provenance, the correction step (`limma::backgroundCorrect`) is also noted in the `metadata` of the object along with the name of the modified assay (`fore`). 
 
 ```{r}
-metadata(pbmdata_bc)
+metadata(pbmdat_bc)
 ```
 
 We next apply cross-sample normalization. Since a primary objective of normalizing across samples is to put intensities on the same scale, we apply the procedure to only a subset of samples scanned at the same laser intensity. The default is currently to use quantile normalization. **However, based on the observation that samples may have fundamentally different distributional shapes, it is not yet clear if quantile normalization is the best approach for PBM data.** (Again, see `help(normalizeBetweenArrays, package = limma)` for more details.)
 
 ```{r}
-pbmdata500_norm <- limmaNormalizeBetweenArrays(pbmdata_bc[, colData(pbmdata)$lp == 500])
+pbmdat400_norm <- limmaNormalizeBetweenArrays(pbmdat_bc[, colData(pbmdata)$lp == 400])
 ```
 
 Again, we compare the normalized data against the original data.
 
 ```{r, fig.width = 15, fig.height = 5}
-pbmPlotComparison(pbmdata_bc[, colData(pbmdata)$lp == 500],
-                  pbmdata500_norm, maplot = TRUE)
+pbmPlotComparison(pbmdat_bc[, colData(pbmdat)$lp == 400],
+                  pbmdat400_norm, maplot = TRUE)
 ```
 
 ## Filtering GPR Data
@@ -257,26 +263,26 @@ head(pbm_8mers)
 
 The function can be run as follows.
 
-```{r}
-system.time({ pbm_predict <- predictKmers(pbmdata500_norm, verbose = TRUE) })
+```{r, eval = FALSE}
+system.time({ pbm_predict <- predictKmers(pbmdat400_norm, verbose = TRUE) })
 ```
 
 The returned object is again a SummarizedExperiment.
 
-```{r}
+```{r, eval = FALSE}
 pbm_predict
 ```
 
 The array entries are the predicted k-mer intensities per-sample.
 
-```{r}
+```{r, eval = FALSE}
 rowData(pbm_predict)[1:5, ]
 assay(pbm_predict, "pred")[1:5, ]
 ```
 
 The `colData` includes all of the same sample information as the probe-level objects.
 
-```{r, fig.width = 15, fig.height = 5}
+```{r, fig.width = 15, fig.height = 5, eval = FALSE}
 pbmPlotScatter(pbm_predict, assay_name = "pred", log_scale = FALSE)
 pbmPlotScatter(pbm_predict, assay_name = "pred", maplot = TRUE, log_scale = FALSE)
 ```
