@@ -3,7 +3,7 @@ Title: Tools for the analysis of Protein Binding Microarrays
 Version: 0.99.0
 Authors@R: person("Patrick", "Kimes", email = "patrick.kimes@gmail.com.com", role = c("aut", "cre"))
 Description: Classes and methods for the organization and analysis of transcription factor binding affinities
-  quantified in vitro using single-channel Protein Binding Microarrays.
+  quantified in vitro using Protein Binding Microarrays.
 Depends: R (>= 3.4.1),
          SummarizedExperiment,
          S4Vectors,
@@ -25,10 +25,13 @@ Depends: R (>= 3.4.1),
          fitdistrplus,
          truncnorm,
          affy
+Suggestions: BiocStyle,
+             knitr
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 LinkingTo: Rcpp, RcppArmadillo
 Imports: Rcpp,
          methods
+VignetteBuilder: knitr
 RoxygenNote: 6.0.1
