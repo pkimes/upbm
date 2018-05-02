@@ -52,7 +52,7 @@ fitCy3Models <- function(se, assay_name = "fore", refit = TRUE, verbose = FALSE,
     rowdat <- dplyr::bind_cols(rowdat, nt_freq)
 
     ## extract intensities
-    pdat <- assay(nse, "fore")
+    pdat <- assay(nse, assay_name)
     pdat <- as.data.frame(pdat, optional = TRUE)
     pdat <- dplyr::as_tibble(pdat)
     pdat <- dplyr::bind_cols(pdat, rowdat)
