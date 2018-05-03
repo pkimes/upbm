@@ -9,10 +9,8 @@
 #' on the log2-scale to match a specified reference sample.
 #' \emph{This code is still under testing and not a finalized normalization procedure}.
 #'
-#' @param se SummarizedExperiment object containing GPR
-#'        intensity information.
-#' @param assay_name string name of the assay to plot.
-#'        (default = "fore")
+#' @param se SummarizedExperiment object containing GPR intensity information.
+#' @param assay_name string name of the assay to normalize. (default = "fore")
 #' @param q percentile between 0 and 1 specifying lower tail to use for
 #'        fitting truncated normal distribution. (default = 0.4)
 #' @param stratify unquoted name of column in colData of SummarizedExperiment (or

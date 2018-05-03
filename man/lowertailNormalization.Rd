@@ -8,11 +8,9 @@ lowertailNormalization(se, assay_name = "fore", q = 0.4,
   stratify = condition, baseline = NULL, .fits = FALSE)
 }
 \arguments{
-\item{se}{SummarizedExperiment object containing GPR
-intensity information.}
+\item{se}{SummarizedExperiment object containing GPR intensity information.}
 
-\item{assay_name}{string name of the assay to plot.
-(default = "fore")}
+\item{assay_name}{string name of the assay to normalize. (default = "fore")}
 
 \item{q}{percentile between 0 and 1 specifying lower tail to use for
 fitting truncated normal distribution. (default = 0.4)}
