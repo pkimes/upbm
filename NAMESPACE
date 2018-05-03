@@ -3,6 +3,7 @@
 export(assay2tidy)
 export(buildPBMExperiment)
 export(buildPBMTable)
+export(cy3Normalize)
 export(fitCy3Models)
 export(limmaBackgroundCorrect)
 export(limmaNormalizeBetweenArrays)
