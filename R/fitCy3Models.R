@@ -125,42 +125,36 @@ fitCy3Models <- function(se, assay_name = "fore", refit = TRUE, verbose = FALSE,
         pratios <- dplyr::mutate(pratios, ratio = intensity / preds)
         pratios <- dplyr::select(pratios, Row, Column, condition, ratio)
         pratios <- tidyr::spread(pratios, condition, ratio)
-
-        ## re-compute low quality probes (outside 2-fold difference)
-        pdrop <- tidyr::gather(pratios, condition, ratio, -Row, -Column)
-        pdrop <- dplyr::mutate(pdrop, lowq = ratio > 2 | ratio < 1/2)
-        pdrop <- dplyr::select(pdrop, Row, Column, condition, lowq)
-
     }
     pdrop <- tidyr::spread(pdrop, condition, lowq)
     
     ## ## compute residuals
-    ## presids <- dplyr::mutate(pfits, fit = lapply(fit, resid))
-    ## presids <- tidyr::unnest(presids)
-    ## presids <- dplyr::bind_cols(presids, dplyr::select(pdat, Row, Column))
-    ## presids <- tidyr::spread(presids, condition, fit)
+    presids <- dplyr::mutate(pfits, fit = lapply(fit, resid))
+    presids <- tidyr::unnest(presids)
+    presids <- dplyr::bind_cols(presids, dplyr::select(pdat, Row, Column))
+    presids <- tidyr::spread(presids, condition, fit)
 
     ## left join to original rowData to get full set
     full_rowdat <- as.data.frame(rowData(se), optional = TRUE)
     full_rowdat <- dplyr::as_tibble(full_rowdat)
     full_rowdat <- dplyr::select(full_rowdat, Row, Column, Sequence)
-    ## presids <- dplyr::left_join(dplyr::select(full_rowdat, Row, Column), presids, by = c("Row", "Column"))
-    ## pexps <- dplyr::left_join(dplyr::select(full_rowdat, Row, Column), pexps, by = c("Row", "Column"))
+    presids <- dplyr::left_join(dplyr::select(full_rowdat, Row, Column), presids, by = c("Row", "Column"))
+    pexps <- dplyr::left_join(dplyr::select(full_rowdat, Row, Column), pexps, by = c("Row", "Column"))
     pratios <- dplyr::left_join(dplyr::select(full_rowdat, Row, Column), pratios, by = c("Row", "Column"))
     pdrop <- dplyr::left_join(dplyr::select(full_rowdat, Row, Column), pdrop, by = c("Row", "Column"))
 
-    ## presids <- DataFrame(presids, check.names = FALSE)
-    ## presids <- presids[, rownames(colData(se))]
-    ## pexps <- DataFrame(pexps, check.names = FALSE)
-    ## pexps <- pexps[, rownames(colData(se))]
+    presids <- DataFrame(presids, check.names = FALSE)
+    presids <- presids[, rownames(colData(se))]
+    pexps <- DataFrame(pexps, check.names = FALSE)
+    pexps <- pexps[, rownames(colData(se))]
     pratios <- DataFrame(pratios, check.names = FALSE)
     pratios <- pratios[, rownames(colData(se))]
     pdrop <- DataFrame(pdrop, check.names = FALSE)
     pdrop <- pdrop[, rownames(colData(se))]
 
     ## add to SE object
-    ## assay(se, "resid") <- presids
-    ## assay(se, "expected") <- pexps
+    assay(se, "resid") <- presids
+    assay(se, "expected") <- pexps
     assay(se, "ratio") <- pratios
     assay(se, "lowq") <- pdrop
 
