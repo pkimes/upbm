@@ -11,12 +11,20 @@
 #' SummarizedExperiment object containing PBM data.
 #'
 #' @details
-#' If a `id` column is included int he input table, these are used as the
+#' If a `name` column is included int he input table, these are used as the
 #' corresponding IDs for each sample/row. If IDs are not provided, the
 #' file names are used. Sample IDs must be unique, and an error is thrown
 #' if any samples have a common ID.
+#' All other columns (aside from `combn` and `name`) in `tab` will be added to
+#' the `colData` of the returned SummarizedExperiment object. Any sample
+#' information, e.g. replicate or condition information can be included in
+#' `tab`.
 #' 
 #' @md
+#' @import SummarizedExperiment
+#' @importFrom dplyr rename select
+#' @importFrom readr read_tsv
+#' @importFrom purrr reduce
 #' @export
 #' @author Patrick Kimes
 comb2PBMExperiment <- function(tab) {
@@ -34,12 +42,12 @@ comb2PBMExperiment <- function(tab) {
     }
     
     ## check sample IDs
-    if (! "id" %in% names(tab)) {
-        cat("Since 'id' column not present in table, using file basenames as sample IDs.\n")
-        tab$id <- gsub("_combinatorial\\.txt$", "", basename(tab$combn))
+    if (! "name" %in% names(tab)) {
+        cat("Since 'name' column not present in table, using file basenames as sample IDs.\n")
+        tab$name <- gsub("_combinatorial\\.txt$", "", basename(tab$combn))
     }
-    if (any(duplicated(tab$id))) {
-        stop("Sample IDs must be unique.")
+    if (any(duplicated(tab$name))) {
+        stop("Sample names/IDs must be unique.")
     }
     
     ## read in files
@@ -51,11 +59,11 @@ comb2PBMExperiment <- function(tab) {
     if (min(nprobes) / max(nprobes) < 0.95) {
         stop("Not all samples have (roughly) same number of probes.\n",
              "Please only supply samples from a single design.\n",
-             paste0(paste0(tab$id, ":", nprobes), collapse = "; "))
+             paste0(paste0(tab$name, ":", nprobes), collapse = "; "))
     }
 
     ## merge samples
-    gpr <- mapply(function(g, n) { dplyr::rename(g, !!n := intensity) }, gpr, tab$id, SIMPLIFY = FALSE)
+    gpr <- mapply(function(g, n) { dplyr::rename(g, !!n := intensity) }, gpr, tab$name, SIMPLIFY = FALSE)
     assay_table <- purrr::reduce(gpr, left_join, by = c("Sequence"))
 
     ## check that probe sequences match across samples
@@ -70,7 +78,7 @@ comb2PBMExperiment <- function(tab) {
     ## create column data, just probe sequence
     coldat <- cbind(data.frame(scan = rep("Combinatorial", nrow(tab)),
                                stringsAsFactors = FALSE),
-                    dplyr::select(tab, -combn, -id))
+                    dplyr::select(tab, -combn, -name))
 
     ## create assay list
     assaydat <- list(fore = as.matrix(dplyr::select(assay_table, -Sequence)))

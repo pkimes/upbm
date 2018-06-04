@@ -19,10 +19,14 @@ the Universal PBM Analysis Suite into a format similar to raw PBM
 data read using \code{buildPBMExerpiment}.
 }
 \details{
-If a \code{id} column is included int he input table, these are used as the
+If a \code{name} column is included int he input table, these are used as the
 corresponding IDs for each sample/row. If IDs are not provided, the
 file names are used. Sample IDs must be unique, and an error is thrown
 if any samples have a common ID.
+All other columns (aside from \code{combn} and \code{name}) in \code{tab} will be added to
+the \code{colData} of the returned SummarizedExperiment object. Any sample
+information, e.g. replicate or condition information can be included in
+\code{tab}.
 }
 \author{
 Patrick Kimes
