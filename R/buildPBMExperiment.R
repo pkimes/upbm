@@ -366,7 +366,7 @@ readRawData <- function(gpr_path, filterFlags = TRUE, readBackground = TRUE) {
     ## determine number of columns
     p <- length(header)
 
-    ## determine column indicies
+    ## determine column indices
     icol <- grep("column", header, ignore.case = TRUE) 
     irow <- grep("row", header, ignore.case = TRUE)
     ival <- grep("alexa", ifelse(grepl("flag", header, ignore.case = TRUE),
@@ -375,9 +375,9 @@ readRawData <- function(gpr_path, filterFlags = TRUE, readBackground = TRUE) {
     iname <- grep("name", header, ignore.case = TRUE)
     iseq <- grep("sequence", header, ignore.case = TRUE)
     
-    ## make sure column, row, value indicies only occur once
+    ## make sure column, row, value indices only occur once
     stopifnot(sapply(list(icol, irow, ival), length) == 1)
-    ## make sure id, name, sequence indicies at most once
+    ## make sure id, name, sequence indices at most once
     stopifnot(sapply(list(iid, iname, iseq), length) <= 1)
     
     ## subset flag column to be after alexa value column

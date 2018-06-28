@@ -81,7 +81,7 @@ summarizeKmers <- function(se, assay_name = "fore", kmers = NULL, offset = 1,
     pdat <- as.data.frame(pdat, optional = TRUE)
     pdat <- dplyr::as_tibble(pdat)
 
-    ## check whether row/column indicies were available
+    ## check whether row/column indices were available
 
     if (all(c("Row", "Column") %in% names(kmermap))) {
         pdat <- dplyr::mutate(pdat,

@@ -67,7 +67,7 @@ spatiallyAdjust <- function(se, assay_name = "fore", k = 15, returnBias = TRUE,
     raw_intensity <- as.data.frame(raw_intensity, optional = TRUE)
     raw_intensity <- tibble::as_tibble(raw_intensity)
                 
-    ## add row/column indicies
+    ## add row/column indices
     raw_intensity <- dplyr::mutate(raw_intensity,
                                    Row = rowData(se)[, "Row"],
                                    Column = rowData(se)[, "Column"])
