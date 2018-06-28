@@ -71,7 +71,7 @@ summarizeKmers <- function(se, assay_name = "fore", kmers = NULL, offset = 1,
 
     ## find mapping between kmers and probes
     ovnames <- intersect(names(rowData(se)), c("Row", "Column", "ID", "Sequence"))
-    kmermap <- mapKmers(rowData(se)[, ovnames], kmers)
+    kmermap <- mapKmers(rowData(se)[, ovnames, drop = FALSE], kmers)
     
     ## use ordering from input 'kmers'
     kmermap$seq <- factor(kmermap$seq, levels = kmers)
