@@ -64,7 +64,7 @@ summarizeKmers <- function(se, assay_name = "fore", kmers = NULL, offset = 1,
     se <- checkProbeSequences(se, verbose)
     
     ## filter probes
-    se <- pbmFilterProbes(se, .filter) 
+    se <- pbmFilterProbes(se, .filter)
 
     ## trim probe sequences
     se <- trimProbeSequences(se, .trim)
@@ -72,7 +72,7 @@ summarizeKmers <- function(se, assay_name = "fore", kmers = NULL, offset = 1,
     ## find mapping between kmers and probes
     ovnames <- intersect(names(rowData(se)), c("Row", "Column", "ID", "Sequence"))
     kmermap <- mapKmers(rowData(se)[, ovnames, drop = FALSE], kmers)
-    
+
     ## use ordering from input 'kmers'
     kmermap$seq <- factor(kmermap$seq, levels = kmers)
     
@@ -80,16 +80,26 @@ summarizeKmers <- function(se, assay_name = "fore", kmers = NULL, offset = 1,
     pdat <- assay(se, assay_name)
     pdat <- as.data.frame(pdat, optional = TRUE)
     pdat <- dplyr::as_tibble(pdat)
-    pdat <- dplyr::mutate(pdat,
-                          Row = rowData(se)[, "Row"],
-                          Column = rowData(se)[, "Column"])
 
-    pdat <- dplyr::left_join(pdat, dplyr::select(kmermap, "Row", "Column", "seq"),
-                             by = c("Row", "Column"))
+    ## check whether row/column indicies were available
 
+    if (all(c("Row", "Column") %in% names(kmermap))) {
+        pdat <- dplyr::mutate(pdat,
+                              Row = rowData(se)[, "Row"],
+                              Column = rowData(se)[, "Column"])
+        
+        pdat <- dplyr::left_join(pdat, dplyr::select(kmermap, "Row", "Column", "seq"),
+                                 by = c("Row", "Column"))
+        pdat <- dplyr::select(pdat, -Row, -Column)
+    } else {
+        pdat <- dplyr::mutate(pdat, probe_idx = 1:n())
+        pdat <- dplyr::left_join(pdat, dplyr::select(kmermap, "probe_idx", "seq"),
+                                 by = "probe_idx")
+        pdat <- dplyr::select(pdat, -probe_idx)
+    }
+    
     ## group by k-mer sequence
-    pdat_sets <- dplyr::select(pdat, -Row, -Column)
-    pdat_sets <- tidyr::nest(pdat_sets, -seq)
+    pdat_sets <- tidyr::nest(pdat, -seq)
     pdat_samples <- names(pdat_sets$data[[1]])
     pdat_seqs <- pdat_sets$seq
     pdat_sets <- dplyr::mutate(pdat_sets, data = lapply(data, as.matrix))
