@@ -33,6 +33,9 @@ SummarizedExperiment object.
 Uses Cy3 intensities to quantify relative dsDNA material at each probe based
 on observed vs. expected intensity ratios.
 }
+\seealso{
+fitCy3Models
+}
 \author{
 Patrick Kimes
 }

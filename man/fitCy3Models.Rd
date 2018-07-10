@@ -9,7 +9,7 @@ fitCy3Models(se, assay_name = "fore", refit = TRUE, verbose = FALSE,
   })
 }
 \arguments{
-\item{se}{SummarizedExpierment object containing PBM Cy3 intensity data.}
+\item{se}{SummarizedExperiment object containing PBM Cy3 intensity data.}
 
 \item{assay_name}{string name of the assay to use. (default = "fore")}
 
@@ -34,7 +34,27 @@ in the metadata of the returned object.
 \description{
 PBM arrays are scanned twice, once for Cy3-tagged dUTPs to quantify
 dsDNA abundance at each probe, and again for the Alexa488-tagged 
-protein.
+protein. The Cy3 scans can be used to first filter out probes which
+appear to have poor dsDNA enrichment, and second, to scale Alexa488
+intensities to account for differences in dsDNA abundance between
+probes. Since probe intensities in the Cy3 scans are roughly
+proportional to the number of adenines in the probe sequence, the
+original Universal PBM Analysis Suite proposed estimating scaling factors
+by looking at the residuals of a linear regression fit using all
+tri-nucleotide sequences starting with an adenine. Given a
+SummarizedExperiment of Cy3 scans, this function fit the tri-nucleotide
+linear regression models and returns the expected Cy3 intensities,
+the residuals from the fits, and the corresponding observed-expected
+ratios for each probe as new assays added to the original Cy3
+SummarizedExperiment object.
+}
+\details{
+The returned SummarizedExperiment object can be passed to \code{cy3Normalize}
+to filter low quality probes and/or normalize Alexa488 intensities by the
+computed ratios.
+}
+\seealso{
+cy3Normalize
 }
 \author{
 Patrick Kimes

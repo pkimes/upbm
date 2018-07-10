@@ -19,6 +19,7 @@
 #' @return
 #' SummarizedExperiment object.
 #'
+#' @seealso fitCy3Models
 #' @importFrom dplyr as_tibble mutate select left_join
 #' @importFrom tidyr gather spread
 #' @export

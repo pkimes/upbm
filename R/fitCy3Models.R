@@ -2,9 +2,25 @@
 #'
 #' PBM arrays are scanned twice, once for Cy3-tagged dUTPs to quantify
 #' dsDNA abundance at each probe, and again for the Alexa488-tagged 
-#' protein.
+#' protein. The Cy3 scans can be used to first filter out probes which
+#' appear to have poor dsDNA enrichment, and second, to scale Alexa488
+#' intensities to account for differences in dsDNA abundance between
+#' probes. Since probe intensities in the Cy3 scans are roughly
+#' proportional to the number of adenines in the probe sequence, the
+#' original Universal PBM Analysis Suite proposed estimating scaling factors
+#' by looking at the residuals of a linear regression fit using all
+#' tri-nucleotide sequences starting with an adenine. Given a
+#' SummarizedExperiment of Cy3 scans, this function fit the tri-nucleotide
+#' linear regression models and returns the expected Cy3 intensities,
+#' the residuals from the fits, and the corresponding observed-expected
+#' ratios for each probe as new assays added to the original Cy3
+#' SummarizedExperiment object.
+#'
+#' The returned SummarizedExperiment object can be passed to \code{cy3Normalize}
+#' to filter low quality probes and/or normalize Alexa488 intensities by the
+#' computed ratios.
 #' 
-#' @param se SummarizedExpierment object containing PBM Cy3 intensity data.
+#' @param se SummarizedExperiment object containing PBM Cy3 intensity data.
 #' @param assay_name string name of the assay to use. (default = "fore")
 #' @param refit logical whether to filter outliers and refit trinucleotide
 #'        linear regression model. (default = TRUE)
@@ -22,6 +38,7 @@
 #' flagged as low-quality based on log2(ratio) > 1 or < -1. Cy3 models are stored
 #' in the metadata of the returned object.
 #'
+#' @seealso cy3Normalize
 #' @importFrom dplyr as_tibble select bind_cols group_by do ungroup left_join mutate
 #' @importFrom tidyr gather spread
 #' @importFrom Biostrings DNAStringSet oligonucleotideFrequency
