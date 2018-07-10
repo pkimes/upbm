@@ -4,21 +4,22 @@
 #' reference distribution computed using a large collection of
 #' samples. By default, samples are first scaled to have a common
 #' median intensity, and the reference probe-level intensities are
-#' computed on the log2 scale.
+#' computed on the log2 scale. The reference is calculated on the
+#' log2 scale rather than the raw scale because the Cy3 scans will be
+#' used for filtering and scaling, actions which require examining
+#' fold changes and ratios rather than raw intensity differences.
 #'
 #' Scaling is performed by multiplying the raw intensities of each
 #' sample by a scaling factor such that the median intensity of each
 #' sample is equal to the median sample-median intensity of the original
 #' intensities. This multiplicative scaling is equivalent to an additive
-#' scaling on the log2 scale.
+#' shift on the log2 scale.
 #'
+#' 
 #' @param cy3se SummarizedExperiment object containing Cy3 scan data.
 #' @param assay_name string name of assay to use. (default = "fore")
-#' @param log_scale logical whether to log2 transform intensities.
-#'        (default = TRUE)
 #' @param offset numeric offset to add to intensities before log2 transforming
-#'        to prevent errors with zero intensities when log_scale = TRUE.
-#'        (default = 1L)
+#'        to prevent errors with zero intensities. (default = 1L)
 #' @param register logical whether to scale intensities across samples.
 #'        (default = TRUE)
 #' @param .filter integer specifying level of probe filtering to
@@ -30,8 +31,8 @@
 #' 
 #' @export
 #' @author Patrick Kimes
-generateCy3Ref <- function(cy3se, assay_name = "fore", log_scale = TRUE,
-                           offset = 1L, register = TRUE, .filter = 1L) {
+generateCy3Ref <- function(cy3se, assay_name = "fore", offset = 1L, register = TRUE,
+                           .filter = 1L) {
 
     ## verify validity of cy3se
     stopifnot(is(cy3se, "SummarizedExperiment"))
@@ -64,10 +65,8 @@ generateCy3Ref <- function(cy3se, assay_name = "fore", log_scale = TRUE,
         sfactor <- NA
     }
     
-    ## calculate metrics on log2 scale if desired
-    if (log_scale) {
-        cy3vals <- dplyr::mutate(cy3vals, value = log2(value + offset))
-    }
+    ## calculate metrics on log2 scale
+    cy3vals <- dplyr::mutate(cy3vals, value = log2(value + offset))
 
     ## compute probe-level summary metrics
     cy3vals <- dplyr::group_by(cy3vals, Column, Row)
