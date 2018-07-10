@@ -87,7 +87,6 @@ cy3Normalize <- function(se, cy3se, assay_name = "fore", match_by = condition, f
     new_assay <- dplyr::left_join(new_assay, coldat1, by = "sample")
     ##new_assay <- dplyr::select(new_assay, -sample)
 
-
     
     if (scale) {
         scale_assay <- as.data.frame(assay(cy3se, "ratio"), optional = TRUE)

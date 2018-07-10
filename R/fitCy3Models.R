@@ -34,7 +34,7 @@
 #'
 #' @return
 #' original SummarizedExperiment object with additional assays corresponding
-#' to ratio of observed vs. expected probe intensities, and whether probes were
+#' to the ratio of observed vs. expected probe intensities, and whether probes were
 #' flagged as low-quality based on log2(ratio) > 1 or < -1. Cy3 models are stored
 #' in the metadata of the returned object.
 #'
@@ -51,7 +51,7 @@ fitCy3Models <- function(se, assay_name = "fore", refit = TRUE, verbose = FALSE,
     nse <- checkProbeSequences(se, FALSE)
 
     ## filter probes
-    nse <- pbmFilterProbes(nse, 1)
+    nse <- pbmFilterProbes(nse, .filter)
 
     ## trim probe sequences
     nse <- trimProbeSequences(nse, c(1, 36))
@@ -145,23 +145,14 @@ fitCy3Models <- function(se, assay_name = "fore", refit = TRUE, verbose = FALSE,
     }
     pdrop <- tidyr::spread(pdrop, condition, lowq)
     
-    ## ## compute residuals
-    presids <- dplyr::mutate(pfits, fit = lapply(fit, resid))
-    presids <- tidyr::unnest(presids)
-    presids <- dplyr::bind_cols(presids, dplyr::select(pdat, Row, Column))
-    presids <- tidyr::spread(presids, condition, fit)
-
     ## left join to original rowData to get full set
     full_rowdat <- as.data.frame(rowData(se), optional = TRUE)
     full_rowdat <- dplyr::as_tibble(full_rowdat)
     full_rowdat <- dplyr::select(full_rowdat, Row, Column, Sequence)
-    presids <- dplyr::left_join(dplyr::select(full_rowdat, Row, Column), presids, by = c("Row", "Column"))
     pexps <- dplyr::left_join(dplyr::select(full_rowdat, Row, Column), pexps, by = c("Row", "Column"))
     pratios <- dplyr::left_join(dplyr::select(full_rowdat, Row, Column), pratios, by = c("Row", "Column"))
     pdrop <- dplyr::left_join(dplyr::select(full_rowdat, Row, Column), pdrop, by = c("Row", "Column"))
 
-    presids <- DataFrame(presids, check.names = FALSE)
-    presids <- presids[, rownames(colData(se))]
     pexps <- DataFrame(pexps, check.names = FALSE)
     pexps <- pexps[, rownames(colData(se))]
     pratios <- DataFrame(pratios, check.names = FALSE)
@@ -170,7 +161,6 @@ fitCy3Models <- function(se, assay_name = "fore", refit = TRUE, verbose = FALSE,
     pdrop <- pdrop[, rownames(colData(se))]
 
     ## add to SE object
-    assay(se, "resid") <- presids
     assay(se, "expected") <- pexps
     assay(se, "ratio") <- pratios
     assay(se, "lowq") <- pdrop

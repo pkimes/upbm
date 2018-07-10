@@ -27,7 +27,7 @@ Ignored if NULL. (default = c(1, 36))}
 }
 \value{
 original SummarizedExperiment object with additional assays corresponding
-to ratio of observed vs. expected probe intensities, and whether probes were
+to the ratio of observed vs. expected probe intensities, and whether probes were
 flagged as low-quality based on log2(ratio) > 1 or < -1. Cy3 models are stored
 in the metadata of the returned object.
 }
