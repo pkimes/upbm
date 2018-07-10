@@ -1,0 +1,178 @@
+#' Compute Cy3 Scaling Factors using Emprical Reference
+#'
+#' PBM arrays are scanned twice, once for Cy3-tagged dUTPs to quantify
+#' dsDNA abundance at each probe, and again for the Alexa488-tagged 
+#' protein. Given a reference
+#' 
+#' @param se SummarizedExpirement object containing PBM Cy3 intensity data.
+#' @param refse SummarizedExperiment object containing PBM Cy3 reference
+#'        intensities.
+#' @param assay_name string name of the assay to use. (default = "fore")
+#' @param standardize logical whether to standardize residuals using
+#'        MAD (median absolute deviation about the median) intensity
+#'        computed for PBM Cy3 reference data. (default = TRUE)
+#' @param threshold numeric threshold on absolute value of log2 ratio between
+#'        observed and expected Cy3 intensities. If \code{standardize} is
+#'        specified, the log2 ratios are first scaled before comparing against
+#'        the threshold. In this case, the threshold is also scaled by the
+#'        median of the probe-level MAD intensities. (default = 1L)
+#' @param .filter integer specifying level of probe filtering to
+#'        perform prior to estimating affinities. See \code{pbmFilterProbes}
+#'        for more details on probe filter levels. (default = 1L)
+#'
+#' @return
+#' original SummarizedExperiment object with additional assays corresponding
+#' to ratio of observed vs. expected probe intensities, and whether probes were
+#' flagged as low-quality based on abs(log2(ratio)) > \code{threshold}. Cy3 models are stored
+#' in the metadata of the returned object.
+#'
+#' @importFrom dplyr as_tibble select bind_cols group_by ungroup left_join mutate one_of
+#' @importFrom tidyr gather spread
+#' @export
+#' @author Patrick Kimes
+fitCy3Empirical <- function(se, refse, assay_name = "fore", standardize = TRUE,
+                            threshold = 1L, .filter = 1L) {
+
+    ## filter probes
+    nse <- pbmFilterProbes(se, .filter)
+
+    ## check validity of Cy3 empirical reference
+    stopifnot("ref" %in% assayNames(refse))
+    stopifnot("sfactor" %in% names(metadata(refse)))
+    stopifnot("params" %in% names(metadata(refse)))
+    stopifnot("probe_mean" %in% colnames(refse))
+    stopifnot("probe_mad" %in% colnames(refse))
+
+    ## detemrine 
+    ovnames1 <- intersect(names(rowData(nse)), c("Row", "Column", "ID"))
+    ovnames2 <- intersect(names(rowData(refse)), c("Row", "Column", "ID"))
+    ovnames <- intersect(ovnames1, ovnames2)
+
+    ## determine row/probe metadata for Cy3 scans
+    rowdat1 <- as.data.frame(rowData(nse), optional = TRUE)
+    rowdat1 <- dplyr::as_tibble(rowdat1)
+    rowdat1 <- dplyr::select(rowdat1, one_of(ovnames1))
+
+    ## check 'se' rowData alone is alright
+    if (nrow(rowdat1) > nrow(dplyr::distinct(rowdat1))) {
+        stop("rowData of 'se' cannot be used to uniquely identify probes.\n",
+             "Check that rowData contains 'Row', 'Column', and/or 'ID' columns ",
+             "which are unique to each probe.")
+    }
+    
+    ## determine row/probe metadata for Cy3 reference
+    rowdat2 <- as.data.frame(rowData(refse), optional = TRUE)
+    rowdat2 <- dplyr::as_tibble(rowdat2)
+    rowdat2 <- dplyr::select(rowdat2, one_of(ovnames2))
+
+    ## check 'refse' rowData alone is alright
+    if (nrow(rowdat2) > nrow(dplyr::distinct(rowdat2))) {
+        stop("rowData of 'refse' cannot be used to uniquely identify probes.\n",
+             "Check that rowData contains 'Row', 'Column', and/or 'ID' columns ",
+             "which are unique to each probe.")
+    }
+
+    ## check that merging shouldn't be a problem
+    if (nrow(rowdat1) > nrow(dplyr::distinct(dplyr::select(rowdat1, one_of(ovnames)))) |
+        nrow(rowdat2) > nrow(dplyr::distinct(dplyr::select(rowdat2, one_of(ovnames))))) {
+        stop("rowData of 'se' and 'refse' cannot be matched using available rowData columns.\n",
+             "Check that rowData contains sufficient 'Row', 'Column', and/or 'ID' columns.\n",
+             "'se' rowData: ", paste0(ovnames1, collapse = ", "), "\n",
+             "'refse' rowData: ", paste0(ovnames2, collapse = ", "))
+    }
+
+
+    ## extract intensities for Cy3 scans
+    pdat1 <- assay(nse, assay_name)
+    pdat1 <- as.data.frame(pdat1, optional = TRUE)
+    pdat1 <- dplyr::as_tibble(pdat1)
+    pdat1 <- dplyr::bind_cols(pdat1, rowdat1)
+    pdat1 <- tidyr::gather(pdat1, condition, intensity, colnames(nse))
+
+    ## extract intensities for Cy3 reference
+    pdat2 <- assay(refse, "ref")
+    pdat2 <- as.data.frame(pdat2, optional = TRUE)
+    pdat2 <- dplyr::as_tibble(pdat2)
+    pdat2 <- dplyr::bind_cols(pdat2, rowdat2)
+
+
+    ## join observed and reference tables
+    pdat <- dplyr::left_join(pdat1, pdat2, by = ovnames)
+
+
+    ## verify that most values aren't NAs
+    pna <- mean(is.na(pdat$probe_mean))
+    if (pna > 0.2) {
+        stop("After merging observed and reference Cy3 intensities, > 20% of probes have NA reference intensities.\n",
+             "Percent NAs = ", 100*round(pna, 4), "%.\n",
+             "Please check 'refse' again before proceeding.")
+    } else if (pna > 0.01) {
+        warning("After merging observed and reference Cy3 intensities, > 1% of probes have NA reference intensities.\n",
+                "Percent NAs = ", 100*round(pna, 4), "%.\n")
+    }
+    
+    ## register samples if Cy3 ref was computed with registered scans
+    if (metadata(refse)$params$register) {
+        pdat <- dplyr::group_by(pdat, condition)
+        pdat <- dplyr::mutate(pdat, sintensity = intensity / median(intensity, na.rm = TRUE))
+        pdat <- dplyr::ungroup(pdat)
+        pdat <- dplyr::mutate(pdat, sintensity = sintensity * metadata(refse)$sfactor)
+    } else {
+        pdat <- dplyr::mutate(pdat, sintensity = intensity)
+    }
+
+    ## log2 tranform and compute ratios
+    pdat <- dplyr::mutate(pdat, sintensity = log2(sintensity + metadata(refse)$params$offset))
+    pdat <- dplyr::mutate(pdat, pscores = sintensity - probe_median)
+    pdat <- dplyr::mutate(pdat, pratios = 2^pscores)
+
+    ## scale threshold cutoff if standardize specified
+    if (standardize) {
+        median_mad <- median(assay(refse, "ref")$probe_mad, na.rm = TRUE)
+        pdat <- dplyr::mutate(pdat, pscores = pscores / probe_mad * median_mad)
+    }
+
+    ## identify outlier probes
+    pdat <- dplyr::mutate(pdat, pdrop = abs(pscores) > threshold)
+
+    
+    ## create assays
+    pexps <- dplyr::select(pdat, one_of(ovnames), condition, probe_mean)
+    pexps <- dplyr::mutate(pexps, probe_mean = 2^probe_mean - metadata(refse)$params$offset)
+    pexps <- tidyr::spread(pexps, condition, probe_mean)
+    pratios <- dplyr::select(pdat, one_of(ovnames), condition, pratios)
+    pratios <- tidyr::spread(pratios, condition, pratios)
+    pscores <- dplyr::select(pdat, one_of(ovnames), condition, pscores)
+    pscores <- tidyr::spread(pscores, condition, pscores)
+    plowq <- dplyr::select(pdat, one_of(ovnames), condition, pdrop)
+    plowq <- tidyr::spread(plowq, condition, pdrop)
+
+    
+    ## left join to original rowData to get full set
+    full_rowdat <- as.data.frame(rowData(se), optional = TRUE)
+    full_rowdat <- dplyr::as_tibble(full_rowdat)
+    full_rowdat <- dplyr::select(full_rowdat, one_of(ovnames1))
+
+    pexps <- dplyr::left_join(dplyr::select(full_rowdat, one_of(ovnames)), pexps, by = ovnames)
+    pratios <- dplyr::left_join(dplyr::select(full_rowdat, one_of(ovnames)), pratios, by = ovnames)
+    pscores <- dplyr::left_join(dplyr::select(full_rowdat, one_of(ovnames)), pscores, by = ovnames)
+    plowq <- dplyr::left_join(dplyr::select(full_rowdat, one_of(ovnames)), plowq, by = ovnames)
+
+    pexps <- DataFrame(pexps, check.names = FALSE)
+    pexps <- pexps[, rownames(colData(se))]
+    pratios <- DataFrame(pratios, check.names = FALSE)
+    pratios <- pratios[, rownames(colData(se))]
+    pscores <- DataFrame(pscores, check.names = FALSE)
+    pscores <- pscores[, rownames(colData(se))]
+    plowq <- DataFrame(plowq, check.names = FALSE)
+    plowq <- plowq[, rownames(colData(se))]
+
+    
+    ## add to SE object
+    assay(se, "expected") <- pexps
+    assay(se, "ratio") <- pratios
+    assay(se, "scores") <- pscores
+    assay(se, "lowq") <- plowq
+
+    return(se)
+}
