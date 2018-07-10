@@ -40,8 +40,8 @@ cy3Normalize <- function(se, cy3se, assay_name = "fore", match_by = condition, f
     stopifnot(match_by_str %in% names(colData(cy3se)))
     match_vals1 <- colData(se)[[match_by_str]]
     match_vals2 <- colData(cy3se)[[match_by_str]]
-    if (any(duplicated(match_vals1))| any(duplicated(match_vals2))) {
-        stop("Matching variable '", match_by_str, "' is not unique across samples.\n",
+    if (any(duplicated(match_vals2))) {
+        stop("Matching variable '", match_by_str, "' is not unique across samples in 'cy3se'.\n",
              "Specify a different column in colData.")
     }
 
