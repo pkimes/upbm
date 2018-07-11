@@ -134,7 +134,7 @@ pbmPlotChip <- function(se, assay_name = "fore", log_scale = TRUE, relative_scal
         }
     }
     
-    gp <- ggplot(pdat, aes(x = Row, y = Column, fill = value)) +
+    gp <- ggplot(pdat, aes(x = Column, y = Row, fill = value)) +
         geom_tile() +
         scale_x_continuous(expand = c(0, 0)) +
         scale_y_continuous(expand = c(0, 0)) +
