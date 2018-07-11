@@ -149,7 +149,7 @@ fitCy3Empirical <- function(se, refse, assay_name = "fore", useMean = TRUE,
 
     
     ## create assays
-    pexps <- dplyr::select(pdat, one_of(ovnames), condition, probe_mean)
+    pexps <- dplyr::select(pdat, one_of(ovnames), condition, probe_ref)
     pexps <- dplyr::mutate(pexps, probe_ref = 2^probe_ref - metadata(refse)$params$offset)
     pexps <- tidyr::spread(pexps, condition, probe_ref)
     pratios <- dplyr::select(pdat, one_of(ovnames), condition, pratios)
