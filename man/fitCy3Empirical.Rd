@@ -4,8 +4,8 @@
 \alias{fitCy3Empirical}
 \title{Compute Cy3 Scaling Factors using Emprical Reference}
 \usage{
-fitCy3Empirical(se, refse, assay_name = "fore", standardize = TRUE,
-  threshold = 1L, .filter = 1L)
+fitCy3Empirical(se, refse, assay_name = "fore", useMean = TRUE,
+  standardize = TRUE, threshold = 1L, .filter = 1L)
 }
 \arguments{
 \item{se}{SummarizedExpirement object containing PBM Cy3 intensity data.}
@@ -14,6 +14,9 @@ fitCy3Empirical(se, refse, assay_name = "fore", standardize = TRUE,
 intensities.}
 
 \item{assay_name}{string name of the assay to use. (default = "fore")}
+
+\item{useMean}{logical whether to use the probe-level mean, rather than
+the probe-level median as the Cy3 reference (default = TRUE)}
 
 \item{standardize}{logical whether to standardize residuals using
 MAD (median absolute deviation about the median) intensity

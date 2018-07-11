@@ -8,6 +8,8 @@
 #' @param refse SummarizedExperiment object containing PBM Cy3 reference
 #'        intensities.
 #' @param assay_name string name of the assay to use. (default = "fore")
+#' @param useMean logical whether to use the probe-level mean, rather than
+#'        the probe-level median as the Cy3 reference (default = TRUE)
 #' @param standardize logical whether to standardize residuals using
 #'        MAD (median absolute deviation about the median) intensity
 #'        computed for PBM Cy3 reference data. (default = TRUE)
@@ -30,8 +32,8 @@
 #' @importFrom tidyr gather spread
 #' @export
 #' @author Patrick Kimes
-fitCy3Empirical <- function(se, refse, assay_name = "fore", standardize = TRUE,
-                            threshold = 1L, .filter = 1L) {
+fitCy3Empirical <- function(se, refse, assay_name = "fore", useMean = TRUE,
+                            standardize = TRUE, threshold = 1L, .filter = 1L) {
 
     ## filter probes
     nse <- pbmFilterProbes(se, .filter)
@@ -40,8 +42,12 @@ fitCy3Empirical <- function(se, refse, assay_name = "fore", standardize = TRUE,
     stopifnot("ref" %in% assayNames(refse))
     stopifnot("sfactor" %in% names(metadata(refse)))
     stopifnot("params" %in% names(metadata(refse)))
-    stopifnot("probe_mean" %in% colnames(refse))
     stopifnot("probe_mad" %in% colnames(refse))
+    if (useMean) {
+        stopifnot("probe_mean" %in% colnames(refse))
+    } else {
+        stopifnot("probe_median" %in% colnames(refse))
+    }
 
     ## detemrine 
     ovnames1 <- intersect(names(rowData(nse)), c("Row", "Column", "ID"))
@@ -99,9 +105,15 @@ fitCy3Empirical <- function(se, refse, assay_name = "fore", standardize = TRUE,
     ## join observed and reference tables
     pdat <- dplyr::left_join(pdat1, pdat2, by = ovnames)
 
+    ## set the probe reference 
+    if (useMean) {
+        pdat$probe_ref <- pdat$probe_mean
+    } else {
+        pdat$probe_ref <- pdat$probe_median
+    }
 
     ## verify that most values aren't NAs
-    pna <- mean(is.na(pdat$probe_mean))
+    pna <- mean(is.na(pdat$probe_ref))
     if (pna > 0.2) {
         stop("After merging observed and reference Cy3 intensities, > 20% of probes have NA reference intensities.\n",
              "Percent NAs = ", 100*round(pna, 4), "%.\n",
@@ -123,7 +135,7 @@ fitCy3Empirical <- function(se, refse, assay_name = "fore", standardize = TRUE,
 
     ## log2 tranform and compute ratios
     pdat <- dplyr::mutate(pdat, sintensity = log2(sintensity + metadata(refse)$params$offset))
-    pdat <- dplyr::mutate(pdat, pscores = sintensity - probe_median)
+    pdat <- dplyr::mutate(pdat, pscores = sintensity - probe_ref)
     pdat <- dplyr::mutate(pdat, pratios = 2^pscores)
 
     ## scale threshold cutoff if standardize specified
@@ -138,8 +150,8 @@ fitCy3Empirical <- function(se, refse, assay_name = "fore", standardize = TRUE,
     
     ## create assays
     pexps <- dplyr::select(pdat, one_of(ovnames), condition, probe_mean)
-    pexps <- dplyr::mutate(pexps, probe_mean = 2^probe_mean - metadata(refse)$params$offset)
-    pexps <- tidyr::spread(pexps, condition, probe_mean)
+    pexps <- dplyr::mutate(pexps, probe_ref = 2^probe_ref - metadata(refse)$params$offset)
+    pexps <- tidyr::spread(pexps, condition, probe_ref)
     pratios <- dplyr::select(pdat, one_of(ovnames), condition, pratios)
     pratios <- tidyr::spread(pratios, condition, pratios)
     pscores <- dplyr::select(pdat, one_of(ovnames), condition, pscores)
