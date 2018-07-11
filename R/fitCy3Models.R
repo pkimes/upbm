@@ -39,12 +39,13 @@
 #' in the metadata of the returned object.
 #'
 #' @seealso cy3Normalize
+#' @importFrom stats lm na.exclude predict
 #' @importFrom dplyr as_tibble select bind_cols group_by do ungroup left_join mutate
 #' @importFrom tidyr gather spread
 #' @importFrom Biostrings DNAStringSet oligonucleotideFrequency
 #' @export
 #' @author Patrick Kimes
-fitCy3Models <- function(se, assay_name = "fore", refit = TRUE, verbose = FALSE, .filter = 1L, 
+fitCy3Models <- function(se, assay_name = "fore", refit = TRUE, .filter = 1L, 
                          .trim = if (.filter > 0L) { c(1, 36) } else { NULL }) {
 
     ## check Sequence info in rowData

@@ -27,6 +27,7 @@
 #' new assay, \code{scaled}.
 #' 
 #' @import truncnorm fitdistrplus
+#' @importFrom stats quantile
 #' @importFrom dplyr as_tibble tibble mutate group_by filter do select ungroup left_join
 #' @importFrom tidyr gather spread nest
 #' @importFrom rlang enquo quo_name

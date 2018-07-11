@@ -4,9 +4,8 @@
 \alias{fitCy3Models}
 \title{Compute Cy3 Scaling Factors}
 \usage{
-fitCy3Models(se, assay_name = "fore", refit = TRUE, verbose = FALSE,
-  .filter = 1L, .trim = if (.filter > 0L) {     c(1, 36) } else {     NULL
-  })
+fitCy3Models(se, assay_name = "fore", refit = TRUE, .filter = 1L,
+  .trim = if (.filter > 0L) {     c(1, 36) } else {     NULL })
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing PBM Cy3 intensity data.}

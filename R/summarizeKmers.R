@@ -41,6 +41,7 @@
 #' in the rowdata of the SummarizedBenchmark.
 #' 
 #' @md
+#' @importFrom stats mad median
 #' @importFrom dplyr as_tibble mutate left_join select
 #' @importFrom tidyr nest
 #' @importFrom matrixStats colMedians colMeans2 colSds colMads

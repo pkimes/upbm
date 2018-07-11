@@ -30,6 +30,8 @@
 #' SummarizedExperiment object with Cy3 probe-level reference metrics. 
 #' 
 #' @export
+#' @importFrom stats mad median sd
+#' @importFrom dplyr group_by mutate ungroup summarize left_join select
 #' @author Patrick Kimes
 generateCy3Ref <- function(cy3se, assay_name = "fore", offset = 1L, register = TRUE,
                            .filter = 1L) {
