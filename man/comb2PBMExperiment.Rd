@@ -4,11 +4,16 @@
 \alias{comb2PBMExperiment}
 \title{Combinatorial Files to PBMExerpiment Object}
 \usage{
-comb2PBMExperiment(tab)
+comb2PBMExperiment(tab, probes = NULL)
 }
 \arguments{
 \item{tab}{data.frame with at least a single \code{combn} column
 corresponding to PBM "combinatorial.txt" file paths.}
+
+\item{probes}{data.frame containing probe sequences in a column, 'Sequence',
+or a character vector specifying the probe sequences. If specified,
+these values will be added to the rowData of the returned
+SummarizedExperiment object. (default = NULL)}
 }
 \value{
 SummarizedExperiment object containing PBM data.
@@ -19,7 +24,7 @@ the Universal PBM Analysis Suite into a format similar to raw PBM
 data read using \code{buildPBMExerpiment}.
 }
 \details{
-If a \code{name} column is included int he input table, these are used as the
+If a \code{name} column is included in the input table, these are used as the
 corresponding IDs for each sample/row. If IDs are not provided, the
 file names are used. Sample IDs must be unique, and an error is thrown
 if any samples have a common ID.
@@ -27,6 +32,8 @@ All other columns (aside from \code{combn} and \code{name}) in \code{tab} will b
 the \code{colData} of the returned SummarizedExperiment object. Any sample
 information, e.g. replicate or condition information can be included in
 \code{tab}.
+
+If a probe design is
 }
 \author{
 Patrick Kimes

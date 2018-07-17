@@ -6,12 +6,16 @@
 #'
 #' @param tab data.frame with at least a single `combn` column
 #'        corresponding to PBM "combinatorial.txt" file paths. 
+#' @param probes data.frame containing probe sequences in a column, 'Sequence',
+#'        or a character vector specifying the probe sequences. If specified,
+#'        these values will be added to the rowData of the returned
+#'        SummarizedExperiment object. (default = NULL)
 #'
 #' @return
 #' SummarizedExperiment object containing PBM data.
 #'
 #' @details
-#' If a `name` column is included int he input table, these are used as the
+#' If a `name` column is included in the input table, these are used as the
 #' corresponding IDs for each sample/row. If IDs are not provided, the
 #' file names are used. Sample IDs must be unique, and an error is thrown
 #' if any samples have a common ID.
@@ -19,15 +23,18 @@
 #' the `colData` of the returned SummarizedExperiment object. Any sample
 #' information, e.g. replicate or condition information can be included in
 #' `tab`.
+#'
+#' If a probe design is 
 #' 
 #' @md
 #' @import SummarizedExperiment
-#' @importFrom dplyr rename select
+#' @importFrom dplyr rename select one_of
+#' @importFrom stringr str_trunc
 #' @importFrom readr read_tsv
 #' @importFrom purrr reduce
 #' @export
 #' @author Patrick Kimes
-comb2PBMExperiment <- function(tab) {
+comb2PBMExperiment <- function(tab, probes = NULL) {
     stopifnot(is(tab, "data.frame"))
     stopifnot("combn" %in% names(tab))
     
@@ -49,11 +56,36 @@ comb2PBMExperiment <- function(tab) {
     if (any(duplicated(tab$name))) {
         stop("Sample names/IDs must be unique.")
     }
+
+    ## check if probe sequences are valid
+    if (!is.null(probes)) {
+        if (is.vector(probes, mode = "character")) {
+            probes <- DataFrame(Sequence = probes)
+        }
+        if (!is(probes, "DataFrame") & !is(probes, "data.frame")) {
+            warning("Specified 'probes' must be a DataFrame, data.frame, or character vector ",
+                    "of probe sequences equal to the size of each GPR array result.\n",
+                    "Ignoring specified 'probes' input.")
+            probes <- NULL
+        } else if (! "Sequence" %in% names(probes)) {
+            warning("Specified 'probes' must have a column named 'Sequence' with the probe sequences.\n",
+                    "Ignoring specified 'probes' input.")
+            probes <- NULL
+        }
+    }
     
     ## read in files
     gpr <- lapply(tab$combn, readr::read_tsv, col_names = c("intensity", "Sequence"),
                   col_types = "dc", progress = FALSE)
 
+    ## make sure that 'Sequence' is unique for each sample
+    is_seq_dupd <- unlist(lapply(gpr, function(x) { any(duplicated(x$Sequence)) }))
+    if (any(is_seq_dupd)) {
+        stop("All sample combinatorial files should only contain single entry per Sequence.\n",
+             "Samples with duplicated Sequence entries: \n  ",
+             paste0(tab$combn[is_seq_dupd], collapse = "\n  "))
+    }
+    
     ## check that dimensions are the same
     nprobes <- unlist(lapply(gpr, nrow))
     if (min(nprobes) / max(nprobes) < 0.95) {
@@ -66,14 +98,41 @@ comb2PBMExperiment <- function(tab) {
     gpr <- mapply(function(g, n) { dplyr::rename(g, !!n := intensity) }, gpr, tab$name, SIMPLIFY = FALSE)
     assay_table <- purrr::reduce(gpr, left_join, by = c("Sequence"))
 
+    ## check if Sequences in sample are subset of specified probes
+    if (!is.null(probes)) {
+        probe_subset <- assay_table$Sequence %in% probes$Sequence
+        if (!all(probe_subset)) {
+            warning("Not all probes in combinatorial files were containined in the ",
+                    "specified set of probes.\n",
+                    "  # probes in 'probes': ", nrow(probes), "\n",
+                    "  # probes in PBM data: ", nrow(assay_table), "\n",
+                    "  # probes in overlap:  ", sum(probe_subset), "\n",
+                    "first 5 probe sequences in data but not in 'probes':\n  ",
+                    paste0(head(assay_table$Sequence[!probe_subset], n = 5),
+                           collapse = "\n  "), "\n  ...\n",
+                    "Ignoring specified 'probes' input.")
+            probes <- NULL
+        }
+    }
+    
+    ## if probes specified, merge
+    if (!is.null(probes)) {
+        assay_table <- dplyr::left_join(probes, assay_table, by = "Sequence",
+                                        suffix = c(".probes", ""))
+    }
+    
     ## check that probe sequences match across samples
-    if (nrow(assay_table) != max(nprobes)) {
-        stop("Not all samples have same probe sequences.\n",
-             "Please only supply samples from a single design.")
+    if (nrow(assay_table) > 0.95 * (min(nprobes) + max(nprobes))) {
+        stop("Not all samples have (roughly) overlapping probe sequences.\n",
+             "Please only supply samples from a single design.\n",
+             "  min # probes in PBM sample:  ", min(nprobes), " [", colnames(zz)[which.min(nprobes)], "]\n",
+             "  max # probes in PBM sample:  ", max(nprobes), " [", colnames(zz)[which.max(nprobes)], "]\n",
+             "  # probes in merged PBM data: ", nrow(assay_table), "\n",
+             "Please check samples again.")
     }
     
     ## create row data, just probe sequence
-    rowdat <- as.data.frame(dplyr::select(assay_table, Sequence), optional = TRUE)
+    rowdat <- as.data.frame(dplyr::select(assay_table, -dplyr::one_of(tab$name)), optional = TRUE)
     
     ## create column data, just probe sequence
     coldat <- cbind(data.frame(scan = rep("Combinatorial", nrow(tab)),
@@ -81,7 +140,7 @@ comb2PBMExperiment <- function(tab) {
                     dplyr::select(tab, -combn, -name))
 
     ## create assay list
-    assaydat <- list(fore = as.matrix(dplyr::select(assay_table, -Sequence)))
+    assaydat <- list(fore = as.matrix(dplyr::select(assay_table, dplyr::one_of(tab$name))))
 
     ## SummarizedExperiment
     SummarizedExperiment(assays = assaydat, rowData = rowdat, colData = coldat,
