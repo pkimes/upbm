@@ -216,7 +216,7 @@ summarizeKmers <- function(se, assay_name = "fore", kmers = NULL, offset = 1,
     }
     
     ## determine row data
-    rowdat <- DataFrame(kmer = pdat_seqs,
+    rowdat <- DataFrame(kmer = as.character(pdat_seqs),
                         nprobes = n_vals)
     
     ## create new SummarizedExperiment
