@@ -20,6 +20,7 @@
 #' @return
 #' vector of unique k-mer strings.
 #' 
+#' @export
 #' @importFrom Biostrings oligonucleotideFrequency DNAStringSet reverseComplement
 #' @importFrom dplyr tibble mutate filter
 #' @author Patrick Kimes
