@@ -8,7 +8,8 @@ pbmFilterProbes(se, level = 0L)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing GPR
-intensity information.}
+intensity information or DataFrame/data.frame object
+containing the probe design.}
 
 \item{level}{integer specifying level of probe filtering to
 perform prior to plotting. (default = 0)}

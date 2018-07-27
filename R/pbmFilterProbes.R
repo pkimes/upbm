@@ -7,7 +7,8 @@
 #' metrics.
 #' 
 #' @param se SummarizedExperiment object containing GPR
-#'        intensity information.
+#'        intensity information or DataFrame/data.frame object
+#'        containing the probe design.
 #' @param level integer specifying level of probe filtering to
 #'        perform prior to plotting. (default = 0)
 #'
@@ -26,16 +27,25 @@
 #' @author Patrick Kimes
 pbmFilterProbes <- function(se, level = 0L) {
 
-    if (level > 0L && ! "ID" %in% names(rowData(se))) {
-        stop("Must have 'ID' column in rowData to use filter level > 0.\n",
-             "If **all** probes should be used, set .filter = 0.\n",
+    if (is(se, "SummarizedExperiment")) {
+        pd <- rowData(pd)
+    } else if (is(se, "DataFrame") | is(se, "data.frame")) {
+        pd <- se
+    } else {
+        stop("se must be a SummarizedExperiment or DataFrame/data.frame")
+    }
+
+    if (level > 0L && ! "ID" %in% names(pd)) {
+        stop(paste0("Must have 'ID' column ", ifelse(is(se, "SummarizedExperiment"), "in rowData ", ""),
+                    "to use filter level > 0.\n"),
+             "If **all** probes should be used, set filter level to 0.\n",
              "If only a subset of probes (i.e. de Bruijn probes) should be used,",
-             "add 'ID' to rowData.")
+             "add 'ID' column.")
         level <- 0L
     }
     
     if (level > 0L) {
-        se <- se[grepl("^dBr_", rowData(se)$ID), ]
+        se <- se[grepl("^dBr_", pd$ID), , drop = FALSE]
     }
     
     return(se)

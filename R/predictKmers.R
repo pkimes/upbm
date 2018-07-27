@@ -141,7 +141,24 @@ predictKmers <- function(se, assay_name = "fore", kmers = NULL, offset = 1,
 }
 
 
-## helper function to check if specified k-mer set is valid
+#' Check K-mer Sequences
+#' 
+#' Simple helper function to check if specified k-mer set is valid,
+#' namely a vector of equal length character strings.
+#' If \code{NULL}, a default set of 8-mers is returned. If invalid, an error is thrown.
+#'
+#' @param kmers character vector of k-mer sequences or \code{NULL}.
+#' @param verb logical whether to print extra messages. (default = FALSE)
+#'
+#' @return
+#' Original \code{se} object with default \code{pbm_8x60k_v1} probe design added
+#' if probe 'Sequence' column is missing and the 8x60k design dimensions match
+#' to original \code{se}.
+#'
+#' 
+#' @importFrom dplyr left_join
+#' @export
+#' @author Patrick Kimes
 checkKmers <- function(kmers, verb) {
     if (is.null(kmers)) {
         if (verb) {
@@ -151,13 +168,33 @@ checkKmers <- function(kmers, verb) {
         return(pbm_8mers)
     }
     if (!is.vector(kmers, mode = "character")) {
-        stop("If specified, 'kmers' must be a vector of nucleotide sequences to estimate.")
+        stop("If specified, 'kmers' must be a vector of nucleotide sequences as character strings.")
+    }
+    if (!length(unique(nchar(kmers))) != 1L) {
+        stop("If specified, 'kmers' must be a vector of nucleotide sequences of equal length.")
     }
     return(kmers)
 }
 
 
-## helper function to check if probe sequences in SE are valid
+#' Check Probe Sequences
+#' 
+#' Simple helper function to check if probe sequences in the rowData of
+#' a SummarizedExperiment object are valid. The sequences should be in
+#' a column named 'Sequence'.
+#'
+#' @param se SummarizedExperiment object containing PBM intensity data and
+#'        probe sequence information in rowData.
+#' @param verb logical whether to print extra messages. (default = FALSE)
+#'
+#' @return
+#' Original \code{se} object with default \code{pbm_8x60k_v1} probe design added
+#' if probe 'Sequence' column is missing and the 8x60k design dimensions match
+#' to original \code{se}.
+#'
+#' @importFrom dplyr left_join
+#' @export
+#' @author Patrick Kimes
 checkProbeSequences <- function(se, verb) {
     if ("Sequence" %in% names(rowData(se))) {
         return(se)
@@ -187,13 +224,45 @@ checkProbeSequences <- function(se, verb) {
 }
 
 
-## helper function to trim probe sequences in SE if specified
-trimProbeSequences <- function(se, .trim) {
+#' Trim Probe Sequences 
+#'
+#' Simple helper function to trim probe sequences in the rowData of
+#' a SummarizedExperiment object, or alternatively, a DataFrame/data.frame
+#' object. The sequences should be in a column named 'Sequence'.
+#' 
+#' @param se SummarizedExperiment object containing PBM intensity data and
+#'        probe sequence information in rowData, or simply the DataFrame/data.frame
+#'        corresponding to the rowData.
+#' @param .trim interger vector of length two specifying start and end
+#'        of probe sequence \strong{to be used}. Default is based on the universal
+#'        PBM probe design where only leading 36nt should be used. 
+#'        Ignored if \code{NULL}. (default = \code{c(1, 36)})
+#'
+#' @return
+#' Original \code{se} object with trimmed Sequence column.
+#'
+#' @importFrom Biostrings subseq
+#' @export
+#' @author Patrick Kimes
+trimProbeSequences <- function(se, .trim = c(1, 36)) {
     if (is.null(.trim)) {
         return(se)
     }
+
+    if (is(se, "SummarizedExperiment")) {
+        pd <- rowData(pd)
+    } else if (is(se, "DataFrame") | is(se, "data.frame")) {
+        pd <- se
+    } else {
+        stop("se must be a SummarizedExperiment or DataFrame/data.frame")
+    }
+
+    if (! "Sequence" %in% names(pd)) {
+        stop(paste0("Must have 'Sequence' column ",
+                    ifelse(is(se, "SummarizedExperiment"), "in rowData ", ""),
+                    "to perform trimming."))
+    }
     
-    ## otherwise perform trimming
     if (length(.trim) != 2 || !is.numeric(.trim)) {
         stop("If probe sequences should be trimmed, set '.trim' to a vector of length ",
              "2 corresponding to start and end of regions to be kept.")
@@ -201,12 +270,17 @@ trimProbeSequences <- function(se, .trim) {
     if (.trim[1] > .trim[2] || .trim[1] < 1) {
         stop("Invalid choice of '.trim'.")
     }
-    plens <- nchar(rowData(se)$Sequence)
+    plens <- nchar(pd$Sequence)
     if (any(plens < .trim[2])) {
         stop("Choice of '.trim' is longer than at least one sequence.")
     }
-    
-    rowData(se)$Sequence <- Biostrings::subseq(rowData(se)$Sequence,
-                                               .trim[1], .trim[2])
+
+    ## if made it here, trim
+    if (is(se, "SummarizedExperiment")) {
+        rowData(se)$Sequence <- Biostrings::subseq(pd$Sequence, .trim[1], .trim[2])
+    } else {
+        se <- Biostrings::subseq(pd$Sequence, .trim[1], .trim[2])
+    }
+
     return(se)
 }
