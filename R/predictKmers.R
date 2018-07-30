@@ -170,7 +170,7 @@ checkKmers <- function(kmers, verb) {
     if (!is.vector(kmers, mode = "character")) {
         stop("If specified, 'kmers' must be a vector of nucleotide sequences as character strings.")
     }
-    if (!length(unique(nchar(kmers))) != 1L) {
+    if (length(unique(nchar(kmers))) != 1L) {
         stop("If specified, 'kmers' must be a vector of nucleotide sequences of equal length.")
     }
     return(kmers)
