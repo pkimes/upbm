@@ -9,7 +9,7 @@ checkKmers(kmers, verb)
 \arguments{
 \item{kmers}{character vector of k-mer sequences or \code{NULL}.}
 
-\item{verb}{logical whether to print extra messages. (default = FALSE)}
+\item{verb}{logical whether to print extra messages.}
 }
 \value{
 Original \code{se} object with default \code{pbm_8x60k_v1} probe design added

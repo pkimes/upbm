@@ -56,7 +56,7 @@ predictKmers <- function(se, assay_name = "fore", kmers = NULL, offset = 1,
     
     ## check kmers specified
     kmers <- checkKmers(kmers, verbose)
-
+    
     ## check Sequence info in rowData
     se <- checkProbeSequences(se, verbose)
     
@@ -148,7 +148,7 @@ predictKmers <- function(se, assay_name = "fore", kmers = NULL, offset = 1,
 #' If \code{NULL}, a default set of 8-mers is returned. If invalid, an error is thrown.
 #'
 #' @param kmers character vector of k-mer sequences or \code{NULL}.
-#' @param verb logical whether to print extra messages. (default = FALSE)
+#' @param verb logical whether to print extra messages.
 #'
 #' @return
 #' Original \code{se} object with default \code{pbm_8x60k_v1} probe design added
@@ -185,7 +185,7 @@ checkKmers <- function(kmers, verb) {
 #'
 #' @param se SummarizedExperiment object containing PBM intensity data and
 #'        probe sequence information in rowData.
-#' @param verb logical whether to print extra messages. (default = FALSE)
+#' @param verb logical whether to print extra messages.
 #'
 #' @return
 #' Original \code{se} object with default \code{pbm_8x60k_v1} probe design added
@@ -283,4 +283,39 @@ trimProbeSequences <- function(se, .trim = c(1, 36)) {
     }
 
     return(se)
+}
+
+
+#'
+#'
+#' Simple wrapper function to process PBM probe sequences
+#'
+#' @param se SummarizedExperiment object containing PBM intensity data and
+#'        probe sequence information in rowData, or simply the DataFrame/data.frame
+#'        corresponding to the rowData.
+#' @param verb logical whether to print extra messages. (default = FALSE)
+#' @param .filter integer specifying level of probe filtering to perform. See
+#'        \code{pbmFilterProbes} for more details about levels of probe filtering.
+#'        (default = 1L)
+#' @param .trim interger vector of length two specifying start and end
+#'        of probe sequence \strong{to be used}. Default is based on the universal
+#'        PBM probe design where only leading 36nt should be used. 
+#'        Ignored if \code{NULL}. (default = \code{c(1, 36)})
+#'
+#' @return 
+#' Original \code{se} object with only probes passing filter, with trimmed Sequence columns.
+#' If the probe sequences are not valid, an error is thrown. 
+#'
+#' @seealso trimProbeSequences pbmFilterProbes checkProbeSequences
+#' @export
+#' @author Patrick Kimes
+pbmProcessProbes <- function(se, verbose = FALSE, .filter = 1L, .trim = c(1, 36)) {
+    ## check Sequence info in rowData
+    se <- checkProbeSequences(se, verbose)
+    
+    ## filter probes
+    se <- pbmFilterProbes(se, .filter) 
+
+    ## trim probe sequences
+    se <- trimProbeSequences(se, .trim)
 }
