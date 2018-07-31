@@ -28,7 +28,7 @@
 pbmFilterProbes <- function(se, level = 0L) {
 
     if (is(se, "SummarizedExperiment")) {
-        pd <- rowData(pd)
+        pd <- rowData(se)
     } else if (is(se, "DataFrame") | is(se, "data.frame")) {
         pd <- se
     } else {
