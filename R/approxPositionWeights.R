@@ -20,6 +20,10 @@
 #'        per k-mer depends strongly on k. (default = 10L)
 #' @param verbose logical whether to print extra messages during model fitting
 #'        procedure. (default = FALSE)
+#' @param log_scale logical whether to calculate bias on log2 scale
+#'        intensities. (default = FALSE)
+#' @param offset integer offset to add to intensities before performing
+#'        log2 scale calculations. (default = 1L)
 #' @param .filter integer specifying level of probe filtering to
 #'        perform prior to estimating affinities. See \code{pbmFilterProbes}
 #'        for more details on probe filter levels. (default = 1)
@@ -36,7 +40,8 @@
 #' @importFrom dplyr rename as_tibble top_n group_by ungroup mutate left_join select summarize arrange
 #' @importFrom tidyr gather spread
 #' @author Patrick Kimes
-approxPositionWeights <- function(se, kmers, nk = 10L, verbose = FALSE, .filter = 1L, 
+approxPositionWeights <- function(se, kmers, nk = 10L, verbose = FALSE, .filter = 1L,
+                                  log_scale = FALSE, offset = 1L,
                                   .trim = if (.filter > 0L) { c(1, 36) } else { NULL }) {
     ## check kmers specified
     kmers <- checkKmers(kmers, verbose)
@@ -74,8 +79,14 @@ approxPositionWeights <- function(se, kmers, nk = 10L, verbose = FALSE, .filter 
     ## get log2 ratios relative to median k-mer intensity
     kmall <- dplyr::left_join(topkm, kmmap, by = "kmer")
     kmall <- dplyr::left_join(kmall, sevals, by = c("probe_idx", "sample"), suffix = c(".km", ".pr"))
-    kmall <- dplyr::mutate(kmall, log2ratio = log2(value.pr / value.km))
 
+    if (log_scale) {
+        kmall <- dplyr::mutate(kmall, log2ratio = log2( log2(value.pr + offset) /
+                                                        log2(value.km + offset) ))
+    } else {
+        kmall <- dplyr::mutate(kmall, log2ratio = log2(value.pr / value.km))
+    }
+    
     ptrend <- dplyr::select(kmall, sample, pos, log2ratio)
     ptrend <- dplyr::group_by(ptrend, sample, pos)
     ptrend <- dplyr::summarize(ptrend, log2ratio = median(log2ratio, na.rm = TRUE))

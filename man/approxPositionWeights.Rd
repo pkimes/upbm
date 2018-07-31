@@ -5,7 +5,8 @@
 \title{Approximate Positional Bias}
 \usage{
 approxPositionWeights(se, kmers, nk = 10L, verbose = FALSE, .filter = 1L,
-  .trim = if (.filter > 0L) {     c(1, 36) } else {     NULL })
+  log_scale = FALSE, offset = 1L, .trim = if (.filter > 0L) {     c(1, 36)
+  } else {     NULL })
 }
 \arguments{
 \item{se}{SummarizedExperiment of probe intensities}
@@ -23,6 +24,12 @@ procedure. (default = FALSE)}
 \item{.filter}{integer specifying level of probe filtering to
 perform prior to estimating affinities. See \code{pbmFilterProbes}
 for more details on probe filter levels. (default = 1)}
+
+\item{log_scale}{logical whether to calculate bias on log2 scale
+intensities. (default = FALSE)}
+
+\item{offset}{integer offset to add to intensities before performing
+log2 scale calculations. (default = 1L)}
 
 \item{.trim}{interger vector of length two specifying start and end
 of probe sequence to be used. Default is based on the universal
