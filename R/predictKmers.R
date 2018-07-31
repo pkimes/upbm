@@ -184,7 +184,8 @@ checkKmers <- function(kmers, verb) {
 #' a column named 'Sequence'.
 #'
 #' @param se SummarizedExperiment object containing PBM intensity data and
-#'        probe sequence information in rowData.
+#'        probe sequence information in rowData, or simply the DataFrame/data.frame
+#'        corresponding to the rowData.
 #' @param verb logical whether to print extra messages.
 #'
 #' @return
@@ -196,7 +197,15 @@ checkKmers <- function(kmers, verb) {
 #' @export
 #' @author Patrick Kimes
 checkProbeSequences <- function(se, verb) {
-    if ("Sequence" %in% names(rowData(se))) {
+    if (is(se, "SummarizedExperiment")) {
+        pd <- rowData(se)
+    } else if (is(se, "DataFrame") | is(se, "data.frame")) {
+        pd <- se
+    } else {
+        stop("se must be a SummarizedExperiment or DataFrame/data.frame")
+    }
+
+    if ("Sequence" %in% names(pd)) {
         return(se)
     }
 
@@ -204,7 +213,7 @@ checkProbeSequences <- function(se, verb) {
     if (verb) {
         cat("!! Using the default probe sequence set.\n")
     }
-    if (! all(c("Row", "Column") %in% names(rowData(se)))) {
+    if (! all(c("Row", "Column") %in% names(pd))) {
         stop("The default set of probe sequences could not be used because the specified SummarizedExperiment ",
              "object does not contain probe 'Row' and 'Column' information in the rowData.\n",
              "The unique 'Row' and 'Column' values (and 'Sequence') information must be added to the rowData.")
@@ -215,11 +224,13 @@ checkProbeSequences <- function(se, verb) {
              "contains ", nrow(se), " rows, and the default probe set includes ", nrow(pbm_8x60k_v1), " rows.\n",
              "The unique 'Sequence' information must be added to the rowData to use this command.")
     }
-    rdat <- dplyr::left_join(as.data.frame(rowData(se), optional = TRUE),
-                             dplyr::distinct(pbm_8x60k_v1),
-                             by = c("Column", "Row"))
-    rowData(se) <- DataFrame(rdat)
-
+    pd <- dplyr::left_join(as.data.frame(pd, optional = TRUE),
+                           dplyr::distinct(pbm_8x60k_v1),
+                           by = c("Column", "Row"))
+    if (is(se, "SummarizedExperiment")) {
+        rowData(se) <- DataFrame(rdat)
+    }
+    
     return(se)
 }
 
@@ -250,7 +261,7 @@ trimProbeSequences <- function(se, .trim = c(1, 36)) {
     }
 
     if (is(se, "SummarizedExperiment")) {
-        pd <- rowData(pd)
+        pd <- rowData(se)
     } else if (is(se, "DataFrame") | is(se, "data.frame")) {
         pd <- se
     } else {
@@ -279,7 +290,7 @@ trimProbeSequences <- function(se, .trim = c(1, 36)) {
     if (is(se, "SummarizedExperiment")) {
         rowData(se)$Sequence <- Biostrings::subseq(pd$Sequence, .trim[1], .trim[2])
     } else {
-        se <- Biostrings::subseq(pd$Sequence, .trim[1], .trim[2])
+        se$Sequence <- Biostrings::subseq(pd$Sequence, .trim[1], .trim[2])
     }
 
     return(se)
@@ -317,5 +328,5 @@ pbmProcessProbes <- function(se, verbose = FALSE, .filter = 1L, .trim = c(1, 36)
     se <- pbmFilterProbes(se, .filter) 
 
     ## trim probe sequences
-    se <- trimProbeSequences(se, .trim)
+    trimProbeSequences(se, .trim)
 }

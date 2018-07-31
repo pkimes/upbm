@@ -8,7 +8,8 @@ checkProbeSequences(se, verb)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing PBM intensity data and
-probe sequence information in rowData.}
+probe sequence information in rowData, or simply the DataFrame/data.frame
+corresponding to the rowData.}
 
 \item{verb}{logical whether to print extra messages.}
 }
