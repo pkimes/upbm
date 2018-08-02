@@ -5,7 +5,8 @@
 \title{Lower-Tail Normalization (TESTING)}
 \usage{
 lowertailNormalization(se, assay_name = "fore", q = 0.4,
-  stratify = condition, baseline = NULL, .fits = FALSE)
+  stratify = condition, baseline = NULL, log_scale = FALSE,
+  method = c("regression", "pca", "normal"), regtype = 1L, .fits = FALSE)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing GPR intensity information.}
@@ -19,9 +20,15 @@ fitting truncated normal distribution. (default = 0.4)}
 '\code{sample}') to use for comparing samples; values in column must be
 unique for each sample. (default = condition)}
 
-\item{baseline}{string name of baseline condition to
-compare other conditions against; if not specified, guessed by looking for
+\item{baseline}{string name of baseline condition to compare other conditions
+against; if not specified, guessed by looking for
 'ref' in any value of the stratifying variable. (default = NULL)}
+
+\item{log_scale}{logical whether cross-sample normalization should be applied
+using log2-scaled intensities rather than raw intensities. (default = FALSE)}
+
+\item{method}{character string specifying method to use for normalization.
+Must be one of "regression", "pca", or "normal". (default = "regression")}
 
 \item{.fits}{logical whether to just return a table of fits rather
 than the normalized SummarizedExperiment object. (default = FALSE)}
@@ -31,15 +38,31 @@ SummarizedExperiment object with normalized intensities in
 new assay, \code{scaled}.
 }
 \description{
-This is an experimental normalization procedure based on fitting
-a truncated normal distribution to the lower tail of log2-scale probe
-intensities to register intensities across experiments. The mean of
-the distribution is estimated using the \code{bg.parameters} function
-from the \code{affy} package, and only the standard deviation is estimated
-separately for the lower tail. The intensities are shift/scale transformed
-on the log2-scale to match a specified reference sample.
+This is a collection of experimental cross-sample normalization procedures which
+all attempt to align samples based on lower-tail of probe intensities (or log2-intensities).
+Inherent to all of these cross-sample normalization approaches is the assumption that the
+lower-tail probes of all samples are primarily background noise, and should therefore be
+similiarly distributed, regardless of specific binding affinity or specificity for each
+protein. These methods assume that the primary reason cross-sample normalization is needed is
+due to differences in protein concentration, which can be corrected by scale and shift
+transformation when concentration differences are small.
+}
+\details{
+Currently, 3 appraoches for scale and shift transformation are supported: "regression",
+"pca" and "normal."  The "regression" approach takes the lower \code{q}-quantile probes of the
+reference sample and fits an ordinary least squares (OLS) model for each non-reference sample (Y)
+on the reference sample (X). The fitted intercept and slope parameters are used as the shift and
+scaling parameters. The "pca" approach applies principal components analysis (PCA) to the lower-tail
+probes for each pair of the reference and a non-reference sample, and the first PC is used as the
+scaling parameter. The shift parameter is calculated such that the first PC passes through the
+means of both samples. For the "normal" method, a background (normal) plus signal is assumed
+for probe-level intensities, and the normal background mean is estimated using
+the \code{bg.parameters} function from the \code{affy} package. The corresponding
+standard deviation is estimated separately from the lower tail for each sample by
+fitting a truncated normal distribution to the tail.
+
 \emph{This code is still under testing and not a finalized normalization procedure}.
 }
 \author{
-Patrick Kimes
+Dongyuan Song, Patrick Kimes
 }
