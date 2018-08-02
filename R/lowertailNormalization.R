@@ -84,6 +84,7 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, stratify = 
     }
     
     if (method == "regression" || method == "pca") {
+        bl_assay <- dplyr::filter(assay_fits, Stratify == baseline, value < ul)
         bl_assay <- dplyr::select(bl_assay, Row, Column, value)
         assay_fits <- dplyr::left_join(assay_fits, bl_assay, by = c("Row", "Column"),
                                        suffix = c("", ".bl"))
@@ -100,8 +101,6 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, stratify = 
                                         est_shift = sapply(fits, function(x) { coef(x)[1] }),
                                         est_scale = sapply(fits, function(x) { coef(x)[2] }),
                                         r2adj = sapply(fits, function(x) { summary(x)$adj.r.squared }))
-            assay_fits <- dplyr::bind_rows(assay_fits, dplyr::mutate(assay_ref, est_shift = 0L, est_scale = 1L))
-            assay_fits <- dplyr::select(assay_fits, -data)
         } else if (method == "pca") {
             assay_fits <- dplyr::mutate(assay_fits,
                                         fits = lapply(data, function(x) { prcomp(as.matrix(x[, c("value", "value.bl")])) }),
