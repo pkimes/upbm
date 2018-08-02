@@ -22,7 +22,7 @@ per k-mer depends strongly on k. (default = 10L)}
 procedure. (default = FALSE)}
 
 \item{.filter}{integer specifying level of probe filtering to
-perform prior to estimating affinities. See \code{pbmFilterProbes}
+perform prior to estimating weights. See \code{pbmFilterProbes}
 for more details on probe filter levels. (default = 1)}
 
 \item{log_scale}{logical whether to calculate bias on log2 scale

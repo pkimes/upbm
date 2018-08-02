@@ -25,7 +25,7 @@
 #' @param offset integer offset to add to intensities before performing
 #'        log2 scale calculations. (default = 1L)
 #' @param .filter integer specifying level of probe filtering to
-#'        perform prior to estimating affinities. See \code{pbmFilterProbes}
+#'        perform prior to estimating weights. See \code{pbmFilterProbes}
 #'        for more details on probe filter levels. (default = 1)
 #' @param .trim interger vector of length two specifying start and end
 #'        of probe sequence to be used. Default is based on the universal
