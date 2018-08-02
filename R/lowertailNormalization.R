@@ -88,9 +88,9 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, stratify = 
         assay_fits <- dplyr::left_join(assay_fits, bl_assay, by = c("Row", "Column"),
                                        suffix = c("", ".bl"))
         assay_fits <- dplyr::filter(assay_fits, !is.na(value.bl))
-        if (.filter_both) {
-            assay_fits <- dplyr::filter(assay_fits, value < ul)
-        }
+        ## if (.filter_both) {
+        ##     assay_fits <- dplyr::filter(assay_fits, value < ul)
+        ## }
         assay_fits <- tidyr::nest(assay_fits, -sample, -Stratify, -ul)
         assay_ref <- dplyr::filter(assay_fits, Stratify == baseline)
         assay_fits <- dplyr::filter(assay_fits, Stratify != baseline)
