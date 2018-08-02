@@ -36,6 +36,8 @@
 #'        'ref' in any value of the stratifying variable. (default = NULL)
 #' @param log_scale logical whether cross-sample normalization should be applied
 #'        using log2-scaled intensities rather than raw intensities. (default = FALSE)
+#' @param shift logical whether to apply linear shift before/after scaling.
+#'        (default = TRUE).
 #' @param method character string specifying method to use for normalization.
 #'        Must be one of "regression", "pca", or "normal". (default = "regression")
 #' @param .fits logical whether to just return a table of fits rather
@@ -54,7 +56,7 @@
 #' @export
 #' @author Dongyuan Song, Patrick Kimes    
 lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, stratify = condition,
-                                   baseline = NULL, log_scale = FALSE, 
+                                   baseline = NULL, log_scale = FALSE, shift = TRUE,
                                    method = c("regression", "pca", "normal"),
                                    regtype = 1L, .fits = FALSE) {
     stopifnot(q > 0, q < 1)
@@ -96,18 +98,34 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, stratify = 
         assay_ref <- dplyr::filter(assay_fits, Stratify == baseline)
         assay_fits <- dplyr::filter(assay_fits, Stratify != baseline)
         if (method == "regression") {
-            assay_fits <- dplyr::mutate(assay_fits,
-                                        fits = lapply(data, function(x) lm(value ~ value.bl, data = x)),
-                                        est_shift = sapply(fits, function(x) { coef(x)[1] }),
-                                        est_scale = sapply(fits, function(x) { coef(x)[2] }),
-                                        r2adj = sapply(fits, function(x) { summary(x)$adj.r.squared }))
+            if (shift) { 
+                assay_fits <- dplyr::mutate(assay_fits,
+                                            fits = lapply(data, function(x) lm(value ~ value.bl, data = x)),
+                                            est_shift = sapply(fits, function(x) { coef(x)[1] }),
+                                            est_scale = sapply(fits, function(x) { coef(x)[2] }),
+                                            r2adj = sapply(fits, function(x) { summary(x)$adj.r.squared }))
+            } else {
+                assay_fits <- dplyr::mutate(assay_fits,
+                                            fits = lapply(data, function(x) lm(value ~ 0 + value.bl, data = x)),
+                                            est_shift = 0L,
+                                            est_scale = sapply(fits, function(x) { coef(x)[1] }),
+                                            r2adj = sapply(fits, function(x) { summary(x)$adj.r.squared }))
+            }
         } else if (method == "pca") {
-            assay_fits <- dplyr::mutate(assay_fits,
-                                        fits = lapply(data, function(x) { prcomp(as.matrix(x[, c("value", "value.bl")])) }),
-                                        est_scale = sapply(fits, function(x) { x$rotation[1, 1] / x$rotation[2, 1] }),
-                                        est_shift = mapply(function(x, y) { x$center[1] - y * x$center[2] },
-                                                           x = fits, y = est_scale),
-                                        varexpl = sapply(fits, function(x) { x$sdev[1]^2 / sum(x$sdev^2) }))
+            if (shift) {
+                assay_fits <- dplyr::mutate(assay_fits,
+                                            fits = lapply(data, function(x) { prcomp(as.matrix(x[, c("value", "value.bl")])) }),
+                                            est_scale = sapply(fits, function(x) { x$rotation[1, 1] / x$rotation[2, 1] }),
+                                            est_shift = mapply(function(x, y) { x$center[1] - y * x$center[2] },
+                                                               x = fits, y = est_scale),
+                                            varexpl = sapply(fits, function(x) { x$sdev[1]^2 / sum(x$sdev^2) }))
+            } else {
+                assay_fits <- dplyr::mutate(assay_fits,
+                                            fits = lapply(data, function(x) { prcomp(as.matrix(x[, c("value", "value.bl")]), center = FALSE) }),
+                                            est_shift = 0L,
+                                            est_scale = sapply(fits, function(x) { x$rotation[1, 1] / x$rotation[2, 1] }),
+                                            varexpl = sapply(fits, function(x) { x$sdev[1]^2 / sum(x$sdev^2) }))
+            } 
         }
         assay_fits <- dplyr::bind_rows(assay_fits, dplyr::mutate(assay_ref, est_shift = 0L, est_scale = 1L))
         assay_fits <- dplyr::select(assay_fits, -data)
@@ -119,6 +137,9 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, stratify = 
                                     re_fit = mapply(function(x, y, z) { .fit_tnorm(x$value, y, z) },
                                                     data, ul, est_shift, SIMPLIFY = FALSE),
                                     est_scale = sapply(re_fit, function(x) x$estimate["sd"]))
+        if (!shift) {
+            assay_fits <- dplyr::mutate(assay_fits, est_shift = 0L)
+        }
         assay_fits <- dplyr::select(assay_fits, -re_fit)
     }
 

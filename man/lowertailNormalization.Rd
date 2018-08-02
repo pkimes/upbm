@@ -6,7 +6,8 @@
 \usage{
 lowertailNormalization(se, assay_name = "fore", q = 0.4,
   stratify = condition, baseline = NULL, log_scale = FALSE,
-  method = c("regression", "pca", "normal"), regtype = 1L, .fits = FALSE)
+  shift = TRUE, method = c("regression", "pca", "normal"), regtype = 1L,
+  .fits = FALSE)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing GPR intensity information.}
@@ -26,6 +27,9 @@ against; if not specified, guessed by looking for
 
 \item{log_scale}{logical whether cross-sample normalization should be applied
 using log2-scaled intensities rather than raw intensities. (default = FALSE)}
+
+\item{shift}{logical whether to apply linear shift before/after scaling.
+(default = TRUE).}
 
 \item{method}{character string specifying method to use for normalization.
 Must be one of "regression", "pca", or "normal". (default = "regression")}
