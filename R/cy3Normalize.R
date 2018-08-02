@@ -127,7 +127,7 @@ cy3Normalize <- function(se, cy3se, assay_name = "fore", match_by = condition, f
 
     ## match row order to rowData
     c_order <- paste(rowData(se)$Row, rowData(se)$Column, sep = "-")
-    new_order <- match(paste(new_assay$Row, new_assay$Column, sep = "-"), c_order)
+    new_order <- match(c_order, paste(new_assay$Row, new_assay$Column, sep = "-"))
     stopifnot(!duplicated(new_order), length(new_order) == nrow(se))
     new_assay <- new_assay[new_order, ]
     new_assay <- dplyr::select(new_assay, -Row, -Column)
