@@ -25,7 +25,8 @@ Depends: R (>= 3.4.1),
          matrixStats,
          fitdistrplus,
          truncnorm,
-         affy
+         affy,
+         quantreg
 Suggests: BiocStyle,
           knitr
 License: MIT + file LICENSE

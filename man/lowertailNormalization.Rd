@@ -6,8 +6,8 @@
 \usage{
 lowertailNormalization(se, assay_name = "fore", q = 0.4,
   stratify = condition, baseline = NULL, log_scale = FALSE,
-  shift = TRUE, method = c("regression", "pca", "normal"), regtype = 1L,
-  .fits = FALSE)
+  shift = TRUE, method = c("regression", "pca", "quantreg", "quantile",
+  "normal"), regtype = 1L, .fits = FALSE, .filter = 1L)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing GPR intensity information.}
@@ -32,10 +32,15 @@ using log2-scaled intensities rather than raw intensities. (default = FALSE)}
 (default = TRUE).}
 
 \item{method}{character string specifying method to use for normalization.
-Must be one of "regression", "pca", or "normal". (default = "regression")}
+Must be one of "regression", "pca", "quantreg", "quantile"  or "normal".
+(default = "regression")}
 
 \item{.fits}{logical whether to just return a table of fits rather
 than the normalized SummarizedExperiment object. (default = FALSE)}
+
+\item{.filter}{integer specifying level of probe filtering to
+perform prior to normalization. See \code{pbmFilterProbes}
+for more details on probe filter levels. (default = 1)}
 }
 \value{
 SummarizedExperiment object with normalized intensities in
@@ -59,8 +64,11 @@ on the reference sample (X). The fitted intercept and slope parameters are used 
 scaling parameters. The "pca" approach applies principal components analysis (PCA) to the lower-tail
 probes for each pair of the reference and a non-reference sample, and the first PC is used as the
 scaling parameter. The shift parameter is calculated such that the first PC passes through the
-means of both samples. For the "normal" method, a background (normal) plus signal is assumed
-for probe-level intensities, and the normal background mean is estimated using
+means of both samples. The "quantreg" method fits a quantile regression model rather than the
+OLS model used for the "regression" method. The "quantile" method simply scales distributions to
+have the same value at the specified quantile. This reduces to the "scale" method in the
+\code{limma::normalizeBetweenArrays} function. For the "normal" method, a background (normal) plus
+signal is assumed for probe-level intensities, and the normal background mean is estimated using
 the \code{bg.parameters} function from the \code{affy} package. The corresponding
 standard deviation is estimated separately from the lower tail for each sample by
 fitting a truncated normal distribution to the tail.

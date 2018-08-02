@@ -16,8 +16,11 @@
 #' scaling parameters. The "pca" approach applies principal components analysis (PCA) to the lower-tail
 #' probes for each pair of the reference and a non-reference sample, and the first PC is used as the
 #' scaling parameter. The shift parameter is calculated such that the first PC passes through the
-#' means of both samples. For the "normal" method, a background (normal) plus signal is assumed
-#' for probe-level intensities, and the normal background mean is estimated using
+#' means of both samples. The "quantreg" method fits a quantile regression model rather than the
+#' OLS model used for the "regression" method. The "quantile" method simply scales distributions to
+#' have the same value at the specified quantile. This reduces to the "scale" method in the
+#' \code{limma::normalizeBetweenArrays} function. For the "normal" method, a background (normal) plus
+#' signal is assumed for probe-level intensities, and the normal background mean is estimated using
 #' the \code{bg.parameters} function from the \code{affy} package. The corresponding
 #' standard deviation is estimated separately from the lower tail for each sample by
 #' fitting a truncated normal distribution to the tail.
@@ -39,9 +42,13 @@
 #' @param shift logical whether to apply linear shift before/after scaling.
 #'        (default = TRUE).
 #' @param method character string specifying method to use for normalization.
-#'        Must be one of "regression", "pca", or "normal". (default = "regression")
+#'        Must be one of "regression", "pca", "quantreg", "quantile"  or "normal".
+#'        (default = "regression")
 #' @param .fits logical whether to just return a table of fits rather
 #'        than the normalized SummarizedExperiment object. (default = FALSE)
+#' @param .filter integer specifying level of probe filtering to
+#'        perform prior to normalization. See \code{pbmFilterProbes}
+#'        for more details on probe filter levels. (default = 1)
 #'
 #' @return
 #' SummarizedExperiment object with normalized intensities in
@@ -53,39 +60,49 @@
 #' @importFrom tidyr gather spread nest
 #' @importFrom rlang enquo quo_name
 #' @importFrom affy bg.parameters
+#' @importFrom quantreg rq
 #' @export
 #' @author Dongyuan Song, Patrick Kimes    
 lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, stratify = condition,
                                    baseline = NULL, log_scale = FALSE, shift = TRUE,
-                                   method = c("regression", "pca", "normal"),
-                                   regtype = 1L, .fits = FALSE) {
+                                   method = c("regression", "pca", "quantreg", "quantile", "normal"),
+                                   regtype = 1L, .fits = FALSE, .filter = 1L) {
     stopifnot(q > 0, q < 1)
     stopifnot(assay_name %in% assayNames(se))
     match.arg(method)
+
+    ## filter probes - only for computing shift/scale factors (return original se)
+    fse <- pbmFilterProbes(se, .filter)
     
     ## check normalization stratification settings
     stratify <- rlang::enquo(stratify)
-    strats <- .pbmCheckStratify(se, stratify, baseline)
+    strats <- .pbmCheckStratify(fse, stratify, baseline)
     coldat <- strats$coldat
     baseline <- strats$baseline
     
-    new_assay <- as.data.frame(assay(se, assay_name), optional = TRUE)
-    new_assay <- dplyr::as_tibble(new_assay)
-    new_assay <- dplyr::mutate(new_assay,
-                               Row = rowData(se)[, "Row"],
-                               Column = rowData(se)[, "Column"])
-    new_assay <- tidyr::gather(new_assay, sample, value, -Row, -Column)
-    new_assay <- dplyr::left_join(new_assay, coldat, by = "sample")
-    new_assay <- dplyr::group_by(new_assay, sample, Stratify)
-    new_assay <- dplyr::mutate(new_assay, ul = quantile(value, probs = q, na.rm = TRUE))
-    new_assay <- dplyr::ungroup(new_assay)
-
-    assay_fits <- dplyr::filter(new_assay, !is.na(value), value > 0)
+    ## tidy up data for computing factors
+    scale_assay <- as.data.frame(assay(fse, assay_name), optional = TRUE)
+    scale_assay <- dplyr::as_tibble(scale_assay)
+    scale_assay <- dplyr::mutate(scale_assay,
+                                 Row = rowData(fse)[, "Row"],
+                                 Column = rowData(fse)[, "Column"])
+    scale_assay <- tidyr::gather(scale_assay, sample, value, -Row, -Column)
+    scale_assay <- dplyr::left_join(scale_assay, coldat, by = "sample")
+    scale_assay <- dplyr::group_by(scale_assay, sample, Stratify)
+    scale_assay <- dplyr::mutate(scale_assay, ul = quantile(value, probs = q, na.rm = TRUE))
+    scale_assay <- dplyr::ungroup(scale_assay)
+    
+    assay_fits <- dplyr::filter(scale_assay, !is.na(value), value > 0)
     if (log_scale) {
         assay_fits <- dplyr::mutate(assay_fits, value = log2(value), ul = log2(ul))
     }
-    
-    if (method == "regression" || method == "pca") {
+
+    if (method == "quantile") {
+        assay_fits <- dplyr::select(assay_fits, sample, Stratify, ul)
+        assay_fits <- dplyr::distinct(assay_fits)
+        assay_fits <- dplyr::mutate(assay_fits, est_shift = 0L)
+        assay_fits <- dplyr::mutate(assay_fits, est_scale = ul)
+    } else if (method == "regression" || method == "pca" || method == "quantreg") {
         bl_assay <- dplyr::filter(assay_fits, Stratify == baseline, value < ul)
         bl_assay <- dplyr::select(bl_assay, Row, Column, value)
         assay_fits <- dplyr::left_join(assay_fits, bl_assay, by = c("Row", "Column"),
@@ -110,6 +127,18 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, stratify = 
                                             est_shift = 0L,
                                             est_scale = sapply(fits, function(x) { coef(x)[1] }),
                                             r2adj = sapply(fits, function(x) { summary(x)$adj.r.squared }))
+            }
+        } else if (method == "quantreg") {
+            if (shift) { 
+                assay_fits <- dplyr::mutate(assay_fits,
+                                            fits = lapply(data, function(x) quantreg::rq(value ~ value.bl, data = x)),
+                                            est_shift = sapply(fits, function(x) { coef(x)[1] }),
+                                            est_scale = sapply(fits, function(x) { coef(x)[2] }))
+            } else {
+                assay_fits <- dplyr::mutate(assay_fits,
+                                            fits = lapply(data, function(x) quantreg::rq(value ~ 0 + value.bl, data = x)),
+                                            est_shift = 0L,
+                                            est_scale = sapply(fits, function(x) { coef(x)[1] }))
             }
         } else if (method == "pca") {
             if (shift) {
@@ -151,6 +180,15 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, stratify = 
     ref_shift <- assay_fits$est_shift[assay_fits$Stratify == baseline]
     ref_scale <- assay_fits$est_scale[assay_fits$Stratify == baseline]
 
+    ## tidy up original data
+    new_assay <- as.data.frame(assay(se, assay_name), optional = TRUE)
+    new_assay <- dplyr::as_tibble(new_assay)
+    new_assay <- dplyr::mutate(new_assay,
+                               Row = rowData(se)[, "Row"],
+                               Column = rowData(se)[, "Column"])
+    new_assay <- tidyr::gather(new_assay, sample, value, -Row, -Column)
+    new_assay <- dplyr::left_join(new_assay, coldat, by = "sample")
+
     ## adjust to reference
     new_assay <- dplyr::left_join(new_assay, assay_fits, by = c("sample", "Stratify"))
     if (log_scale) {
@@ -169,7 +207,7 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, stratify = 
 
     ## match row order to rowData
     c_order <- paste(rowData(se)$Row, rowData(se)$Column, sep = "-")
-    new_order <- match(paste(new_assay$Row, new_assay$Column, sep = "-"), c_order)
+    new_order <- match(c_order, paste(new_assay$Row, new_assay$Column, sep = "-"))
     stopifnot(!duplicated(new_order), length(new_order) == nrow(se))
     new_assay <- new_assay[new_order, ]
     new_assay <- dplyr::select(new_assay, -Row, -Column)
