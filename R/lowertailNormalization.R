@@ -66,7 +66,7 @@
 lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, stratify = condition,
                                    baseline = NULL, log_scale = FALSE, shift = TRUE,
                                    method = c("regression", "pca", "quantreg", "quantile", "normal"),
-                                   regtype = 1L, .fits = FALSE, .filter = 1L) {
+                                   .fits = FALSE, .filter = 1L) {
     stopifnot(q > 0, q < 1)
     stopifnot(assay_name %in% assayNames(se))
     match.arg(method)

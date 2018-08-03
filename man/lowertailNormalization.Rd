@@ -7,7 +7,7 @@
 lowertailNormalization(se, assay_name = "fore", q = 0.4,
   stratify = condition, baseline = NULL, log_scale = FALSE,
   shift = TRUE, method = c("regression", "pca", "quantreg", "quantile",
-  "normal"), regtype = 1L, .fits = FALSE, .filter = 1L)
+  "normal"), .fits = FALSE, .filter = 1L)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing GPR intensity information.}
