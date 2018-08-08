@@ -145,6 +145,7 @@ summarizeKmers <- function(se, assay_name = "fore", kmers = NULL,
         pdatm <- dplyr::mutate(pdat_sets, m = lapply(data, matrixStats::colMedians, na.rm = TRUE))
         median_vals <- DataFrame(do.call(rbind, pdatm$m))
         names(median_vals) <- pdat_samples
+        median_vals <- median_vals[colnames(se)]
         stopifnot(pdat_seqs == pdatm$seq)
         assay_list$medianIntensity <- median_vals
     }
@@ -154,6 +155,7 @@ summarizeKmers <- function(se, assay_name = "fore", kmers = NULL,
         pdatm <- dplyr::mutate(pdat_sets, m = lapply(data, matrixStats::colMeans2, na.rm = TRUE))
         mean_vals <- DataFrame(do.call(rbind, pdatm$m))
         names(mean_vals) <- pdat_samples
+        mean_vals <- mean_vals[colnames(se)]
         stopifnot(pdat_seqs == pdatm$seq)
         assay_list$meanIntensity <- mean_vals
     }
@@ -163,6 +165,7 @@ summarizeKmers <- function(se, assay_name = "fore", kmers = NULL,
         pdatm <- dplyr::mutate(pdat_sets, m = lapply(data, matrixStats::colMads, na.rm = TRUE))
         mad_vals <- DataFrame(do.call(rbind, pdatm$m))
         names(mad_vals) <- pdat_samples
+        mad_vals <- mad_vals[colnames(se)]
         stopifnot(pdat_seqs == pdatm$seq)
         assay_list$madIntensity <- mad_vals
     }
@@ -172,6 +175,7 @@ summarizeKmers <- function(se, assay_name = "fore", kmers = NULL,
         pdatm <- dplyr::mutate(pdat_sets, m = lapply(data, matrixStats::colSds, na.rm = TRUE))
         sd_vals <- DataFrame(do.call(rbind, pdatm$m))
         names(sd_vals) <- pdat_samples
+        sd_vals <- sd_vals[colnames(se)]
         stopifnot(pdat_seqs == pdatm$seq)
         assay_list$sdIntensity <- sd_vals
     }
@@ -181,7 +185,8 @@ summarizeKmers <- function(se, assay_name = "fore", kmers = NULL,
         if (offset <= 0) {  
             pdatm <- dplyr::mutate(pdat_sets,
                                    m = lapply(data, function(x) {
-                                       matrixStats::colMeans2(log2(x[x > 0]), na.rm = TRUE)
+                                       x[x <= 0] <- NA
+                                       matrixStats::colMeans2(log2(x), na.rm = TRUE)
                                    }))
         } else {
             pdatm <- dplyr::mutate(pdat_sets,
@@ -191,6 +196,7 @@ summarizeKmers <- function(se, assay_name = "fore", kmers = NULL,
         }
         log2mean_vals <- DataFrame(do.call(rbind, pdatm$m))
         names(log2mean_vals) <- pdat_samples
+        log2mean_vals <- log2mean_vals[colnames(se)]
         stopifnot(pdat_seqs == pdatm$seq)
         assay_list$log2meanIntensity <- log2mean_vals
     }
@@ -200,7 +206,8 @@ summarizeKmers <- function(se, assay_name = "fore", kmers = NULL,
         if (offset <= 0) {
             pdatm <- dplyr::mutate(pdat_sets,
                                    m = lapply(data, function(x) {
-                                       matrixStats::colMads(log2(x[x > 0]), na.rm = TRUE)
+                                       x[x <= 0] <- NA
+                                       matrixStats::colMads(log2(x), na.rm = TRUE)
                                    }))
         } else {
             pdatm <- dplyr::mutate(pdat_sets,
@@ -210,6 +217,7 @@ summarizeKmers <- function(se, assay_name = "fore", kmers = NULL,
         }
         log2mad_vals <- DataFrame(do.call(rbind, pdatm$m))
         names(log2mad_vals) <- pdat_samples
+        log2mad_vals <- log2mad_vals[colnames(se)]
         stopifnot(pdat_seqs == pdatm$seq)
         assay_list$log2madIntensity <- log2mad_vals
     }
@@ -229,6 +237,7 @@ summarizeKmers <- function(se, assay_name = "fore", kmers = NULL,
         }
         log2sd_vals <- DataFrame(do.call(rbind, pdatm$m))
         names(log2sd_vals) <- pdat_samples
+        log2sd_vals <- log2sd_vals[colnames(se)]
         stopifnot(pdat_seqs == pdatm$seq)
         assay_list$log2sdIntensity <- log2sd_vals
     }
@@ -238,6 +247,7 @@ summarizeKmers <- function(se, assay_name = "fore", kmers = NULL,
         pdatm <- dplyr::mutate(pdat_sets, m = lapply(data, function(x) { colSums(is.na(x)) }))
         na_vals <- DataFrame(do.call(rbind, pdatm$m))
         names(na_vals) <- pdat_samples
+        na_vals <- na_vals[colnames(se)]
         stopifnot(pdat_seqs == pdatm$seq)
         assay_list$naProbes <- na_vals
     }
