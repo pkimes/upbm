@@ -4,10 +4,10 @@
 \alias{summarizeKmers}
 \title{Summarize K-mer Intensities}
 \usage{
-summarizeKmers(se, assay_name = "fore", kmers = NULL, offset = 1,
+summarizeKmers(se, assay_name = "fore", kmers = NULL,
   stat_set = c("median", "mean", "mad", "sd", "log2mean", "log2mad", "log2sd",
-  "na"), verbose = FALSE, .filter = 1L, .trim = if (.filter > 0L) {    
-  c(1, 36) } else {     NULL })
+  "na"), offset = 1, weights = NULL, verbose = FALSE, .filter = 1L,
+  .trim = if (.filter > 0L) {     c(1, 36) } else {     NULL })
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing PBM intensity data.}
@@ -16,14 +16,18 @@ summarizeKmers(se, assay_name = "fore", kmers = NULL, offset = 1,
 
 \item{kmers}{character vector of k-mers to predict.}
 
-\item{offset}{integer offset to add to intensities before log2 scaling to
-prevent errors with zero intensities. If set to 0, probes with
-zero intensities are dropped/ignored for log-scaled metrics. (default = 1)}
-
 \item{stat_set}{character vector of statistics to calculate for each sample.
 The set of supported statistics are listed in the details. By default,
 all possible statistics are computed. Details on available statistics are
 given in details. (default = \code{c("median", "mean", "mad", "sd", "log2mean", "log2mad", "log2sd", "na")})}
+
+\item{offset}{integer offset to add to intensities before log2 scaling to
+prevent errors with zero intensities. If set to 0, probes with
+zero intensities are dropped/ignored for log-scaled metrics. (default = 1)}
+
+\item{weights}{tibble of sequence position weights (log2) to use when computing
+metrics. Can be calculated using \code{approxPositionWeights}. Ignored
+if NULL. (default = NULL)}
 
 \item{verbose}{logical whether to print extra messages during model fitting
 procedure. (default = FALSE)}

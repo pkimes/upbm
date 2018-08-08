@@ -6,13 +6,16 @@
 #' @param se SummarizedExperiment object containing PBM intensity data.
 #' @param assay_name string name of the assay to use. (default = "fore")
 #' @param kmers character vector of k-mers to predict.
-#' @param offset integer offset to add to intensities before log2 scaling to
-#'        prevent errors with zero intensities. If set to 0, probes with
-#'        zero intensities are dropped/ignored for log-scaled metrics. (default = 1)
 #' @param stat_set character vector of statistics to calculate for each sample.
 #'        The set of supported statistics are listed in the details. By default,
 #'        all possible statistics are computed. Details on available statistics are
 #'        given in details. (default = \code{c("median", "mean", "mad", "sd", "log2mean", "log2mad", "log2sd", "na")})
+#' @param weights tibble of sequence position weights (log2) to use when computing
+#'        metrics. Can be calculated using \code{approxPositionWeights}. Ignored
+#'        if NULL. (default = NULL)
+#' @param offset integer offset to add to intensities before log2 scaling to
+#'        prevent errors with zero intensities. If set to 0, probes with
+#'        zero intensities are dropped/ignored for log-scaled metrics. (default = 1)
 #' @param verbose logical whether to print extra messages during model fitting
 #'        procedure. (default = FALSE)
 #' @param .filter integer specifying level of probe filtering to
@@ -47,9 +50,9 @@
 #' @importFrom matrixStats colMedians colMeans2 colSds colMads
 #' @export
 #' @author Patrick Kimes
-summarizeKmers <- function(se, assay_name = "fore", kmers = NULL, offset = 1,
+summarizeKmers <- function(se, assay_name = "fore", kmers = NULL, 
                            stat_set = c("median", "mean", "mad", "sd", "log2mean", "log2mad", "log2sd", "na"),
-                           verbose = FALSE, .filter = 1L,
+                           offset = 1, weights = NULL, verbose = FALSE, .filter = 1L,
                            .trim = if (.filter > 0L) { c(1, 36) } else { NULL }) {
 
     ## check stat statistics are valid
@@ -89,13 +92,37 @@ summarizeKmers <- function(se, assay_name = "fore", kmers = NULL, offset = 1,
                               Row = rowData(se)[, "Row"],
                               Column = rowData(se)[, "Column"])
         
-        pdat <- dplyr::left_join(pdat, dplyr::select(kmermap, "Row", "Column", "seq"),
-                                 by = c("Row", "Column"))
+        if (is.null(weights)) {
+            pdat <- dplyr::left_join(pdat, dplyr::select(kmermap, "Row", "Column", "seq"),
+                                     by = c("Row", "Column"))
+        } else {
+            pdat <- dplyr::left_join(pdat, dplyr::select(kmermap, "Row", "Column", "seq", "pos"),
+                                     by = c("Row", "Column"))
+            pdat <- dplyr::left_join(tidyr::gather(pdat, sample, value, -seq, -pos, -Row, -Column),
+                                     tidyr::gather(weights, sample, l2r, -pos),
+                                     by = c("sample", "pos"))
+            pdat <- dplyr::mutate(pdat, value = value / 2^(l2r))
+            pdat <- dplyr::select(pdat, -l2r)
+            pdat <- tidyr::spread(pdat, sample, value)
+            pdat <- dplyr::select(pdat, -pos)
+        }
         pdat <- dplyr::select(pdat, -Row, -Column)
     } else {
         pdat <- dplyr::mutate(pdat, probe_idx = 1:n())
-        pdat <- dplyr::left_join(pdat, dplyr::select(kmermap, "probe_idx", "seq"),
-                                 by = "probe_idx")
+        if (is.null(weights)) {
+            pdat <- dplyr::left_join(pdat, dplyr::select(kmermap, "probe_idx", "seq"),
+                                     by = "probe_idx")
+        } else {
+            pdat <- dplyr::left_join(pdat, dplyr::select(kmermap, "probe_idx", "seq", "pos"),
+                                     by = "probe_idx")
+            pdat <- dplyr::left_join(tidyr::gather(pdat, sample, value, -seq, -pos, -probe_idx),
+                                     tidyr::gather(weights, sample, l2r, -pos),
+                                     by = c("sample", "pos"))
+            pdat <- dplyr::mutate(pdat, value = value / 2^(l2r))
+            pdat <- dplyr::select(pdat, -l2r)
+            pdat <- tidyr::spread(pdat, sample, value)
+            pdat <- dplyr::select(pdat, -pos)
+        }
         pdat <- dplyr::select(pdat, -probe_idx)
     }
     
@@ -223,3 +250,4 @@ summarizeKmers <- function(se, assay_name = "fore", kmers = NULL, offset = 1,
     SummarizedExperiment(assays = assay_list,
                          rowData = rowdat, colData = colData(se))
 }
+
