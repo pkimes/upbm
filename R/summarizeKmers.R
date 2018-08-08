@@ -9,13 +9,16 @@
 #' @param stat_set character vector of statistics to calculate for each sample.
 #'        The set of supported statistics are listed in the details. By default,
 #'        all possible statistics are computed. Details on available statistics are
-#'        given in details. (default = \code{c("median", "mean", "mad", "sd", "log2mean", "log2mad", "log2sd", "na")})
+#'        given in details. (default = \code{c("median", "mean", "mad", "sd", "log2mean", "log2mad", "log2sd", "na", "quantile")})
 #' @param weights tibble of sequence position weights (log2) to use when computing
 #'        metrics. Can be calculated using \code{approxPositionWeights}. Ignored
 #'        if NULL. (default = NULL)
 #' @param offset integer offset to add to intensities before log2 scaling to
 #'        prevent errors with zero intensities. If set to 0, probes with
 #'        zero intensities are dropped/ignored for log-scaled metrics. (default = 1)
+#' @param q probability values or vector of values which should be used for computing
+#'        quantiles if "quantile" is specified as part of \code{stat_set}.
+#'        (default = 0.25)
 #' @param verbose logical whether to print extra messages during model fitting
 #'        procedure. (default = FALSE)
 #' @param .filter integer specifying level of probe filtering to
@@ -36,6 +39,7 @@
 #' * \code{"log2mad"}: MAD probe log2(intensity + offset)
 #' * \code{"log2sd"}: SD probe log(intensity + offset)
 #' * \code{"na"}: number of NA probes
+#' * \code{"quantile"}: q-quantile probe intensity
 #' 
 #' @return
 #' SummarizedExperiment object with intensity information summarized for
@@ -47,12 +51,13 @@
 #' @importFrom stats mad median
 #' @importFrom dplyr as_tibble mutate left_join select
 #' @importFrom tidyr nest
-#' @importFrom matrixStats colMedians colMeans2 colSds colMads
+#' @importFrom matrixStats colMedians colMeans2 colSds colMads colQuantiles
 #' @export
 #' @author Patrick Kimes
 summarizeKmers <- function(se, assay_name = "fore", kmers = NULL, 
-                           stat_set = c("median", "mean", "mad", "sd", "log2mean", "log2mad", "log2sd", "na"),
-                           offset = 1, weights = NULL, verbose = FALSE, .filter = 1L,
+                           stat_set = c("median", "mean", "mad", "sd", "log2mean",
+                                        "log2mad", "log2sd", "na", "quantile"),
+                           offset = 1, weights = NULL, q = 0.25, verbose = FALSE, .filter = 1L,
                            .trim = if (.filter > 0L) { c(1, 36) } else { NULL }) {
 
     ## check stat statistics are valid
@@ -251,7 +256,23 @@ summarizeKmers <- function(se, assay_name = "fore", kmers = NULL,
         stopifnot(pdat_seqs == pdatm$seq)
         assay_list$naProbes <- na_vals
     }
-    
+
+    ## calculate quantile intensities
+    if ("quantile" %in% stat_set) {
+        pdatm <- dplyr::mutate(pdat_sets, m = lapply(data, matrixStats::colQuantiles,
+                                                     probs = q, drop = FALSE, na.rm = TRUE))
+        qtiles <- colnames(pdatm$m[[1]])
+        qtiles <- paste0("q", gsub("%", "Intensity", qtiles))
+        for (i in seq_len(length(qtiles))) {
+            qt_vals <- lapply(pdatm$m, function(x) { x[, i] })
+            qt_vals <- DataFrame(do.call(rbind, qt_vals))
+            names(qt_vals) <- pdat_samples
+            qt_vals <- qt_vals[colnames(se)]
+            stopifnot(pdat_seqs == pdatm$seq)
+            assay_list[[qtiles[[i]]]] <- qt_vals
+        }
+    }
+        
     ## determine row data
     rowdat <- DataFrame(kmer = as.character(pdat_seqs),
                         nprobes = n_vals)

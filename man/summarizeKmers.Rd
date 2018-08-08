@@ -6,8 +6,9 @@
 \usage{
 summarizeKmers(se, assay_name = "fore", kmers = NULL,
   stat_set = c("median", "mean", "mad", "sd", "log2mean", "log2mad", "log2sd",
-  "na"), offset = 1, weights = NULL, verbose = FALSE, .filter = 1L,
-  .trim = if (.filter > 0L) {     c(1, 36) } else {     NULL })
+  "na", "quantile"), offset = 1, weights = NULL, q = 0.25,
+  verbose = FALSE, .filter = 1L, .trim = if (.filter > 0L) {     c(1, 36)
+  } else {     NULL })
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing PBM intensity data.}
@@ -19,7 +20,7 @@ summarizeKmers(se, assay_name = "fore", kmers = NULL,
 \item{stat_set}{character vector of statistics to calculate for each sample.
 The set of supported statistics are listed in the details. By default,
 all possible statistics are computed. Details on available statistics are
-given in details. (default = \code{c("median", "mean", "mad", "sd", "log2mean", "log2mad", "log2sd", "na")})}
+given in details. (default = \code{c("median", "mean", "mad", "sd", "log2mean", "log2mad", "log2sd", "na", "quantile")})}
 
 \item{offset}{integer offset to add to intensities before log2 scaling to
 prevent errors with zero intensities. If set to 0, probes with
@@ -28,6 +29,10 @@ zero intensities are dropped/ignored for log-scaled metrics. (default = 1)}
 \item{weights}{tibble of sequence position weights (log2) to use when computing
 metrics. Can be calculated using \code{approxPositionWeights}. Ignored
 if NULL. (default = NULL)}
+
+\item{q}{probability values or vector of values which should be used for computing
+quantiles if "quantile" is specified as part of \code{stat_set}.
+(default = 0.25)}
 
 \item{verbose}{logical whether to print extra messages during model fitting
 procedure. (default = FALSE)}
@@ -62,6 +67,7 @@ The following statistics are currently supported.
 \item \code{"log2mad"}: MAD probe log2(intensity + offset)
 \item \code{"log2sd"}: SD probe log(intensity + offset)
 \item \code{"na"}: number of NA probes
+\item \code{"quantile"}: q-quantile probe intensity
 }
 }
 \author{
