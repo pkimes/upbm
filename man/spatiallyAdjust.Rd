@@ -32,7 +32,11 @@ values by setting negative values to NA. (default = TRUE)}
 \value{
 SummarizedExperiment object with spatially adjusted intensities.
 Row and column metadata are copied from the original SummarizedExperiment
-object.
+object. A new column is additionally added to the column metadata,
+'spatialMedian' containing the reference median intensity used to compute
+the spatial bias for each sample. This can be used to plot relative-scale
+sptial biases using \code{pbmPlotChip} with the \code{relative_scale=}
+parameter.
 }
 \description{
 Given PBM intensities stored as a SummarizedExperiment, this function

@@ -30,7 +30,11 @@
 #' @return
 #' SummarizedExperiment object with spatially adjusted intensities.
 #' Row and column metadata are copied from the original SummarizedExperiment
-#' object.
+#' object. A new column is additionally added to the column metadata,
+#' 'spatialMedian' containing the reference median intensity used to compute
+#' the spatial bias for each sample. This can be used to plot relative-scale
+#' sptial biases using \code{pbmPlotChip} with the \code{relative_scale=}
+#' parameter.
 #'
 #' @import SummarizedExperiment
 #' @importFrom tibble as_tibble
@@ -78,6 +82,14 @@ spatiallyAdjust <- function(se, assay_name = "fore", k = 15, returnBias = TRUE,
     med_intensity <- dplyr::do(med_intensity, spatialmedian = .wrapSA(., k, log_scale))
     med_intensity <- tidyr::unnest(med_intensity)
 
+    ## compute raw intensity medians for future use
+    raw_medians <- dplyr::group_by(raw_intensity, sample)
+    raw_medians <- dplyr::summarize(raw_medians, spatialMedian = median(value, na.rm = TRUE))
+    raw_medians <- dplyr::ungroup(raw_medians)
+    if (log_scale) {
+        raw_medians <- dplyr::mutate(raw_medians, spatialMedian = log2(spatialMedian))
+    }
+    
     ## join median deviations w/ original raw intensities, subtract
     sub_intensity <- dplyr::left_join(raw_intensity, med_intensity,
                                       by = c("Row", "Column", "sample"),
@@ -119,6 +131,9 @@ spatiallyAdjust <- function(se, assay_name = "fore", k = 15, returnBias = TRUE,
     if (returnBias) {
         assay(se, "spatialbias") <- med_intensity
     }
+
+    ## add median intensities for raw data used for spatial scaling, match colnames order
+    colData(se)$spatialMedian <- raw_medians$spatialMedian[match(colnames(se), raw_medians$sample)]
     
     ## add step to metadata
     method_str <- paste("BlockMedianDetrend ->", assay_name)
