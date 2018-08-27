@@ -145,9 +145,6 @@ buildPBMTable <- function(gpr_dir = NULL, gpr_type = "Alexa", gpr_files = NULL) 
     if (nrow(idx2name) != nrow(dplyr::distinct(idx2name, vers, id, idx))) {
         stop("Some version/id/idx values map to multiple condition names")
     }
-    if (nrow(idx2name) != nrow(dplyr::distinct(idx2name, vers, id, condition))) {
-        stop("Some version/id/condition values map to multiple array indices")
-    }
 
     ## fill in Cy3 scan condition names
     if (any(fl_type == "Cy3")) {
