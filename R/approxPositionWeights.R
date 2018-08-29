@@ -87,7 +87,7 @@ approxPositionWeights <- function(se, assay_name = "fore", kmers, nk = 100L, smo
     topkm <- dplyr::ungroup(topkm)
 
     ## extract probe-level intensities
-    sevals <- dplyr::as_tibble(as.data.frame(assay(se), optional = TRUE))
+    sevals <- dplyr::as_tibble(as.data.frame(assay(se, assay_name), optional = TRUE))
     sevals <- dplyr::mutate(sevals, probe_idx = 1:n())
     sevals <- tidyr::gather(sevals, sample, value, one_of(colnames(se)))
 
