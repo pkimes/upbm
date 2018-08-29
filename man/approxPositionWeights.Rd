@@ -4,13 +4,15 @@
 \alias{approxPositionWeights}
 \title{Approximate Positional Bias}
 \usage{
-approxPositionWeights(se, kmers, nk = 100L, smooth = TRUE, withse = TRUE,
-  verbose = FALSE, log_scale = FALSE, offset = 1L, .smooth.span = 1/2,
-  .filter = 1L, .trim = if (.filter > 0L) {     c(1, 36) } else {     NULL
-  })
+approxPositionWeights(se, assay_name = "fore", kmers, nk = 100L,
+  smooth = TRUE, withse = TRUE, verbose = FALSE, log_scale = FALSE,
+  offset = 1L, .smooth.span = 1/2, .filter = 1L, .trim = if (.filter >
+  0L) {     c(1, 36) } else {     NULL })
 }
 \arguments{
 \item{se}{SummarizedExperiment of probe intensities}
+
+\item{assay_name}{string name of the assay to use. (default = "fore")}
 
 \item{kmers}{character vector of k-mers to predict.}
 

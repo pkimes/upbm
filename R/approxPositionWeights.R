@@ -13,6 +13,7 @@
 #' affinity.
 #' 
 #' @param se SummarizedExperiment of probe intensities
+#' @param assay_name string name of the assay to use. (default = "fore")
 #' @param kmers character vector of k-mers to predict.
 #' @param nk number of top k-mers to use to estimate positional
 #'        trend for each sample. This should be larger for longer
@@ -54,7 +55,7 @@
 #' @importFrom dplyr rename as_tibble top_n group_by ungroup mutate left_join select summarize arrange
 #' @importFrom tidyr gather spread
 #' @author Patrick Kimes
-approxPositionWeights <- function(se, kmers, nk = 100L, smooth = TRUE, withse = TRUE,
+approxPositionWeights <- function(se, assay_name = "fore", kmers, nk = 100L, smooth = TRUE, withse = TRUE, 
                                   verbose = FALSE, log_scale = FALSE, offset = 1L, .smooth.span = 1/2,
                                   .filter = 1L, .trim = if (.filter > 0L) { c(1, 36) } else { NULL }) {
     ## check kmers specified
@@ -74,8 +75,8 @@ approxPositionWeights <- function(se, kmers, nk = 100L, smooth = TRUE, withse = 
     kmmap <- dplyr::rename(kmmap, kmer = seq)
 
     ## compute median k-mer intensities
-    kmsum <- summarizeKmers(se, kmers = kmers, stat_set = "median",
-                            .trim = .trim, .filter = .filter)
+    kmsum <- summarizeKmers(se, assay_name = assay_name, kmers = kmers,
+                            stat_set = "median", .trim = .trim, .filter = .filter)
     kmsum <- cbind(rowData(kmsum), assay(kmsum, "medianIntensity"))
     kmsum <- dplyr::as_tibble(as.data.frame(kmsum, optional = TRUE))
 
