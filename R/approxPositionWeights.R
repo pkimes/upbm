@@ -153,3 +153,76 @@ approxPositionWeights <- function(se, assay_name = "fore", kmers, nk = 100L, smo
         return(res)
     }
 }
+
+
+#' Simple Function to Plot Position Weights
+#'
+#' @description
+#' The \code{approxPositionWeights} function returns either a tibble or
+#' list of tibbles contianing estimated approximate probe sequence
+#' position biases. These are biases are expressed as the log2 ratio of
+#' the observed to median probe intensities of fixed K-mer sequences
+#' along the probe sequence. Typically, the bias is characterizerd by a
+#' sharp drop in affinity near the end of the probe and a gradual decline
+#' as the sequence is positioned closer to the glass slide, with the
+#' highest affinity between 5 and 10 nucleotides from the end of the probe.
+#'
+#' This function is a simple wrapper to plot the log2 ratio position bias
+#' for samples as a function of the "position" from the end of the probe,
+#' with 1 corresponding to the end of the probe, and moving towards the
+#' glass slide as values increase.
+#' 
+#' @param weights tibble of position weights estimated, e.g. using
+#'        \code{approxPositionWeights}.
+#' @param se optional specification of SummarizedExperiment used to
+#'        generate weights. This is only useful if a column in the
+#'        colData of the SummarizedExperiment should be used to label
+#'        samples rather than the default column names (samples). If
+#'        a different colData column should be used instead, this should
+#'        be specified to \code{color} unquoted. (default = NULL)
+#' @param color column in \code{colData(se)} that should be used to
+#'        group and color samples in the plot. This should be specified
+#'        unquoted. By default, the column names are labeled "sample"
+#'        and used. (default = sample)
+#'
+#' @return
+#' ggplot object of position bias
+#'
+#' @examples
+#' \dontrun{
+#' ## estimate approximate weights 
+#' we <- approxPositionWeights(se)
+#'
+#' ## plot smoothed weights
+#' pbmPlotPositionWeights(we$smooth)
+#' }
+#' 
+#' @importFrom dplyr left_join as_tibble
+#' @importFrom rlang enquo
+#' @importFrom tidyr gather
+#' @import SummarizedExperiment
+#' @export
+#' @author Patrick Kimes
+pbmPlotPositionWeights <- function(weights, se = NULL, color = sample) {
+    color <- rlang::enquo(color)
+
+    stopifnot(is(weights, "data.frame"))
+    stopifnot("pos" %in% names(weights))
+    
+    wedat <- tidyr::gather(weights, sample, value, -pos)
+
+    if (!is.null(se)) {
+        stopifnot(is(se, "SummarizedExperiment"))
+        stopifnot(ncol(se) >= ncol(weights) - 1L) 
+        coldat <- as.data.frame(colData(gpr), optional = TRUE)
+        coldat <- as_tibble(coldat, rownames = "sample")
+        wedat <- dplyr::left_join(wedat, coldat, by = "sample")
+    }
+    
+    ggplot(wedat, aes(x = pos, y = value, color = !!color)) +
+        geom_line(alpha = 1/2) +
+        geom_point() +
+        theme_bw() +
+        xlab("position (nt)") +
+        ylab("bias (log2 ratio)")
+}
