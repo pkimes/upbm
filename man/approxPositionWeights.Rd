@@ -6,8 +6,8 @@
 \usage{
 approxPositionWeights(se, assay_name = "fore", kmers, nk = 100L,
   smooth = TRUE, withse = TRUE, verbose = FALSE, log_scale = FALSE,
-  offset = 1L, .smooth.span = 1/2, .filter = 1L, .trim = if (.filter >
-  0L) {     c(1, 36) } else {     NULL })
+  offset = 1L, .smooth.span = 1/2, .filter = 1L, .trim = if
+  (.filter > 0L) {     c(1, 36) } else {     NULL })
 }
 \arguments{
 \item{se}{SummarizedExperiment of probe intensities}

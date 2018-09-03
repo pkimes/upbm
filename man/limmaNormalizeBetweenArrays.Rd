@@ -4,7 +4,8 @@
 \alias{limmaNormalizeBetweenArrays}
 \title{SummarizedExperiment Wrapper for limma NormalizeBetweenArrays}
 \usage{
-limmaNormalizeBetweenArrays(se, assay_name = "fore", ..., .force = FALSE)
+limmaNormalizeBetweenArrays(se, assay_name = "fore", ...,
+  .force = FALSE)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing PBM intensity data}
