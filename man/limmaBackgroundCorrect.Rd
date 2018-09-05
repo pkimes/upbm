@@ -4,8 +4,8 @@
 \alias{limmaBackgroundCorrect}
 \title{SummarizedExperiment Wrapper for limma backgroundCorrect}
 \usage{
-limmaBackgroundCorrect(se, assay_name = "fore", assayb_name = NULL,
-  ..., .force = FALSE, .nonnegative = TRUE)
+limmaBackgroundCorrect(se, assay_name = "fore", assayb_name = NULL, ...,
+  .force = FALSE, .nonnegative = TRUE)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing PBM intensity data}

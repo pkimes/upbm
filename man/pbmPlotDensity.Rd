@@ -4,8 +4,8 @@
 \alias{pbmPlotDensity}
 \title{Plot of Intensity Densities}
 \usage{
-pbmPlotDensity(se, assay_name = "fore", log_scale = TRUE,
-  .facet = TRUE, .filter = 1)
+pbmPlotDensity(se, assay_name = "fore", log_scale = TRUE, .facet = TRUE,
+  .filter = 1)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing GPR
