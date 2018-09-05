@@ -11,6 +11,8 @@ pbmProcessProbes(se, verbose = FALSE, .filter = 1L, .trim = c(1, 36))
 probe sequence information in rowData, or simply the DataFrame/data.frame
 corresponding to the rowData.}
 
+\item{verbose}{logical whether to print extra messages. (default = FALSE)}
+
 \item{.filter}{integer specifying level of probe filtering to perform. See
 \code{pbmFilterProbes} for more details about levels of probe filtering.
 (default = 1L)}
@@ -19,8 +21,6 @@ corresponding to the rowData.}
 of probe sequence \strong{to be used}. Default is based on the universal
 PBM probe design where only leading 36nt should be used. 
 Ignored if \code{NULL}. (default = \code{c(1, 36)})}
-
-\item{verb}{logical whether to print extra messages. (default = FALSE)}
 }
 \value{
 Original \code{se} object with only probes passing filter, with trimmed Sequence columns.
