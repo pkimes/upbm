@@ -5,8 +5,8 @@
 \title{Scatterplot of Intensities}
 \usage{
 pbmPlotScatter(se, assay_name = "fore", stratify = condition,
-  baseline = NULL, log_scale = TRUE, maplot = FALSE, .method = "auto",
-  .filter = 1)
+  baseline = NULL, log_scale = TRUE, maplot = FALSE,
+  .method = "auto", .filter = 1)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing GPR
