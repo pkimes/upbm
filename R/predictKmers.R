@@ -297,14 +297,12 @@ trimProbeSequences <- function(se, .trim = c(1, 36)) {
 }
 
 
-#'
-#'
 #' Simple wrapper function to process PBM probe sequences
 #'
 #' @param se SummarizedExperiment object containing PBM intensity data and
 #'        probe sequence information in rowData, or simply the DataFrame/data.frame
 #'        corresponding to the rowData.
-#' @param verb logical whether to print extra messages. (default = FALSE)
+#' @param verbose logical whether to print extra messages. (default = FALSE)
 #' @param .filter integer specifying level of probe filtering to perform. See
 #'        \code{pbmFilterProbes} for more details about levels of probe filtering.
 #'        (default = 1L)

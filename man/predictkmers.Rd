@@ -5,8 +5,8 @@
 \title{Estimate K-mer Affinities}
 \usage{
 predictKmers(se, assay_name = "fore", kmers = NULL, offset = 1,
-  verbose = FALSE, .filter = 1L, .trim = if (.filter > 0L) {     c(1, 36)
-  } else {     NULL }, ...)
+  verbose = FALSE, .filter = 1L, .trim = if (.filter > 0L) {     c(1,
+  36) } else {     NULL }, ...)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing PBM intensity data.}
