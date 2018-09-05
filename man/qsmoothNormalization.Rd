@@ -27,6 +27,8 @@ has already been normalized within arrays. (default = FALSE)}
 perform prior to normalization. See \code{pbmFilterProbes}
 for more details on probe filter levels. (default = 1)}
 
+\item{plot_weight}{logical whether to plot \code{qsmooth::qsmoothPlotWeights}. (default = TRUE)}
+
 \item{...}{parameters to pass to \code{qsmooth::qsmooth}.
 See details below for more information on main parameters.}
 }

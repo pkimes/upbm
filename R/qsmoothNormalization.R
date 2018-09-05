@@ -19,7 +19,7 @@
 #' @param .filter integer specifying level of probe filtering to
 #'        perform prior to normalization. See \code{pbmFilterProbes}
 #'        for more details on probe filter levels. (default = 1)
-#' @plot_weight logical whether to plot \code{qsmooth::qsmoothPlotWeights}. (default = TRUE)
+#' @param plot_weight logical whether to plot \code{qsmooth::qsmoothPlotWeights}. (default = TRUE)
 #' @param ... parameters to pass to \code{qsmooth::qsmooth}.
 #'        See details below for more information on main parameters.
 #'
