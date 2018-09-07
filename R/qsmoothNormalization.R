@@ -13,7 +13,9 @@
 #' @param ref_rep integer specifying which replicate will be used for scaling before normalization. (default = 1)
 #' @param assay_name string name of the assay to normalize. (default = "fore")
 #' @param scaling_between_rep logical whether to scale two reps into same median. (default = TRUE)
-#' @param scaling_within_rep logical whether to perform median scaling within arrays in advance. (default = TRUE)
+#' @param scaling_within_rep logical whether to perform scaling within arrays in advance. (default = TRUE)
+#' @param q percentile between 0 and 1 specifying the quantile to align different tfs within a rep.
+#'        See \code{lowertailNormalization}. (default = 0.5)
 #' @param .force logical whether to run normalization even if data
 #'        has already been normalized within arrays. (default = FALSE)
 #' @param .filter integer specifying level of probe filtering to
@@ -36,11 +38,13 @@ qsmoothNormalization <- function(se_list,
                                  assay_name = "fore",
                                  scaling_between_rep = TRUE,
                                  scaling_within_rep = TRUE,
+                                 q = 0.5,
                                  .force = FALSE, .filter = 1L,
                                  plot_weight = TRUE, 
                                  ...) {
-  
-  
+  ## Check num of replicates
+  rep_num <- length(se_list)
+  stopifnot(rep_num >= 2)
   
   ## check if already normalized
   if (!.force) {
@@ -52,7 +56,7 @@ qsmoothNormalization <- function(se_list,
   ## perform median scaling within reps
   if (scaling_within_rep) {
     new_assay_list <- lapply(se_list, lowertailNormalization, 
-                             assay_name = assay_name,  q = 0.5,  shift = FALSE, method = "quantile", .filter = .filter)
+                             assay_name = assay_name,  q = q,  shift = FALSE, method = "quantile", .filter = .filter)
     new_assay_list <- lapply(new_assay_list, function(x) {as.matrix(assay(x, "scaled"))})
   }
   else {
@@ -86,7 +90,7 @@ qsmoothNormalization <- function(se_list,
   
   ## perform quantile normalization
   q_assay <- qsmooth::qsmooth(object = new_assay[complete.cases(new_assay), ], 
-                              groupFactor = rep(1:var_num, 2),
+                              groupFactor = rep(1:var_num, rep_num),
                               ...)
   if(plot_weight) qsmooth::qsmoothPlotWeights(q_assay)
   
