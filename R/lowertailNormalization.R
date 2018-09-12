@@ -222,7 +222,20 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, stratify = 
     ## store reference mean, sd information
     metadata(se)$ref_shift <- ref_shift
     metadata(se)$ref_scale <- ref_scale
-    
+
+    ## store scaling parameters
+    assay_fits <- dplyr::select(assay_fits, -Stratify)
+    if ("fits" %in% names(assay_fits)) {
+        assay_fits <- dplyr::select(assay_fits, -fits)
+    }
+    coldat <- merge(colData(se), data.frame(assay_fits, row.names = "sample"),
+                    by = 0, all = TRUE)
+    rownames(coldat) <- coldat$Row.names
+    coldat$Row.names <- NULL
+
+    stopifnot(all(rownames(coldat) == colnames(se)))
+    colData(se) <- coldat
+
     return(se)
 }
 
