@@ -29,7 +29,7 @@
 #' list of SummarizedExperiment object with normalized intensities in
 #' new assay
 #' 
-#' @import SummarizedExperiment
+#' @import SummarizedExperiment dplyr tidyr
 #' @importFrom qsmooth qsmooth
 #' @export
 #' @author Dongyuan Song, Patrick Kimes 
@@ -60,7 +60,7 @@ qsmoothNormalization <- function(se_list,
     new_assay_list <- lapply(new_assay_list, function(x) {as.matrix(assay(x, "scaled"))})
   }
   else {
-    new_assay_list <- lapply(se_list, function(x) {as.matrix(assay(x, "scaled"))})
+    new_assay_list <- lapply(se_list, function(x) {as.matrix(assay(x, "fore"))})
   }
   
   ## perform median scaling between reps (with geometric mean of ratios)
