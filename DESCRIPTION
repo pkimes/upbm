@@ -26,7 +26,9 @@ Depends: R (>= 3.4.1),
          fitdistrplus,
          truncnorm,
          affy,
-         quantreg
+         quantreg,
+         qsmooth,
+         NormalGamma
 Suggests: BiocStyle,
           knitr
 License: MIT + file LICENSE
@@ -36,4 +38,4 @@ LinkingTo: Rcpp, RcppArmadillo
 Imports: Rcpp,
          methods
 VignetteBuilder: knitr
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.0
