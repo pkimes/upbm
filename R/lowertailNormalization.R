@@ -238,6 +238,9 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, stratify = 
     rownames(coldat) <- coldat$Row.names
     coldat$Row.names <- NULL
 
+    ## match colData row order with SE col order
+    coldat <- coldat[match(colnames(se), rownames(coldat)), , drop = FALSE]
+
     stopifnot(all(rownames(coldat) == colnames(se)))
     colData(se) <- coldat
 
