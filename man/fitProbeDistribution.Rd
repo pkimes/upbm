@@ -2,14 +2,13 @@
 % Please edit documentation in R/fitProbeDistribution.R
 \name{fitProbeDistribution}
 \alias{fitProbeDistribution}
-\title{fit probe distribution}
+\title{Fit Probe-Level Convolution Distributions}
 \usage{
 fitProbeDistribution(se, assay_name = "fore", model = c("NormGam",
   "NormExp"), method = "mle", .filter = 1L)
 }
 \arguments{
-\item{se}{SummarizedExperiment object containing GPR intensity information. Notice usually the intensity should
-should be raw intensity in non-log scale.}
+\item{se}{SummarizedExperiment object containing GPR intensity information.}
 
 \item{assay_name}{string name of the assay to normalize. (default = "fore")}
 
@@ -24,13 +23,15 @@ perform prior to normalization. See \code{pbmFilterProbes}
 for more details on probe filter levels. (default = 1)}
 }
 \value{
-A matrix with rows as condition and cols as parameter
+A dataframe with rows as condition and cols as parameter
 }
 \description{
-This is a collection of several models to fit the probe intensities. It applys
-normal+exponential convolutional model from \code{limma::normexp.fit} and 
-normal+gamma convolutional model from \code{NormalGamma::normgam.fit}. This function returns the
-parameter estimate of corresponding mode.
+This is a collection of several models to fit a normal+exponential or
+normal+gamma convolution model to the probe-level intensities of a PBM experiment.
+The normal+exponential convolutional model is fit using \code{limma::normexp.fit} and 
+the normal+gamma convolutional model is fit using \code{NormalGamma::normgam.fit}.
+This function returns the model parameter estimates for each sample in the
+SummarizedExperiment object.
 }
 \author{
 Dongyuan Song, Patrick Kimes
