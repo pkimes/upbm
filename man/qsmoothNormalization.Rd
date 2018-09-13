@@ -5,7 +5,7 @@
 \title{qsmooth Normalization (TESTING)}
 \usage{
 qsmoothNormalization(se_list, ref_rep = 1, assay_name = "fore",
-  scaling_between_rep = TRUE, scaling_within_rep = TRUE,
+  scaling_between_rep = TRUE, scaling_within_rep = TRUE, q = 0.5,
   .force = FALSE, .filter = 1L, plot_weight = TRUE, ...)
 }
 \arguments{
@@ -18,7 +18,10 @@ information.}
 
 \item{scaling_between_rep}{logical whether to scale two reps into same median. (default = TRUE)}
 
-\item{scaling_within_rep}{logical whether to perform median scaling within arrays in advance. (default = TRUE)}
+\item{scaling_within_rep}{logical whether to perform scaling within arrays in advance. (default = TRUE)}
+
+\item{q}{percentile between 0 and 1 specifying the quantile to align different tfs within a rep.
+See \code{lowertailNormalization}. (default = 0.5)}
 
 \item{.force}{logical whether to run normalization even if data
 has already been normalized within arrays. (default = FALSE)}
@@ -26,6 +29,8 @@ has already been normalized within arrays. (default = FALSE)}
 \item{.filter}{integer specifying level of probe filtering to
 perform prior to normalization. See \code{pbmFilterProbes}
 for more details on probe filter levels. (default = 1)}
+
+\item{plot_weight}{logical whether to plot \code{qsmooth::qsmoothPlotWeights}. (default = TRUE)}
 
 \item{...}{parameters to pass to \code{qsmooth::qsmooth}.
 See details below for more information on main parameters.}

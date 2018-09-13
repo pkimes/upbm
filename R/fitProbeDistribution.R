@@ -1,12 +1,13 @@
-#' fit probe distribution
+#' Fit Probe-Level Convolution Distributions
 #' 
-#' This is a collection of several models to fit the probe intensities. It applys
-#' normal+exponential convolutional model from \code{limma::normexp.fit} and 
-#' normal+gamma convolutional model from \code{NormalGamma::normgam.fit}. This function returns the
-#' parameter estimate of corresponding mode.
+#' This is a collection of several models to fit a normal+exponential or
+#' normal+gamma convolution model to the probe-level intensities of a PBM experiment.
+#' The normal+exponential convolutional model is fit using \code{limma::normexp.fit} and 
+#' the normal+gamma convolutional model is fit using \code{NormalGamma::normgam.fit}.
+#' This function returns the model parameter estimates for each sample in the
+#' SummarizedExperiment object.
 #' 
-#' @param se SummarizedExperiment object containing GPR intensity information. Notice usually the intensity should
-#'        should be raw intensity in non-log scale.
+#' @param se SummarizedExperiment object containing GPR intensity information.
 #' @param assay_name string name of the assay to normalize. (default = "fore")
 #' @param model character string specifying model for fitting intensityies. 
 #'        Must be one of "NormGam", "NormExp". (default = "NormGam")
@@ -18,7 +19,6 @@
 #'        
 #' @return A dataframe with rows as condition and cols as parameter
 #' 
-#' @import dplyr tidyr
 #' @importFrom limma normexp.fit
 #' @importFrom NormalGamma normgam.fit
 #' @export
@@ -45,15 +45,13 @@ fitProbeDistribution <- function(se,
     colnames(par_e) <- c("condition", "norm_mean", "norm_sigma", "gam_shape", "gam_scale")
     
   } else {
-    
     par_e <- sapply(assay_vector, function(x) {limma::normexp.fit(x, method = method)$par}, simplify = TRUE)
     par_e[2, ] <- exp(par_e[2, ])
     par_e[3, ] <- exp(par_e[3, ])
     par_e <- as.data.frame(t(par_e))
     par_e <- cbind(colData(se)$condition, par_e)
     colnames(par_e) <- c("condition", "norm_mean", "norm_sigma", "exp_mean")
-    }
+  }
   
   return(par_e)
-  
 }

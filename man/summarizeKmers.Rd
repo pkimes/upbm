@@ -5,10 +5,10 @@
 \title{Summarize K-mer Intensities}
 \usage{
 summarizeKmers(se, assay_name = "fore", kmers = NULL,
-  stat_set = c("median", "mean", "mad", "sd", "log2mean", "log2mad", "log2sd",
-  "na", "quantile"), offset = 1, weights = NULL, q = 0.25,
-  verbose = FALSE, .filter = 1L, .trim = if (.filter > 0L) {     c(1, 36)
-  } else {     NULL })
+  stat_set = c("median", "mean", "mad", "sd", "log2mean", "log2mad",
+  "log2sd", "na", "quantile"), offset = 1, weights = NULL, q = 0.25,
+  verbose = FALSE, .filter = 1L, .trim = if (.filter > 0L) {     c(1,
+  36) } else {     NULL })
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing PBM intensity data.}

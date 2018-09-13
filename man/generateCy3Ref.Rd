@@ -4,8 +4,8 @@
 \alias{generateCy3Ref}
 \title{Generate Cy3 Empirical Reference}
 \usage{
-generateCy3Ref(cy3se, assay_name = "fore", offset = 1L, register = TRUE,
-  .filter = 1L)
+generateCy3Ref(cy3se, assay_name = "fore", offset = 1L,
+  register = TRUE, .filter = 1L)
 }
 \arguments{
 \item{cy3se}{SummarizedExperiment object containing Cy3 scan data.}

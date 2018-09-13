@@ -7,7 +7,7 @@
 lowertailNormalization(se, assay_name = "fore", q = 0.4,
   stratify = condition, baseline = NULL, log_scale = FALSE,
   shift = TRUE, method = c("regression", "pca", "quantreg", "quantile",
-  "normal"), .fits = FALSE, .filter = 1L)
+  "normal"), .filter_both = FALSE, .fits = FALSE, .filter = 1L)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing GPR intensity information.}
@@ -34,6 +34,12 @@ using log2-scaled intensities rather than raw intensities. (default = FALSE)}
 \item{method}{character string specifying method to use for normalization.
 Must be one of "regression", "pca", "quantreg", "quantile"  or "normal".
 (default = "regression")}
+
+\item{.filter_both}{logical whether to fit models only probes in both the lower
+\code{q} quantiles of the baseline and non-baseline samples (TRUE) or
+probes in lower \code{q} quantile of the baseline samples (FALSE). Note that
+setting this to TRUE will result in less probes being used for fitting the
+normalization parameters. (default = FALSE)}
 
 \item{.fits}{logical whether to just return a table of fits rather
 than the normalized SummarizedExperiment object. (default = FALSE)}

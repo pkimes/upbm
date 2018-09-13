@@ -44,6 +44,11 @@
 #' @param method character string specifying method to use for normalization.
 #'        Must be one of "regression", "pca", "quantreg", "quantile"  or "normal".
 #'        (default = "regression")
+#' @param .filter_both logical whether to fit models only probes in both the lower
+#'        \code{q} quantiles of the baseline and non-baseline samples (TRUE) or
+#'        probes in lower \code{q} quantile of the baseline samples (FALSE). Note that
+#'        setting this to TRUE will result in less probes being used for fitting the
+#'        normalization parameters. (default = FALSE)
 #' @param .fits logical whether to just return a table of fits rather
 #'        than the normalized SummarizedExperiment object. (default = FALSE)
 #' @param .filter integer specifying level of probe filtering to
@@ -66,7 +71,7 @@
 lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, stratify = condition,
                                    baseline = NULL, log_scale = FALSE, shift = TRUE,
                                    method = c("regression", "pca", "quantreg", "quantile", "normal"),
-                                   .fits = FALSE, .filter = 1L) {
+                                   .filter_both = FALSE, .fits = FALSE, .filter = 1L) {
     stopifnot(q > 0, q < 1)
     stopifnot(assay_name %in% assayNames(se))
     match.arg(method)
@@ -108,9 +113,9 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, stratify = 
         assay_fits <- dplyr::left_join(assay_fits, bl_assay, by = c("Row", "Column"),
                                        suffix = c("", ".bl"))
         assay_fits <- dplyr::filter(assay_fits, !is.na(value.bl))
-        ## if (.filter_both) {
-        ##     assay_fits <- dplyr::filter(assay_fits, value < ul)
-        ## }
+        if (.filter_both) {
+            assay_fits <- dplyr::filter(assay_fits, value < ul)
+        }
         assay_fits <- tidyr::nest(assay_fits, -sample, -Stratify, -ul)
         assay_ref <- dplyr::filter(assay_fits, Stratify == baseline)
         assay_fits <- dplyr::filter(assay_fits, Stratify != baseline)
@@ -222,7 +227,23 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, stratify = 
     ## store reference mean, sd information
     metadata(se)$ref_shift <- ref_shift
     metadata(se)$ref_scale <- ref_scale
-    
+
+    ## store scaling parameters
+    assay_fits <- dplyr::select(assay_fits, -Stratify)
+    if ("fits" %in% names(assay_fits)) {
+        assay_fits <- dplyr::select(assay_fits, -fits)
+    }
+    coldat <- merge(colData(se), data.frame(assay_fits, row.names = "sample"),
+                    by = 0, all = TRUE)
+    rownames(coldat) <- coldat$Row.names
+    coldat$Row.names <- NULL
+
+    ## match colData row order with SE col order
+    coldat <- coldat[match(colnames(se), rownames(coldat)), , drop = FALSE]
+
+    stopifnot(all(rownames(coldat) == colnames(se)))
+    colData(se) <- coldat
+
     return(se)
 }
 
