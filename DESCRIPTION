@@ -27,7 +27,8 @@ Depends: R (>= 3.4.1),
          truncnorm,
          affy,
          quantreg,
-         qsmooth
+         qsmooth,
+         NormalGamma
 Suggests: BiocStyle,
           knitr
 License: MIT + file LICENSE

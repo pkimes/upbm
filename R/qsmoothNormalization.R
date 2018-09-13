@@ -60,7 +60,7 @@ qsmoothNormalization <- function(se_list,
     new_assay_list <- lapply(new_assay_list, function(x) {as.matrix(assay(x, "scaled"))})
   }
   else {
-    new_assay_list <- lapply(se_list, function(x) {as.matrix(assay(x, "scaled"))})
+    new_assay_list <- lapply(se_list, function(x) {as.matrix(assay(x, "fore"))})
   }
   
   ## perform median scaling between reps (with geometric mean of ratios)
@@ -81,9 +81,8 @@ qsmoothNormalization <- function(se_list,
   new_assay_cmpl <- new_assay[complete.cases(new_assay), ]
   
   ## deal with missing value
-  
-  warning(paste0("Notice: because of missing value ",  round((1 - dim(new_assay_cmpl)[1]/dim(new_assay)[1])*100, 2), 
-                 "% rows will be removed."))
+  pmissing <- round((1 - dim(new_assay_cmpl)[1] / dim(new_assay)[1]) * 100, 2)  
+  warning(paste0("Notice: because of missing value ",  pmissing, "% of rows will be removed."))
   
   ## variant numbers
   var_num <- dim(new_assay)[2]/length(se_list)
