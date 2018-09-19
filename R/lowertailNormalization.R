@@ -74,7 +74,7 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, stratify = 
                                    .filter_both = FALSE, .fits = FALSE, .filter = 1L) {
     stopifnot(q > 0, q < 1)
     stopifnot(assay_name %in% assayNames(se))
-    match.arg(method)
+    method <- match.arg(method)
 
     ## filter probes - only for computing shift/scale factors (return original se)
     fse <- pbmFilterProbes(se, .filter)

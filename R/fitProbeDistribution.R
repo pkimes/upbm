@@ -30,7 +30,7 @@ fitProbeDistribution <- function(se,
                                  .filter = 1L) {
   stopifnot(assay_name %in% assayNames(se))
   
-  match.arg(model)
+  model <- match.arg(model)
   
   se <- pbmFilterProbes(se, .filter)
   
