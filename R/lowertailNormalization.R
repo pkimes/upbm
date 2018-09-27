@@ -29,8 +29,10 @@
 #'
 #' @param se SummarizedExperiment object containing GPR intensity information.
 #' @param assay_name string name of the assay to normalize. (default = "fore")
-#' @param q percentile between 0 and 1 specifying lower tail to use for
-#'        fitting truncated normal distribution. (default = 0.4)
+#' @param q percentile between 0 and 1 specifying lower tail probes to use for
+#'        normalization. (default = 0.4)
+#' @param q0 percentile between 0 and q specifying lower tail probes which are 
+#'        filtered out. It only works for fitting methods. (default = 0)
 #' @param stratify unquoted name of column in colData of SummarizedExperiment (or
 #'        '\code{sample}') to use for comparing samples; values in column must be
 #'        unique for each sample. (default = condition)
@@ -68,11 +70,12 @@
 #' @importFrom quantreg rq
 #' @export
 #' @author Dongyuan Song, Patrick Kimes    
-lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, stratify = condition,
+lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, q0 = 0, stratify = condition,
                                    baseline = NULL, log_scale = FALSE, shift = TRUE,
                                    method = c("regression", "pca", "quantreg", "quantile", "normal"),
                                    .filter_both = FALSE, .fits = FALSE, .filter = 1L) {
     stopifnot(q > 0, q < 1)
+    stopifnot(q0 >= 0, q0 < q)
     stopifnot(assay_name %in% assayNames(se))
     match.arg(method)
 
@@ -94,29 +97,30 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, stratify = 
     scale_assay <- tidyr::gather(scale_assay, sample, value, -Row, -Column)
     scale_assay <- dplyr::left_join(scale_assay, coldat, by = "sample")
     scale_assay <- dplyr::group_by(scale_assay, sample, Stratify)
-    scale_assay <- dplyr::mutate(scale_assay, ul = quantile(value, probs = q, na.rm = TRUE))
+    scale_assay <- dplyr::mutate(scale_assay, ul = quantile(value, probs = q, na.rm = TRUE),
+                                 ll = quantile(value, probs = q0, na.rm = TRUE))
     scale_assay <- dplyr::ungroup(scale_assay)
     
     assay_fits <- dplyr::filter(scale_assay, !is.na(value), value > 0)
     if (log_scale) {
-        assay_fits <- dplyr::mutate(assay_fits, value = log2(value), ul = log2(ul))
+        assay_fits <- dplyr::mutate(assay_fits, value = log2(value), ul = log2(ul), ll = log(ll))
     }
 
     if (method == "quantile") {
-        assay_fits <- dplyr::select(assay_fits, sample, Stratify, ul)
+        assay_fits <- dplyr::select(assay_fits, sample, Stratify, ul, ll)
         assay_fits <- dplyr::distinct(assay_fits)
         assay_fits <- dplyr::mutate(assay_fits, est_shift = 0L)
         assay_fits <- dplyr::mutate(assay_fits, est_scale = ul)
     } else if (method == "regression" || method == "pca" || method == "quantreg") {
-        bl_assay <- dplyr::filter(assay_fits, Stratify == baseline, value < ul)
+        bl_assay <- dplyr::filter(assay_fits, Stratify == baseline, value >= ll & value < ul)
         bl_assay <- dplyr::select(bl_assay, Row, Column, value)
         assay_fits <- dplyr::left_join(assay_fits, bl_assay, by = c("Row", "Column"),
                                        suffix = c("", ".bl"))
         assay_fits <- dplyr::filter(assay_fits, !is.na(value.bl))
         if (.filter_both) {
-            assay_fits <- dplyr::filter(assay_fits, value < ul)
+            assay_fits <- dplyr::filter(assay_fits, value >= ll & value < ul)
         }
-        assay_fits <- tidyr::nest(assay_fits, -sample, -Stratify, -ul)
+        assay_fits <- tidyr::nest(assay_fits, -sample, -Stratify, -ul, -ll)
         assay_ref <- dplyr::filter(assay_fits, Stratify == baseline)
         assay_fits <- dplyr::filter(assay_fits, Stratify != baseline)
         if (method == "regression") {
@@ -164,7 +168,7 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, stratify = 
         assay_fits <- dplyr::bind_rows(assay_fits, dplyr::mutate(assay_ref, est_shift = 0L, est_scale = 1L))
         assay_fits <- dplyr::select(assay_fits, -data)
     } else if (method == "normal") {
-        assay_fits <- tidyr::nest(assay_fits, -sample, -Stratify, -ul)
+        assay_fits <- tidyr::nest(assay_fits, -sample, -Stratify, -ul, -ll)
         assay_fits <- dplyr::mutate(assay_fits,
                                     est_shift = sapply(data, function(x) affy::bg.parameters(x$value)$mu),
                                     data = mapply(function(x, y) { x[x$value <= y, ] }, data, ul, SIMPLIFY = FALSE),

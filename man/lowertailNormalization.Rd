@@ -4,7 +4,7 @@
 \alias{lowertailNormalization}
 \title{Lower-Tail Normalization (TESTING)}
 \usage{
-lowertailNormalization(se, assay_name = "fore", q = 0.4,
+lowertailNormalization(se, assay_name = "fore", q = 0.4, q0 = 0,
   stratify = condition, baseline = NULL, log_scale = FALSE,
   shift = TRUE, method = c("regression", "pca", "quantreg", "quantile",
   "normal"), .filter_both = FALSE, .fits = FALSE, .filter = 1L)
@@ -14,8 +14,11 @@ lowertailNormalization(se, assay_name = "fore", q = 0.4,
 
 \item{assay_name}{string name of the assay to normalize. (default = "fore")}
 
-\item{q}{percentile between 0 and 1 specifying lower tail to use for
-fitting truncated normal distribution. (default = 0.4)}
+\item{q}{percentile between 0 and 1 specifying lower tail probes to use for
+normalization. (default = 0.4)}
+
+\item{q0}{percentile between 0 and q specifying lower tail probes which are 
+filtered out. It only works for fitting methods. (default = 0)}
 
 \item{stratify}{unquoted name of column in colData of SummarizedExperiment (or
 '\code{sample}') to use for comparing samples; values in column must be
