@@ -109,13 +109,13 @@ pbmPlotComparison <- function(se1, se2, assay_name  = "fore", match_by = conditi
     coldat1 <- data.frame(colData(se1), check.names = FALSE,
                           check.rows = FALSE, stringsAsFactors = FALSE)
     coldat1 <- tibble::rownames_to_column(coldat1, "sample")
-    coldat1 <- dplyr::mutate(coldat1, Match = rlang::UQ(match_by))
+    coldat1 <- dplyr::mutate(coldat1, Match = !!match_by)
     coldat1 <- dplyr::select(coldat1, sample, Match)
 
     coldat2 <- data.frame(colData(se2), check.names = FALSE,
                           check.rows = FALSE, stringsAsFactors = FALSE)
     coldat2 <- tibble::rownames_to_column(coldat2, "sample")
-    coldat2 <- dplyr::mutate(coldat2, Match = rlang::UQ(match_by))
+    coldat2 <- dplyr::mutate(coldat2, Match = !!match_by)
     coldat2 <- dplyr::select(coldat2, sample, Match)
     
     ## extract intensities
