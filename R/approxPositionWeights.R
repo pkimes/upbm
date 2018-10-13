@@ -77,7 +77,8 @@ approxPositionWeights <- function(se, assay_name = "fore", kmers, nk = 100L, smo
     ## compute median k-mer intensities
     kmsum <- summarizeKmers(se, assay_name = assay_name, kmers = kmers,
                             stat_set = "median", .trim = .trim, .filter = .filter)
-    kmsum <- cbind(rowData(kmsum), assay(kmsum, "medianIntensity"))
+    kmsum <- cbind(as.data.frame(rowData(kmsum), optional = TRUE),
+                   as.data.frame(assay(kmsum, "medianIntensity"), optional = TRUE))
     kmsum <- dplyr::as_tibble(as.data.frame(kmsum, optional = TRUE))
 
     ## determine top nk k-mers for each sample
