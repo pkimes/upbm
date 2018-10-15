@@ -137,6 +137,7 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, q0 = 0, str
                                             est_scale = sapply(fits, function(x) { coef(x)[1] }),
                                             r2adj = sapply(fits, function(x) { summary(x)$adj.r.squared }))
             }
+            assay_fits <- dplyr::select(assay_fits, -fits)
         } else if (method == "quantreg") {
             if (shift) { 
                 assay_fits <- dplyr::mutate(assay_fits,
@@ -149,6 +150,7 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, q0 = 0, str
                                             est_shift = 0L,
                                             est_scale = sapply(fits, function(x) { coef(x)[1] }))
             }
+            assay_fits <- dplyr::select(assay_fits, -fits)
         } else if (method == "pca") {
             if (shift) {
                 assay_fits <- dplyr::mutate(assay_fits,
@@ -178,7 +180,7 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, q0 = 0, str
         if (!shift) {
             assay_fits <- dplyr::mutate(assay_fits, est_shift = 0L)
         }
-        assay_fits <- dplyr::select(assay_fits, -re_fit)
+        assay_fits <- dplyr::select(assay_fits, -re_fit, -data)
     }
 
     if (.fits) {
