@@ -28,7 +28,8 @@ Depends: R (>= 3.4.1),
          affy,
          quantreg,
          qsmooth,
-         NormalGamma
+         NormalGamma,
+         princurve
 Suggests: BiocStyle,
           knitr
 License: MIT + file LICENSE
