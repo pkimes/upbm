@@ -82,6 +82,7 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, q0 = 0, str
                                    .filter_ver = FALSE, .filter_both = FALSE, .fits = FALSE, .filter = 1L) {
     stopifnot(q > 0, q < 1)
     stopifnot(q0 >= 0, q0 < q)
+    stopifnot(!(.filter_ver & .filter_both))
     stopifnot(assay_name %in% assayNames(se))
     match.arg(method)
 
@@ -118,7 +119,8 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, q0 = 0, str
         assay_fits <- dplyr::mutate(assay_fits, est_shift = 0L)
         assay_fits <- dplyr::mutate(assay_fits, est_scale = ul)
     } else if (method == "regression" || method == "pca" || method == "quantreg") {
-        # filter with perpendicular line
+        
+      ## filter with perpendicular line
         if (.filter_ver) {
         bl_assay <- dplyr::filter(assay_fits, Stratify == baseline)
         bl_assay <- dplyr::select(bl_assay, Row, Column, value)
@@ -129,7 +131,8 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, q0 = 0, str
         assay_ref <- dplyr::filter(assay_fits, Stratify == baseline)
         assay_fits <- dplyr::filter(assay_fits, Stratify != baseline)
         
-        if (.filter_both) {
+        ## Check if q0 == 0
+        if (q0 > 0) {
           assay_fits <- dplyr::mutate(assay_fits, 
                                       data = lapply(data, .get_per_filter, q1 = q, q2 = q0))
         }
@@ -296,17 +299,22 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, q0 = 0, str
       as.matrix()
   fit_per <- princurve::principal_curve(assay_per, approx_points = 100)
   fit_per <- fit_per$s
-  fit_per_p1 <- fit_per[order(abs(fit_per[,1] - quantile(assay_per[,1], probs = q1, na.rm = TRUE)), 
-                                decreasing = FALSE), ]
-  fit_per_p1 <- .get_per(fit_per_p1[1:2, 1:2])
-    
+  ul <- quantile(assay_per[,1], probs = q1, na.rm = TRUE)
+  fit_per_p1 <- fit_per[order(abs(fit_per[,1] - ul), 
+                                decreasing = FALSE), , drop=FALSE]
+  
+  fit_per_p1 <- unique(fit_per_p1)
+  fit_per_p1 <- .get_per(fit_per_p1[1:2, 1:2,drop=FALSE])
+  
   if (is.null(q2)) {
     x <- x %>% dplyr::filter(value.bl * fit_per_p1[2] - value + fit_per_p1[1] > 0)
   } 
     
   else {
-    fit_per_p2 <- fit_per[order(abs(fit_per[,1] - quantile(assay_per[,1], probs = q2, na.rm = TRUE)), 
-                                  decreasing = FALSE), ]
+    ll <- quantile(assay_per[,1], probs = q2, na.rm = TRUE)
+    fit_per_p2 <- fit_per[order(abs(fit_per[,1] - ll), 
+                                  decreasing = FALSE), , drop = FALSE]
+    fit_per_p2 <- unique(fit_per_p2)
     fit_per_p2 <- .get_per(fit_per_p2[1:2, 1:2])
     x <- x %>% dplyr::filter(value.bl * fit_per_p1[2] - value + fit_per_p1[1] > 0) %>%
        dplyr::filter(value.bl * fit_per_p2[2] - value + fit_per_p2[1] < 0)
