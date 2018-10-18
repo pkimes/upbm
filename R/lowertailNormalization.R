@@ -304,20 +304,32 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, q0 = 0, str
                                 decreasing = FALSE), , drop=FALSE]
   
   fit_per_p1 <- unique(fit_per_p1)
-  fit_per_p1 <- .get_per(fit_per_p1[1:2, 1:2,drop=FALSE])
-  
+  fit_per_p1 <- .get_per(fit_per_p1[1:2, 1:2,drop = FALSE])
+
   if (is.null(q2)) {
-    x <- x %>% dplyr::filter(value.bl * fit_per_p1[2] - value + fit_per_p1[1] > 0)
+    if (fit_per_p1[2] < 0) {x <- x %>% 
+        dplyr::filter(value.bl * fit_per_p1[2] - value + fit_per_p1[1] > 0)
+    }
+    else {
+      warning("Perpendicular line is problematic. Do not perfrom filtering.")
+      x <- x
+    }
   } 
-    
   else {
     ll <- quantile(assay_per[,1], probs = q2, na.rm = TRUE)
     fit_per_p2 <- fit_per[order(abs(fit_per[,1] - ll), 
                                   decreasing = FALSE), , drop = FALSE]
     fit_per_p2 <- unique(fit_per_p2)
-    fit_per_p2 <- .get_per(fit_per_p2[1:2, 1:2])
-    x <- x %>% dplyr::filter(value.bl * fit_per_p1[2] - value + fit_per_p1[1] > 0) %>%
-       dplyr::filter(value.bl * fit_per_p2[2] - value + fit_per_p2[1] < 0)
+    fit_per_p2 <- .get_per(fit_per_p2[1:2, 1:2, drop = FALSE])
+    
+    if (fit_per_p1[2] < 0 && fit_per_p2[2] < 0) {
+      x <- x %>% dplyr::filter(value.bl * fit_per_p1[2] - value + fit_per_p1[1] > 0) %>%
+        dplyr::filter(value.bl * fit_per_p2[2] - value + fit_per_p2[1] < 0)
+    }
+    else {
+      warning("Perpendicular line fitting is problematic. Do not perfrom filtering.")
+      x <- x
+    }
   }
   return(x)
 }
