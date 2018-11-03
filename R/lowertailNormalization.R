@@ -47,7 +47,7 @@
 #'        Must be one of "regression", "pca", "quantreg", "quantile"  or "normal".
 #'        (default = "regression")
 #' @param .filter_ver logical whether to fit models only by probes falling in the left side of 
-#'        the perpendicular bisector of the given \code{q} value on a principal curve. Note here
+#'        the orthogonal line of the given \code{q} value on a principal curve. Note here
 #'        the function uses the two closest points of the given \code{q} value. The purpose of the function
 #'        is to generate more "symmetric" cutoffs. Recommend to set as TRUE only when using 
 #'        "pca". (default = FALSE)
@@ -55,7 +55,8 @@
 #'        \code{q} quantiles of the baseline and non-baseline samples (TRUE) or
 #'        probes in lower \code{q} quantile of the baseline samples (FALSE). Note that
 #'        setting this to TRUE will result in less probes being used for fitting the
-#'        normalization parameters. (default = FALSE)
+#'        normalization parameters. Note that \code{.filter_both}
+#'        and \code{.filter_ver} can not be true simultaneously. (default = FALSE)
 #' @param .fits logical whether to just return a table of fits rather
 #'        than the normalized SummarizedExperiment object. (default = FALSE)
 #' @param .filter integer specifying level of probe filtering to
@@ -118,9 +119,13 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, q0 = 0, str
         assay_fits <- dplyr::distinct(assay_fits)
         assay_fits <- dplyr::mutate(assay_fits, est_shift = 0L)
         assay_fits <- dplyr::mutate(assay_fits, est_scale = ul)
+        
+        assay_ref <- dplyr::filter(assay_fits, Stratify == baseline)
+                assay_fits <- dplyr::mutate(assay_fits, est_scale = est_scale / assay_ref$est_scale)
+       
     } else if (method == "regression" || method == "pca" || method == "quantreg") {
         
-      ## filter with perpendicular line
+      ## filter with orthogonal line
         if (.filter_ver) {
         bl_assay <- dplyr::filter(assay_fits, Stratify == baseline)
         bl_assay <- dplyr::select(bl_assay, Row, Column, value)
@@ -311,7 +316,7 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, q0 = 0, str
         dplyr::filter(value.bl * fit_per_p1[2] - value + fit_per_p1[1] > 0)
     }
     else {
-      warning("Perpendicular line is problematic. Do not perfrom filtering.")
+      warning("orthogonal line is problematic. Do not perfrom filtering.")
       x <- x
     }
   } 
@@ -327,7 +332,7 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, q0 = 0, str
         dplyr::filter(value.bl * fit_per_p2[2] - value + fit_per_p2[1] < 0)
     }
     else {
-      warning("Perpendicular line fitting is problematic. Do not perfrom filtering.")
+      warning("orthogonal line fitting is problematic. Do not perfrom filtering.")
       x <- x
     }
   }
