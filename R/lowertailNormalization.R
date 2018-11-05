@@ -46,11 +46,17 @@
 #' @param method character string specifying method to use for normalization.
 #'        Must be one of "regression", "pca", "quantreg", "quantile"  or "normal".
 #'        (default = "regression")
+#' @param .filter_ver logical whether to fit models only by probes falling in the left side of 
+#'        the orthogonal line of the given \code{q} value on a principal curve. Note here
+#'        the function uses the two closest points of the given \code{q} value. The purpose of the function
+#'        is to generate more "symmetric" cutoffs. Recommend to set as TRUE only when using 
+#'        "pca". (default = FALSE)
 #' @param .filter_both logical whether to fit models only probes in both the lower
 #'        \code{q} quantiles of the baseline and non-baseline samples (TRUE) or
 #'        probes in lower \code{q} quantile of the baseline samples (FALSE). Note that
 #'        setting this to TRUE will result in less probes being used for fitting the
-#'        normalization parameters. (default = FALSE)
+#'        normalization parameters. Note that \code{.filter_both}
+#'        and \code{.filter_ver} can not be true simultaneously. (default = FALSE)
 #' @param .fits logical whether to just return a table of fits rather
 #'        than the normalized SummarizedExperiment object. (default = FALSE)
 #' @param .filter integer specifying level of probe filtering to
@@ -68,14 +74,16 @@
 #' @importFrom rlang enquo quo_name
 #' @importFrom affy bg.parameters
 #' @importFrom quantreg rq
+#' @importFrom princurve principal_curve
 #' @export
 #' @author Dongyuan Song, Patrick Kimes    
 lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, q0 = 0, stratify = condition,
                                    baseline = NULL, log_scale = FALSE, shift = TRUE,
                                    method = c("regression", "pca", "quantreg", "quantile", "normal"),
-                                   .filter_both = FALSE, .fits = FALSE, .filter = 1L) {
+                                   .filter_ver = FALSE, .filter_both = FALSE, .fits = FALSE, .filter = 1L) {
     stopifnot(q > 0, q < 1)
     stopifnot(q0 >= 0, q0 < q)
+    stopifnot(!(.filter_ver & .filter_both))
     stopifnot(assay_name %in% assayNames(se))
     method <- match.arg(method)
 
@@ -111,19 +119,47 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, q0 = 0, str
         assay_fits <- dplyr::distinct(assay_fits)
         assay_fits <- dplyr::mutate(assay_fits, est_shift = 0L)
         assay_fits <- dplyr::mutate(assay_fits, est_scale = ul)
+        
+        assay_ref <- dplyr::filter(assay_fits, Stratify == baseline)
+                assay_fits <- dplyr::mutate(assay_fits, est_scale = est_scale / assay_ref$est_scale)
+       
     } else if (method == "regression" || method == "pca" || method == "quantreg") {
+        
+      ## filter with orthogonal line
+        if (.filter_ver) {
+        bl_assay <- dplyr::filter(assay_fits, Stratify == baseline)
+        bl_assay <- dplyr::select(bl_assay, Row, Column, value)
+        assay_fits <- dplyr::left_join(assay_fits, bl_assay, by = c("Row", "Column"),
+                                       suffix = c("", ".bl"))
+        assay_fits <- dplyr::filter(assay_fits, !is.na(value.bl))
+        assay_fits <- tidyr::nest(assay_fits, -sample, -Stratify, -ul, -ll)
+        assay_ref <- dplyr::filter(assay_fits, Stratify == baseline)
+        assay_fits <- dplyr::filter(assay_fits, Stratify != baseline)
+        
+        ## Check if q0 == 0
+        if (q0 > 0) {
+          assay_fits <- dplyr::mutate(assay_fits, 
+                                      data = lapply(data, .get_per_filter, q1 = q, q2 = q0))
+        }
+        else {
+          assay_fits <- dplyr::mutate(assay_fits, 
+                                      data = lapply(data, .get_per_filter, q1 = q, q2 = NULL))
+        }
+      }
+      else {
         bl_assay <- dplyr::filter(assay_fits, Stratify == baseline, value >= ll & value < ul)
         bl_assay <- dplyr::select(bl_assay, Row, Column, value)
         assay_fits <- dplyr::left_join(assay_fits, bl_assay, by = c("Row", "Column"),
                                        suffix = c("", ".bl"))
         assay_fits <- dplyr::filter(assay_fits, !is.na(value.bl))
         if (.filter_both) {
-            assay_fits <- dplyr::filter(assay_fits, value >= ll & value < ul)
+          assay_fits <- dplyr::filter(assay_fits, value >= ll & value < ul)
         }
         assay_fits <- tidyr::nest(assay_fits, -sample, -Stratify, -ul, -ll)
         assay_ref <- dplyr::filter(assay_fits, Stratify == baseline)
         assay_fits <- dplyr::filter(assay_fits, Stratify != baseline)
-        if (method == "regression") {
+      }
+      if (method == "regression") {
             if (shift) { 
                 assay_fits <- dplyr::mutate(assay_fits,
                                             fits = lapply(data, function(x) lm(value ~ value.bl, data = x)),
@@ -141,12 +177,12 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, q0 = 0, str
         } else if (method == "quantreg") {
             if (shift) { 
                 assay_fits <- dplyr::mutate(assay_fits,
-                                            fits = lapply(data, function(x) quantreg::rq(value ~ value.bl, data = x)),
+                                            fits = lapply(data, function(x) quantreg::rq(value ~ value.bl, data = x, model = FALSE)),
                                             est_shift = sapply(fits, function(x) { coef(x)[1] }),
                                             est_scale = sapply(fits, function(x) { coef(x)[2] }))
             } else {
                 assay_fits <- dplyr::mutate(assay_fits,
-                                            fits = lapply(data, function(x) quantreg::rq(value ~ 0 + value.bl, data = x)),
+                                            fits = lapply(data, function(x) quantreg::rq(value ~ 0 + value.bl, data = x, model = FALSE)),
                                             est_shift = 0L,
                                             est_scale = sapply(fits, function(x) { coef(x)[1] }))
             }
@@ -257,4 +293,50 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, q0 = 0, str
     fitdist(vals, distr = dtruncnorm,
             fix.arg = list("a" = -20, "b" = upper, "mean" = vbar), 
             start = list(sd = sd(vals)))
+}
+  
+.get_per <- function(x) {
+  b <- -(x[1,1] - x[2,1])/(x[1,2] - x[2,2])
+  a <-  -b * (x[1,1] + x[2,1])/2 + (x[1,2] + x[2,2])/2
+  return(as.numeric(c(a, b)))
+}
+  
+.get_per_filter <- function(x, q1, q2) {
+  assay_per <- x %>% dplyr::select(value.bl, value, -Row, -Column) %>%
+      as.matrix()
+  fit_per <- princurve::principal_curve(assay_per, approx_points = 100)
+  fit_per <- fit_per$s
+  ul <- quantile(assay_per[,1], probs = q1, na.rm = TRUE)
+  fit_per_p1 <- fit_per[order(abs(fit_per[,1] - ul), 
+                                decreasing = FALSE), , drop=FALSE]
+  
+  fit_per_p1 <- unique(fit_per_p1)
+  fit_per_p1 <- .get_per(fit_per_p1[1:2, 1:2,drop = FALSE])
+
+  if (is.null(q2)) {
+    if (fit_per_p1[2] < 0) {x <- x %>% 
+        dplyr::filter(value.bl * fit_per_p1[2] - value + fit_per_p1[1] > 0)
+    }
+    else {
+      warning("orthogonal line is problematic. Do not perfrom filtering.")
+      x <- x
+    }
+  } 
+  else {
+    ll <- quantile(assay_per[,1], probs = q2, na.rm = TRUE)
+    fit_per_p2 <- fit_per[order(abs(fit_per[,1] - ll), 
+                                  decreasing = FALSE), , drop = FALSE]
+    fit_per_p2 <- unique(fit_per_p2)
+    fit_per_p2 <- .get_per(fit_per_p2[1:2, 1:2, drop = FALSE])
+    
+    if (fit_per_p1[2] < 0 && fit_per_p2[2] < 0) {
+      x <- x %>% dplyr::filter(value.bl * fit_per_p1[2] - value + fit_per_p1[1] > 0) %>%
+        dplyr::filter(value.bl * fit_per_p2[2] - value + fit_per_p2[1] < 0)
+    }
+    else {
+      warning("orthogonal line fitting is problematic. Do not perfrom filtering.")
+      x <- x
+    }
+  }
+  return(x)
 }

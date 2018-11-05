@@ -28,10 +28,9 @@ A dataframe with rows as condition and cols as parameter
 \description{
 This is a collection of several models to fit a normal+exponential or
 normal+gamma convolution model to the probe-level intensities of a PBM experiment.
-The normal+exponential convolutional model is fit using \code{limma::normexp.fit} and 
-the normal+gamma convolutional model is fit using \code{NormalGamma::normgam.fit}.
-This function returns the model parameter estimates for each sample in the
-SummarizedExperiment object.
+The normal+exponential convolution model is fit using \code{limma::normexp.fit} and 
+the normal+gamma convolution model is fit using \code{NormalGamma::normgam.fit}.
+This function returns the model parameter estimates for each sample in a dataframe.
 }
 \author{
 Dongyuan Song, Patrick Kimes

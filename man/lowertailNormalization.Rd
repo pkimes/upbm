@@ -7,7 +7,8 @@
 lowertailNormalization(se, assay_name = "fore", q = 0.4, q0 = 0,
   stratify = condition, baseline = NULL, log_scale = FALSE,
   shift = TRUE, method = c("regression", "pca", "quantreg", "quantile",
-  "normal"), .filter_both = FALSE, .fits = FALSE, .filter = 1L)
+  "normal"), .filter_ver = FALSE, .filter_both = FALSE,
+  .fits = FALSE, .filter = 1L)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing GPR intensity information.}
@@ -38,11 +39,18 @@ using log2-scaled intensities rather than raw intensities. (default = FALSE)}
 Must be one of "regression", "pca", "quantreg", "quantile"  or "normal".
 (default = "regression")}
 
+\item{.filter_ver}{logical whether to fit models only by probes falling in the left side of 
+the orthogonal line of the given \code{q} value on a principal curve. Note here
+the function uses the two closest points of the given \code{q} value. The purpose of the function
+is to generate more "symmetric" cutoffs. Recommend to set as TRUE only when using 
+"pca". (default = FALSE)}
+
 \item{.filter_both}{logical whether to fit models only probes in both the lower
 \code{q} quantiles of the baseline and non-baseline samples (TRUE) or
 probes in lower \code{q} quantile of the baseline samples (FALSE). Note that
 setting this to TRUE will result in less probes being used for fitting the
-normalization parameters. (default = FALSE)}
+normalization parameters. Note that \code{.filter_both}
+and \code{.filter_ver} can not be true simultaneously. (default = FALSE)}
 
 \item{.fits}{logical whether to just return a table of fits rather
 than the normalized SummarizedExperiment object. (default = FALSE)}
