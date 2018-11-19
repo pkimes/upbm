@@ -25,7 +25,7 @@
 #' @param .force logical whether to run adjustment even if data
 #'        has already been spatially adjusted. (default = FALSE)
 #' @param .nonnegative logical whether to restrict intensities to non-negative
-#'        values by setting negative values to NA. (default = TRUE)
+#'        values by setting negative values to 0. (default = TRUE)
 #' 
 #' @return
 #' SummarizedExperiment object with spatially adjusted intensities.
@@ -105,7 +105,7 @@ spatiallyAdjust <- function(se, assay_name = "fore", k = 15, returnBias = TRUE,
 
     ## drop negative values if specified
     if (.nonnegative) {
-        sub_intensity$value[sub_intensity$value < 0] <- NA
+        sub_intensity$value[sub_intensity$value < 0] <- 0
     }
 
     ## spread back so samples are in separate columns
