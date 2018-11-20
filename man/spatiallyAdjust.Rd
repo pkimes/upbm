@@ -27,7 +27,7 @@ STILL TESTING. (default = FALSE)}
 has already been spatially adjusted. (default = FALSE)}
 
 \item{.nonnegative}{logical whether to restrict intensities to non-negative
-values by setting negative values to NA. (default = TRUE)}
+values by setting negative values to 0. (default = TRUE)}
 }
 \value{
 SummarizedExperiment object with spatially adjusted intensities.
