@@ -51,7 +51,7 @@ generateCy3Ref <- function(cy3se, assay_name = "fore", offset = 1L, register = T
     }
     
     ## tidy scan data for parsing
-    cy3vals <- PBMExperiment::assay2tidy(cy3se, assay_name, long = TRUE, .filter = .filter)
+    cy3vals <- upbm::assay2tidy(cy3se, assay_name, long = TRUE, .filter = .filter)
     
     ## scale scans
     if (register) {

@@ -2,6 +2,6 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 blockmedian <- function(Xr, w, center = TRUE) {
-    .Call('_PBMExperiment_blockmedian', PACKAGE = 'PBMExperiment', Xr, w, center)
+    .Call('_upbm_blockmedian', PACKAGE = 'upbm', Xr, w, center)
 }
 

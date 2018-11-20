@@ -8,7 +8,7 @@ using namespace Rcpp;
 
 // blockmedian
 NumericMatrix blockmedian(NumericMatrix Xr, int w, bool center);
-RcppExport SEXP _PBMExperiment_blockmedian(SEXP XrSEXP, SEXP wSEXP, SEXP centerSEXP) {
+RcppExport SEXP _upbm_blockmedian(SEXP XrSEXP, SEXP wSEXP, SEXP centerSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -21,11 +21,11 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_PBMExperiment_blockmedian", (DL_FUNC) &_PBMExperiment_blockmedian, 3},
+    {"_upbm_blockmedian", (DL_FUNC) &_upbm_blockmedian, 3},
     {NULL, NULL, 0}
 };
 
-RcppExport void R_init_PBMExperiment(DllInfo *dll) {
+RcppExport void R_init_upbm(DllInfo *dll) {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
 }
