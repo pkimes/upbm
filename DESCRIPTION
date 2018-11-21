@@ -15,7 +15,6 @@ Depends: R (>= 3.5),
          Biostrings,
          Matrix,
          dplyr,
-         glmnet,
          preprocessCore,
          tibble,
          tidyr,
@@ -23,24 +22,25 @@ Depends: R (>= 3.5),
          stringr,
          ggplot2,
          rlang,
-         limma,
          stats,
          utils,
          matrixStats,
          fitdistrplus,
          truncnorm,
-         affy,
          quantreg,
          qsmooth,
          NormalGamma,
          princurve
+Imports: Rcpp,
+         methods,
+         limma,
+         qvalue,
+         affy
 Suggests: BiocStyle,
           knitr
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 LinkingTo: Rcpp, RcppArmadillo
-Imports: Rcpp,
-         methods
 VignetteBuilder: knitr
 RoxygenNote: 6.1.0

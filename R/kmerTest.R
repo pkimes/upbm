@@ -1,64 +1,113 @@
-#' Estimate K-mer Affinities
+#' Test K-mer Affinity Differences
 #'
-#' This function uses elastic net regularized least squares regression
-#' to estimate k-mer affinities from PBM data. The base model
-#' estimates affinities across multiple samples with a shared probe-level
-#' effect. Estimates are reported on the scale of log2 relative affinity.
+#' @description
+#' This function uses a probe set approach to aggregate probe-level
+#' test results to call K-mer level differences between conditions.
 #' 
 #' @param se SummarizedExperiment object containing PBM intensity data.
+#' @param design formula specifying design of test, where variables are
+#'        taken from the \code{colData} of \code{se}.
 #' @param assay_name string name of the assay to use. (default = "fore")
-#' @param kmers character vector of k-mers to predict.
 #' @param offset integer offset to add to intensities before log2 scaling to
 #'        prevent errors with zero intensities. If set to 0, probes with
 #'        zero intensities are dropped/ignored in estimation. (default = 1)
-#' @param verbose logical whether to print extra messages during model fitting
-#'        procedure. (default = FALSE)
 #' @param .filter integer specifying level of probe filtering to
 #'        perform prior to estimating affinities. See \code{pbmFilterProbes}
 #'        for more details on probe filter levels. (default = 1)
+#' @param baselines named list of baseline conditions for any categorical
+#'        variables included in the model. Ignored if NULL. (default = NULL)
+#' 
+#' @return
+#' SummarizedExperiment object with probe-level testing results. Each assay
+#' contains the results for a single coefficient in the model specified
+#' in \code{design}.
+#'
+#' @md
+#' @import SummarizedExperiment
+#' @importFrom dplyr left_join distinct
+#' @importFrom limma lmFit eBayes
+#' @importFrom qvalue qvalue
+#' @export
+#' @author Patrick Kimes
+probeTest <- function(se, design, assay_name = "fore", offset = 1L, .filter = 1L,
+                       baselines = NULL) {
+
+    stopifnot(inherits(design, "formula"))
+    stopifnot(is.null(baselines) || is.list(baselines))
+    
+    ## filter probes
+    se <- pbmFilterProbes(se, .filter) 
+
+    ## extract probe data matrix
+    datp <- assay(se, assay_name)
+    datp <- log2(as.matrix(datp) + offset)
+    datp[is.infinite(datp)] <- NA
+
+    ## extact sample metadata
+    metadat <- colData(se)
+    
+    ## processdesign matrix
+    if (!is.null(baselines)) {
+        for (ic in intersect(names(baselines), colnames(metadat))) {
+            iclevs <- unique(metadat[[ic]])
+            stopifnot(baselines[[ic]] %in% iclevs)
+            iclevs <- c(baselines[[ic]], setdiff(iclevs, baselines[[ic]]))
+            metadat[[ic]] <- factor(metadat[[ic]], levels = iclevs)
+        }
+    }
+    mmat <- model.matrix(design, metadat)
+
+    ## fit limma model with variance trend and robust estimation
+    fit <- lmFit(datp, mmat)
+    fit <- eBayes(fit, trend = TRUE, robust = TRUE)
+
+    ## return SummarizedExperiment with test results - one coef per assay
+    alist <- list(Amean = replicate(ncol(fit$coefficients), fit$Amean),
+                  t = fit$t,
+                  coefs = fit$coefficients,
+                  stdev = sweep(fit$stdev.unscaled, 1, fit$s2.post^.5, `*`),
+                  df = replicate(ncol(fit$coefficients), fit$df.total))
+    alist <- simplify2array(alist)
+    alist <- lapply(seq_len(dim(alist)[2]), function(i) alist[, i, ])
+    names(alist) <- colnames(fit$coefficients)
+    
+    SummarizedExperiment(assays = alist, rowData = rowData(se))
+}
+
+
+#' Aggregate Probe-Level Tests to K-mers
+#'
+#' @description
+#' After performing probe-level testing, this function applies probe set
+#' aggregation to obtain K-mer level inference. 
+#'
+#' @param se probe-level testing results
+#' @param kmers character vector of k-mers to predict.
+#' @param verbose logical whether to print extra messages during model fitting
+#'        procedure. (default = FALSE)
 #' @param .trim interger vector of length two specifying start and end
 #'        of probe sequence to be used. Default is based on the universal
 #'        PBM probe design where only leading 36nt should be used. 
 #'        Ignored if NULL. (default = c(1, 36))
-#' @param ... parameters to be passed to glmnet call - will overwrite
-#'        default paramaters.
-#' 
+#'
 #' @return
-#' SummarizedExperiment object with predicted affinities.
+#' tibble of K-mer results.
 #'
-#' @details
-#' The default signature for the glmnet call is:
-#' * family = 'gaussian'
-#' * alpha = 0.5
-#' * intercept = FALSE
-#' * lambda = rev(0:50)
-#' * lower.limits = 0
-#' * thresh = 1e-10
-#'
-#' Features to be added:
-#' * option to select different regression models
-#' * option to return glmnet results for all alpha
-#' * frozen RMA-like pooled estimate?
-#'
-#' @md
-#' @import Matrix glmnet SummarizedExperiment
-#' @importFrom Biostrings subseq
-#' @importFrom utils data
-#' @importFrom stats coef
-#' @importFrom methods as is
-#' @importFrom dplyr left_join distinct 
+#' @importFrom qvalue qvalue
+#' @importFrom stats p.adjust
+#' @importFrom dplyr select_ group_by left_join ungroup do mutate
+#' @importFrom tidyr unnest
 #' @export
 #' @author Patrick Kimes
-predictKmers <- function(se, assay_name = "fore", kmers = NULL, offset = 1,
-                         verbose = FALSE, .filter = 1L,
-                         .trim = if (.filter > 0L) { c(1, 36) } else { NULL },
-                         ...) {
-    
+kmerTest <- function(se, assay_name, kmers, .filter = 1L,
+                     .trim = if (.filter > 0L) { c(1, 36) } else { NULL },
+                     ...) {
+
     ## check kmers specified
-    kmers <- checkKmers(kmers, verbose)
+    kmers <- checkKmers(kmers, verb = FALSE)
     
     ## check Sequence info in rowData
-    se <- checkProbeSequences(se, verbose)
+    se <- checkProbeSequences(se, verb = FALSE)
     
     ## filter probes
     se <- pbmFilterProbes(se, .filter) 
@@ -72,72 +121,26 @@ predictKmers <- function(se, assay_name = "fore", kmers = NULL, offset = 1,
 
     ## use ordering from input 'kmers'
     kmermap$seq <- factor(kmermap$seq, levels = kmers)
-
-    ## convert kmer map to design matrix
-    designmat <- sparseMatrix(i = as.numeric(kmermap$probe_idx),
-                              j = as.numeric(kmermap$seq))
-    nprobes <- dim(designmat)[1]
-    nkmers <- dim(designmat)[2]
-
-    ## check if design matrix dimensions match data dimensions
-    if (nprobes != nrow(se)) {
-        stop("Design matrix dimensions do not match probe data dimensions")
-    }
-
-    ## add variables for probe effect
-    diagmat <- .sparseDiagonal(nprobes)
     
-    ## create full design matrix w/ per-probe effects, per-sample-8mer effects
-    designmat <- bdiag(replicate(ncol(se), designmat, simplify = FALSE))
-    diagmat <- do.call(rbind, replicate(ncol(se), diagmat, simplify = FALSE))
-    designmat <- cbind(designmat, diagmat)
+    adat <- assay2tidy(se, assay_name, long = FALSE, .filter = 0L)
+    adat <- dplyr::select_(adat, .dots = c(setdiff(ovnames, "Sequence"), "Amean", "t"))
+    adat <- dplyr::left_join(kmermap, adat, by = setdiff(ovnames, "Sequence"))
 
-    ## vectorize and log-transform intensities
-    vec_intensities <- as.matrix(assay(se, assay_name))
-    vec_intensities <- matrix(vec_intensities, ncol = 1)
-    if (offset <= 0) {
-        vec_intensities[vec_intensities <= 0] <- NA
-        vec_intensities <- log2(vec_intensities)
-    } else {
-        vec_intensities <- log2(vec_intensities + offset)
-    }
-    
-    ## remove NAs
-    valid_idx <- which(!is.na(vec_intensities))
-    vec_intensities <- vec_intensities[valid_idx, ]
-    designmat <- designmat[valid_idx, ]
-    
-    ## merge input parameters with default parameter for glmnet call
-    glmnet_args <- list(x = designmat, y = vec_intensities,
-                        family = 'gaussian', alpha = 0.5,
-                        intercept = FALSE, lambda = rev(0:50),
-                        lower.limits = 0, thresh = 1e-10)
-    args_input <- list(...)
-    glmnet_args <- replace(glmnet_args, names(args_input), args_input)
-    
-    ## fit elastic net model, constraint to non-negative
-    if (verbose) { print("starting glmnet fit ...") }
-    efit <- do.call(glmnet, glmnet_args)
-    if (verbose) { print("... finished!") }
-    
-    ## extracting estimated affinities
-    nlambda <- length(glmnet_args$lambda)
-    coefs_all <- coef(efit)[-1, nlambda]
-    coefs_est <- matrix(coefs_all[ 1:(ncol(se) * nkmers) ],
-                        ncol = ncol(se), nrow = nkmers)
+    adat <- dplyr::group_by(adat, seq)
+    adat <- dplyr::do(adat, zt = t.test(.$t),
+                      nprobes = nrow(.),
+                      Amean = mean(.$Amean, na.rm = TRUE))
+    adat <- dplyr::ungroup(adat)
+    adat <- tidyr::unnest(adat, nprobes, Amean)
 
-    ## need to be careful about dropped K-mers if too many NAs
-    
-    ## turn coefficient estimates into table w/ rows = 8mers, cols = conditions
-    coefs_est <- DataFrame(coefs_est)
-    colnames(coefs_est) <- colnames(se)
-
-    ## determine row data
-    rowdat <- DataFrame(kmer = kmers)
-
-    ## create new SummarizedExperiment
-    SummarizedExperiment(assays = list(pred = coefs_est),
-                         rowData = rowdat, colData = colData(se))
+    adat <- dplyr::mutate(adat,
+                          pval = sapply(zt, `[[`, "p.value"),
+                          qval = qvalue::qvalue(pval)$qvalues,
+                          bh = stats::p.adjust(pval, "BH"),
+                          tstat = sapply(zt, `[[`, "statistic"),
+                          effect = sapply(zt, `[[`, "estimate"),
+                          zt = NULL)
+    adat
 }
 
 
