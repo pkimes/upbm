@@ -1,8 +1,8 @@
-#' Test K-mer Affinity Differences
+#' Test Probe Intensity Differences
 #'
 #' @description
-#' This function uses a probe set approach to aggregate probe-level
-#' test results to call K-mer level differences between conditions.
+#' This function uses limma to perform probe-level tests of intensity differences
+#' across conditions. Contrasts should be specified as a design formula.
 #' 
 #' @param se SummarizedExperiment object containing PBM intensity data.
 #' @param design formula specifying design of test, where variables are
@@ -22,6 +22,11 @@
 #' contains the results for a single coefficient in the model specified
 #' in \code{design}.
 #'
+#' @examples
+#' \dontrun{
+#' res <- probeTest(mygpr, ~ 1 + condition)
+#' }
+#' 
 #' @md
 #' @import SummarizedExperiment
 #' @importFrom dplyr left_join distinct
@@ -75,7 +80,7 @@ probeTest <- function(se, design, assay_name = "fore", offset = 1L, .filter = 1L
 }
 
 
-#' Aggregate Probe-Level Tests to K-mers
+#' Test K-mers Probe Differences
 #'
 #' @description
 #' After performing probe-level testing, this function applies probe set
