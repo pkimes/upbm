@@ -87,9 +87,11 @@ probeTest <- function(se, design, assay_name = "fore", offset = 1L, .filter = 1L
 #' aggregation to obtain K-mer level inference. 
 #'
 #' @param se probe-level testing results
+#' @param assay_name string name of the assay to aggregate. 
 #' @param kmers character vector of k-mers to predict.
-#' @param verbose logical whether to print extra messages during model fitting
-#'        procedure. (default = FALSE)
+#' @param .filter integer specifying level of probe filtering to
+#'        perform prior to estimating affinities. See \code{pbmFilterProbes}
+#'        for more details on probe filter levels. (default = 1)
 #' @param .trim interger vector of length two specifying start and end
 #'        of probe sequence to be used. Default is based on the universal
 #'        PBM probe design where only leading 36nt should be used. 
@@ -105,8 +107,7 @@ probeTest <- function(se, design, assay_name = "fore", offset = 1L, .filter = 1L
 #' @export
 #' @author Patrick Kimes
 kmerTest <- function(se, assay_name, kmers, .filter = 1L,
-                     .trim = if (.filter > 0L) { c(1, 36) } else { NULL },
-                     ...) {
+                     .trim = if (.filter > 0L) { c(1, 36) } else { NULL }) {
 
     ## check kmers specified
     kmers <- checkKmers(kmers, verb = FALSE)

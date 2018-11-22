@@ -72,8 +72,9 @@ probeEstimate <- function(se, assay_name = "fore", groups = condition,
 #' @param assay_name string name of the assay to aggregate. If NULL, all assays are
 #'        aggregated. (default = NULL)
 #' @param kmers character vector of k-mers to predict.
-#' @param verbose logical whether to print extra messages during model fitting
-#'        procedure. (default = FALSE)
+#' @param .filter integer specifying level of probe filtering to
+#'        perform prior to estimating affinities. See \code{pbmFilterProbes}
+#'        for more details on probe filter levels. (default = 1)
 #' @param .trim interger vector of length two specifying start and end
 #'        of probe sequence to be used. Default is based on the universal
 #'        PBM probe design where only leading 36nt should be used. 

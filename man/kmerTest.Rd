@@ -5,20 +5,23 @@
 \title{Test K-mers Probe Differences}
 \usage{
 kmerTest(se, assay_name, kmers, .filter = 1L, .trim = if (.filter > 0L)
-  {     c(1, 36) } else {     NULL }, ...)
+  {     c(1, 36) } else {     NULL })
 }
 \arguments{
 \item{se}{probe-level testing results}
 
+\item{assay_name}{string name of the assay to aggregate.}
+
 \item{kmers}{character vector of k-mers to predict.}
+
+\item{.filter}{integer specifying level of probe filtering to
+perform prior to estimating affinities. See \code{pbmFilterProbes}
+for more details on probe filter levels. (default = 1)}
 
 \item{.trim}{interger vector of length two specifying start and end
 of probe sequence to be used. Default is based on the universal
 PBM probe design where only leading 36nt should be used. 
 Ignored if NULL. (default = c(1, 36))}
-
-\item{verbose}{logical whether to print extra messages during model fitting
-procedure. (default = FALSE)}
 }
 \value{
 tibble of K-mer results.
