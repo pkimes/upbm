@@ -31,7 +31,6 @@
 #' @import SummarizedExperiment
 #' @importFrom dplyr left_join distinct
 #' @importFrom limma lmFit eBayes
-#' @importFrom qvalue qvalue
 #' @export
 #' @author Patrick Kimes
 probeTest <- function(se, design, assay_name = "fore", offset = 1L, .filter = 1L,
@@ -101,7 +100,6 @@ probeTest <- function(se, design, assay_name = "fore", offset = 1L, .filter = 1L
 #' @return
 #' SummarizedExperiment of estimated K-mer testing results.
 #'
-#' @importFrom qvalue qvalue
 #' @importFrom stats p.adjust
 #' @importFrom dplyr select_ group_by left_join ungroup do mutate
 #' @importFrom tidyr unnest
@@ -152,10 +150,10 @@ kmerTest <- function(se, kmers, assay_name = NULL, .filter = 1L,
     adat <- dplyr::ungroup(adat)
     adat <- tidyr::unnest(adat, nprobes, Amean)
 
+    return(adat)
+    
     adat <- dplyr::mutate(adat,
                           pval = sapply(zt, `[[`, "p.value"),
-                          qval = qvalue::qvalue(pval)$qvalues,
-                          bh = stats::p.adjust(pval, "BH"),
                           tstat = sapply(zt, `[[`, "statistic"),
                           effect = sapply(zt, `[[`, "estimate"),
                           df = sapply(zt, function(x) { x$parameter[["df"]] }),
@@ -163,7 +161,6 @@ kmerTest <- function(se, kmers, assay_name = NULL, .filter = 1L,
 
     alist <- list(Amean = .tidymat(adat, kmers, Amean),
                   pval = .tidymat(adat, kmers, pval),
-                  qval = .tidymat(adat, kmers, qval),
                   tstat = .tidymat(adat, kmers, tstat),
                   effect = .tidymat(adat, kmers, effect),
                   df = .tidymat(adat, kmers, df))

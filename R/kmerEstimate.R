@@ -26,7 +26,6 @@
 #' @import SummarizedExperiment
 #' @importFrom dplyr left_join distinct
 #' @importFrom limma lmFit eBayes
-#' @importFrom qvalue qvalue
 #' @export
 #' @author Patrick Kimes
 probeEstimate <- function(se, assay_name = "fore", groups = condition,
