@@ -149,8 +149,6 @@ kmerTest <- function(se, kmers, assay_name = NULL, .filter = 1L,
                       Amean = mean(.$Amean, na.rm = TRUE))
     adat <- dplyr::ungroup(adat)
     adat <- tidyr::unnest(adat, nprobes, Amean)
-
-    return(adat)
     
     adat <- dplyr::mutate(adat,
                           pval = sapply(zt, `[[`, "p.value"),
