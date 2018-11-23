@@ -4,17 +4,17 @@
 \alias{kmerEstimate}
 \title{Estimate K-mers Probe Intensities}
 \usage{
-kmerEstimate(se, assay_name = NULL, kmers, .filter = 1L, .trim = if
+kmerEstimate(se, kmers, assay_name = NULL, .filter = 1L, .trim = if
   (.filter > 0L) {     c(1, 36) } else {     NULL })
 }
 \arguments{
 \item{se}{probe-level affinity summaries geneated by \code{probeEstimate} with each
 assay corresponding to a different group label.}
 
+\item{kmers}{character vector of k-mers to predict.}
+
 \item{assay_name}{string name of the assay to aggregate. If NULL, all assays are
 aggregated. (default = NULL)}
-
-\item{kmers}{character vector of k-mers to predict.}
 
 \item{.filter}{integer specifying level of probe filtering to
 perform prior to estimating affinities. See \code{pbmFilterProbes}

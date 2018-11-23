@@ -87,8 +87,9 @@ probeTest <- function(se, design, assay_name = "fore", offset = 1L, .filter = 1L
 #' aggregation to obtain K-mer level inference. 
 #'
 #' @param se probe-level testing results
-#' @param assay_name string name of the assay to aggregate. 
 #' @param kmers character vector of k-mers to predict.
+#' @param assay_name string name of the assay to aggregate. If NULL, all assays
+#'        are aggregated. (default = NULL)
 #' @param .filter integer specifying level of probe filtering to
 #'        perform prior to estimating affinities. See \code{pbmFilterProbes}
 #'        for more details on probe filter levels. (default = 1)
@@ -98,16 +99,24 @@ probeTest <- function(se, design, assay_name = "fore", offset = 1L, .filter = 1L
 #'        Ignored if NULL. (default = c(1, 36))
 #'
 #' @return
-#' tibble of K-mer results.
+#' SummarizedExperiment of estimated K-mer testing results.
 #'
 #' @importFrom qvalue qvalue
 #' @importFrom stats p.adjust
 #' @importFrom dplyr select_ group_by left_join ungroup do mutate
 #' @importFrom tidyr unnest
+#' @importFrom rlang enquo
 #' @export
 #' @author Patrick Kimes
-kmerTest <- function(se, assay_name, kmers, .filter = 1L,
+kmerTest <- function(se, kmers, assay_name = NULL, .filter = 1L,
                      .trim = if (.filter > 0L) { c(1, 36) } else { NULL }) {
+
+    stopifnot(is(se, "SummarizedExperiment"))
+    stopifnot(is.null(assay_name) || all(assay_name %in% assayNames(se)))
+    
+    if (is.null(assay_name)) {
+        assay_name <- assayNames(se)
+    }
 
     ## check kmers specified
     kmers <- checkKmers(kmers, verb = FALSE)
@@ -128,11 +137,15 @@ kmerTest <- function(se, assay_name, kmers, .filter = 1L,
     ## use ordering from input 'kmers'
     kmermap$seq <- factor(kmermap$seq, levels = kmers)
     
-    adat <- assay2tidy(se, assay_name, long = FALSE, .filter = 0L)
-    adat <- dplyr::select_(adat, .dots = c(setdiff(ovnames, "Sequence"), "Amean", "t"))
+    adat <- lapply(assay_name, function(x, ...) { assay2tidy(assay_name = x, ...) },
+                   se = se, long = FALSE, .filter = 0L)
+    names(adat) <- assay_name
+    adat <- dplyr::bind_rows(adat, .id = "aname")
+
+    adat <- dplyr::select_(adat, .dots = c(setdiff(ovnames, "Sequence"), "Amean", "t", "aname"))
     adat <- dplyr::left_join(kmermap, adat, by = setdiff(ovnames, "Sequence"))
 
-    adat <- dplyr::group_by(adat, seq)
+    adat <- dplyr::group_by(adat, aname, seq)
     adat <- dplyr::do(adat, zt = t.test(.$t),
                       nprobes = nrow(.),
                       Amean = mean(.$Amean, na.rm = TRUE))
@@ -145,8 +158,33 @@ kmerTest <- function(se, assay_name, kmers, .filter = 1L,
                           bh = stats::p.adjust(pval, "BH"),
                           tstat = sapply(zt, `[[`, "statistic"),
                           effect = sapply(zt, `[[`, "estimate"),
+                          df = sapply(zt, function(x) { x$parameter[["df"]] }),
                           zt = NULL)
-    adat
+
+    alist <- list(Amean = .tidymat(adat, kmers, Amean),
+                  pval = .tidymat(adat, kmers, pval),
+                  qval = .tidymat(adat, kmers, qval),
+                  tstat = .tidymat(adat, kmers, tstat),
+                  effect = .tidymat(adat, kmers, effect),
+                  df = .tidymat(adat, kmers, df))
+
+    alist <- simplify2array(alist)
+    alist <- lapply(seq_len(dim(alist)[2]), function(i) alist[, i, ])
+    names(alist) <- sort(assay_name)
+
+    rdat <- dplyr::select(adat, seq, nprobes)
+    rdat <- rdat[match(kmers, rdat$seq), ]
+    
+    SummarizedExperiment(assays = alist, rowData = rdat)
+}
+
+## helper to turn tidy table column into matrix for SE
+.tidymat <- function(x, km, cn) {
+    cn <- rlang::enquo(cn)
+    x <- dplyr::select(x, seq, aname, !!cn)
+    x <- tidyr::spread(x, aname, !!cn)
+    x <- x[match(km, x$seq), sort(names(x))]
+    as.matrix(dplyr::select(x, -seq))
 }
 
 

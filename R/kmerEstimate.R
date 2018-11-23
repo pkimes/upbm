@@ -69,9 +69,9 @@ probeEstimate <- function(se, assay_name = "fore", groups = condition,
 #'
 #' @param se probe-level affinity summaries geneated by \code{probeEstimate} with each
 #'        assay corresponding to a different group label. 
+#' @param kmers character vector of k-mers to predict.
 #' @param assay_name string name of the assay to aggregate. If NULL, all assays are
 #'        aggregated. (default = NULL)
-#' @param kmers character vector of k-mers to predict.
 #' @param .filter integer specifying level of probe filtering to
 #'        perform prior to estimating affinities. See \code{pbmFilterProbes}
 #'        for more details on probe filter levels. (default = 1)
@@ -87,11 +87,11 @@ probeEstimate <- function(se, assay_name = "fore", groups = condition,
 #' @importFrom tidyr unnest spread
 #' @export
 #' @author Patrick Kimes
-kmerEstimate <- function(se, assay_name = NULL, kmers, .filter = 1L,
+kmerEstimate <- function(se, kmers, assay_name = NULL, .filter = 1L,
                          .trim = if (.filter > 0L) { c(1, 36) } else { NULL }) {
 
     stopifnot(is(se, "SummarizedExperiment"))
-    stopifnot(is.null(assay_name) || assay_name %in% assayNames(se))
+    stopifnot(is.null(assay_name) || all(assay_name %in% assayNames(se)))
     
     if (is.null(assay_name)) {
         assay_name <- assayNames(se)
@@ -123,8 +123,8 @@ kmerEstimate <- function(se, assay_name = NULL, kmers, .filter = 1L,
     
     adat <- dplyr::select_(adat, .dots = c(setdiff(ovnames, "Sequence"), "coefs", "stdev", "aname"))
     adat <- dplyr::left_join(kmermap, adat, by = setdiff(ovnames, "Sequence"))
+
     adat <- dplyr::group_by(adat, aname, seq)
-    
     adat <- dplyr::do(adat, zt = sum(.$coefs/(.$stdev^2)) / sum(.$stdev^-2))
     adat <- dplyr::ungroup(adat)
     adat <- tidyr::unnest(adat)

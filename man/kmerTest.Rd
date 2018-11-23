@@ -4,15 +4,16 @@
 \alias{kmerTest}
 \title{Test K-mers Probe Differences}
 \usage{
-kmerTest(se, assay_name, kmers, .filter = 1L, .trim = if (.filter > 0L)
-  {     c(1, 36) } else {     NULL })
+kmerTest(se, kmers, assay_name = NULL, .filter = 1L, .trim = if
+  (.filter > 0L) {     c(1, 36) } else {     NULL })
 }
 \arguments{
 \item{se}{probe-level testing results}
 
-\item{assay_name}{string name of the assay to aggregate.}
-
 \item{kmers}{character vector of k-mers to predict.}
+
+\item{assay_name}{string name of the assay to aggregate. If NULL, all assays
+are aggregated. (default = NULL)}
 
 \item{.filter}{integer specifying level of probe filtering to
 perform prior to estimating affinities. See \code{pbmFilterProbes}
@@ -24,7 +25,7 @@ PBM probe design where only leading 36nt should be used.
 Ignored if NULL. (default = c(1, 36))}
 }
 \value{
-tibble of K-mer results.
+SummarizedExperiment of estimated K-mer testing results.
 }
 \description{
 After performing probe-level testing, this function applies probe set
