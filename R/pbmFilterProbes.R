@@ -39,7 +39,7 @@ pbmFilterProbes <- function(se, level = 0L) {
         stop(paste0("Must have 'ID' column ", ifelse(is(se, "SummarizedExperiment"), "in rowData ", ""),
                     "to use filter level > 0.\n"),
              "If **all** probes should be used, set filter level to 0.\n",
-             "If only a subset of probes (i.e. de Bruijn probes) should be used,",
+             "If only a subset of probes (i.e. de Bruijn probes) should be used, ",
              "add 'ID' column.")
         level <- 0L
     }
