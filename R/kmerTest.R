@@ -81,7 +81,7 @@ probeTest <- function(se, design, assay_name = "fore", offset = 1L,
 
     ## fit empirical Bayes adjustment with specified parameters
     eb_args$fit <- fit
-    fit <- do.call(eb_args, eBayes)
+    fit <- do.call(eBayes, eb_args)
 
     ## if specified, just return fits
     if (.fits) {
