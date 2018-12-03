@@ -4,8 +4,8 @@
 \alias{probeTest}
 \title{Test Probe Intensity Differences}
 \usage{
-probeTest(se, design, assay_name = "fore", offset = 1L, .filter = 1L,
-  baselines = NULL)
+probeTest(se, design, assay_name = "fore", offset = 1L,
+  baselines = NULL, .filter = 1L, .fits = FALSE, ...)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing PBM intensity data.}
@@ -19,12 +19,20 @@ taken from the \code{colData} of \code{se}.}
 prevent errors with zero intensities. If set to 0, probes with
 zero intensities are dropped/ignored in estimation. (default = 1)}
 
+\item{baselines}{named list of baseline conditions for any categorical
+variables included in the model. Ignored if NULL. (default = NULL)}
+
 \item{.filter}{integer specifying level of probe filtering to
 perform prior to estimating affinities. See \code{pbmFilterProbes}
 for more details on probe filter levels. (default = 1)}
 
-\item{baselines}{named list of baseline conditions for any categorical
-variables included in the model. Ignored if NULL. (default = NULL)}
+\item{.fits}{logical whether to just return \code{limma} fit rather than
+cleaned up SummarizedExperiment object. Used mostly just during
+development. (default = FALSE)}
+
+\item{...}{named arguments to be passed to \code{limma::eBayes}. See
+Details for default parameters used in this function (different from
+\code{limma::eBayes} default).}
 }
 \value{
 SummarizedExperiment object with probe-level testing results. Each assay
@@ -34,6 +42,10 @@ in \code{design}.
 \description{
 This function uses limma to perform probe-level tests of intensity differences
 across conditions. Contrasts should be specified as a design formula.
+}
+\details{
+By default, \code{trend = TRUE, robust = TRUE} is used with \code{limma::eBayes}
+for pooling information across tests.
 }
 \examples{
 \dontrun{

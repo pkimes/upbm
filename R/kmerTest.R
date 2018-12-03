@@ -11,17 +11,27 @@
 #' @param offset integer offset to add to intensities before log2 scaling to
 #'        prevent errors with zero intensities. If set to 0, probes with
 #'        zero intensities are dropped/ignored in estimation. (default = 1)
+#' @param baselines named list of baseline conditions for any categorical
+#'        variables included in the model. Ignored if NULL. (default = NULL)
 #' @param .filter integer specifying level of probe filtering to
 #'        perform prior to estimating affinities. See \code{pbmFilterProbes}
 #'        for more details on probe filter levels. (default = 1)
-#' @param baselines named list of baseline conditions for any categorical
-#'        variables included in the model. Ignored if NULL. (default = NULL)
+#' @param .fits logical whether to just return \code{limma} fit rather than
+#'        cleaned up SummarizedExperiment object. Used mostly just during
+#'        development. (default = FALSE)
+#' @param ... named arguments to be passed to \code{limma::eBayes}. See
+#'        Details for default parameters used in this function (different from
+#'        \code{limma::eBayes} default).
 #' 
 #' @return
 #' SummarizedExperiment object with probe-level testing results. Each assay
 #' contains the results for a single coefficient in the model specified
 #' in \code{design}.
 #'
+#' @details
+#' By default, \code{trend = TRUE, robust = TRUE} is used with \code{limma::eBayes}
+#' for pooling information across tests.
+#' 
 #' @examples
 #' \dontrun{
 #' res <- probeTest(mygpr, ~ 1 + condition)
@@ -33,9 +43,14 @@
 #' @importFrom limma lmFit eBayes
 #' @export
 #' @author Patrick Kimes
-probeTest <- function(se, design, assay_name = "fore", offset = 1L, .filter = 1L,
-                       baselines = NULL) {
+probeTest <- function(se, design, assay_name = "fore", offset = 1L,
+                      baselines = NULL, .filter = 1L, .fits = FALSE,  ...) {
 
+    ## define eBayes parameters with defaults
+    dots <- list(...)
+    eb_args <- list(trend = TRUE, robust = TRUE)
+    eb_args <- replace(eb_args, names(dots), dots)
+    
     stopifnot(inherits(design, "formula"))
     stopifnot(is.null(baselines) || is.list(baselines))
     
@@ -61,10 +76,18 @@ probeTest <- function(se, design, assay_name = "fore", offset = 1L, .filter = 1L
     }
     mmat <- model.matrix(design, metadat)
 
-    ## fit limma model with variance trend and robust estimation
+    ## fit limma model
     fit <- lmFit(datp, mmat)
-    fit <- eBayes(fit, trend = TRUE, robust = TRUE)
 
+    ## fit empirical Bayes adjustment with specified parameters
+    eb_args$fit <- fit
+    fit <- do.call(eb_args, eBayes)
+
+    ## if specified, just return fits
+    if (.fits) {
+        return(fit)
+    }
+    
     ## return SummarizedExperiment with test results - one coef per assay
     alist <- list(Amean = replicate(ncol(fit$coefficients), fit$Amean),
                   t = fit$t,
