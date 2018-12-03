@@ -126,7 +126,7 @@ kmerEstimate <- function(se, kmers, assay_name = NULL, .filter = 1L,
     adat <- dplyr::group_by(adat, aname, seq)
     adat <- dplyr::do(adat,
                       zt = sum(.$coefs/(.$stdev^2)) / sum(.$stdev^-2),
-                      stdev = sum(.$stdev^-2)^-2)
+                      stdev = sqrt(1 / sum(.$stdev^-2)))
     adat <- dplyr::ungroup(adat)
     adat <- tidyr::unnest(adat)
 
