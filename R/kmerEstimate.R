@@ -124,18 +124,23 @@ kmerEstimate <- function(se, kmers, assay_name = NULL, .filter = 1L,
     adat <- dplyr::left_join(kmermap, adat, by = setdiff(ovnames, "Sequence"))
 
     adat <- dplyr::group_by(adat, aname, seq)
-    adat <- dplyr::do(adat, zt = sum(.$coefs/(.$stdev^2)) / sum(.$stdev^-2))
+    adat <- dplyr::do(adat,
+                      zt = sum(.$coefs/(.$stdev^2)) / sum(.$stdev^-2),
+                      stdev = sum(.$stdev^-2)^-2)
     adat <- dplyr::ungroup(adat)
     adat <- tidyr::unnest(adat)
-    adat <- tidyr::spread(adat, aname, zt)
 
-    zdat <- dplyr::select_(adat, .dots = paste0("`", assay_name, "`"))
-    zdat <- as.matrix(zdat)
+    alist <- list(z = .tidymat(adat, kmers, zt),
+                  stdev = .tidymat(adat, kmers, stdev))
+
+    alist <- simplify2array(alist)
+    alist <- lapply(seq_len(dim(alist)[2]), function(i) alist[, i, ])
+    names(alist) <- sort(assay_name)
+
+    rdat <- dplyr::select(adat, seq)
+    rdat <- rdat[match(kmers, rdat$seq), ]
     
-    rdat <- dplyr::select_(adat, .dots = paste0("-`", assay_name, "`"))
-    rdat <- as.data.frame(rdat, optional = TRUE)
-    
-    SummarizedExperiment(assays = list(z = zdat), rowData = rdat)
+    SummarizedExperiment(assays = alist, rowData = rdat)
 }
 
 
