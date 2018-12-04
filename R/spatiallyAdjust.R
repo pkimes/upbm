@@ -105,7 +105,7 @@ spatiallyAdjust <- function(se, assay_name = "fore", k = 15, returnBias = TRUE,
 
     ## drop negative values if specified
     if (.nonnegative) {
-        sub_intensity$value[sub_intensity$value < 0] <- 0
+        sub_intensity$value[sub_intensity$value < 0] <- min(sub_intensity$value[sub_intensity$value > 0], na.rm = TRUE)
     }
 
     ## spread back so samples are in separate columns
