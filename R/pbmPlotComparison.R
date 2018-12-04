@@ -166,8 +166,8 @@ pbmPlotComparison <- function(se1, se2, assay_name  = "fore", match_by = conditi
     } else {
         if (log_scale) {
             ptitle <- "PBM Intensity Comparison (log2)"
-            pxaxis <- scale_x_continuous("rep1 intensity (log)", breaks = 2^(0:100), trans = "log10")
-            pyaxis <- scale_y_continuous("rep2 intensity (log)", breaks = 2^(0:100), trans = "log10")
+            pxaxis <- scale_x_continuous("rep1 intensity (log)", breaks = 2^(0:100), trans = "log2")
+            pyaxis <- scale_y_continuous("rep2 intensity (log)", breaks = 2^(0:100), trans = "log2")
         } else {
             ptitle <- "PBM Intensity Comparison"
             pxaxis <- scale_x_continuous("rep1 intensity")
