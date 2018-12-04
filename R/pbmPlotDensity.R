@@ -57,7 +57,7 @@ pbmPlotDensity <- function(se, assay_name = "fore", log_scale = TRUE,
     ## handle log-scale plotting if requested
     if (log_scale) {
         ptitle <- "PBM Intensity (log2)"
-        pxaxis <- scale_x_continuous("intensity (log)", breaks = 2^(0:100), trans = "log10")
+        pxaxis <- scale_x_continuous("intensity (log)", breaks = 2^(0:100), trans = "log2")
     } else {
         ptitle <- "PBM Intensity"
         pxaxis <- scale_x_continuous("intensity")

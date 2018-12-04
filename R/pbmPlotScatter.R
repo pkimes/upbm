@@ -101,8 +101,8 @@ pbmPlotScatter <- function(se, assay_name = "fore", stratify = condition, baseli
         if (log_scale) {
             ptitle <- "PBM Intensity (log2)"
             pxaxis <- scale_x_continuous(paste0("reference (", baseline, ") intensity (log)"),
-                                         breaks = 2^(0:100), trans = "log10")
-            pyaxis <- scale_y_continuous("intensity (log)", breaks = 2^(0:100), trans = "log10")
+                                         breaks = 2^(0:100), trans = "log2")
+            pyaxis <- scale_y_continuous("intensity (log)", breaks = 2^(0:100), trans = "log2")
         } else {
             ptitle <- "PBM Intensity"
             pxaxis <- scale_x_continuous(paste0("reference (", baseline, ") intensity"))
