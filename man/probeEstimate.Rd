@@ -5,7 +5,7 @@
 \title{Estimate Probe Intensities and Variances}
 \usage{
 probeEstimate(se, assay_name = "fore", groups = condition,
-  offset = 1L, .filter = 1L)
+  offset = 1L, .filter = 1L, .fits = FALSE, ...)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing PBM intensity data.}
@@ -24,6 +24,14 @@ zero intensities are dropped/ignored in estimation. (default = 1)}
 \item{.filter}{integer specifying level of probe filtering to
 perform prior to estimating affinities. See \code{pbmFilterProbes}
 for more details on probe filter levels. (default = 1)}
+
+\item{.fits}{logical whether to just return \code{limma} fit rather than
+cleaned up SummarizedExperiment object. Used mostly just during
+development. (default = FALSE)}
+
+\item{...}{named arguments to be passed to \code{limma::eBayes}. See
+Details for default parameters used in this function (different from
+\code{limma::eBayes} default).}
 }
 \value{
 SummarizedExperiment object with probe-level intensity information aggregated

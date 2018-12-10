@@ -16,6 +16,12 @@
 #' @param .filter integer specifying level of probe filtering to
 #'        perform prior to estimating affinities. See \code{pbmFilterProbes}
 #'        for more details on probe filter levels. (default = 1)
+#' @param .fits logical whether to just return \code{limma} fit rather than
+#'        cleaned up SummarizedExperiment object. Used mostly just during
+#'        development. (default = FALSE)
+#' @param ... named arguments to be passed to \code{limma::eBayes}. See
+#'        Details for default parameters used in this function (different from
+#'        \code{limma::eBayes} default).
 #' 
 #' @return
 #' SummarizedExperiment object with probe-level intensity information aggregated
@@ -29,8 +35,13 @@
 #' @export
 #' @author Patrick Kimes
 probeEstimate <- function(se, assay_name = "fore", groups = condition,
-                          offset = 1L, .filter = 1L) {
+                          offset = 1L, .filter = 1L, .fits = FALSE, ...) {
     
+    ## define eBayes parameters with defaults
+    dots <- list(...)
+    eb_args <- list(trend = TRUE, robust = TRUE)
+    eb_args <- replace(eb_args, names(dots), dots)
+
     ## filter probes
     se <- pbmFilterProbes(se, .filter) 
 
@@ -43,8 +54,17 @@ probeEstimate <- function(se, assay_name = "fore", groups = condition,
     groups <- rlang::enquo(groups)
     coldat <- .pbmCheckGroups(se, groups)
 
+    ## fit limma model
     fit <- lmFit(datp, coldat)
-    fit <- eBayes(fit, trend = TRUE, robust = TRUE)
+
+    ## fit empirical Bayes adjustment with specified parameters
+    eb_args$fit <- fit
+    fit <- do.call(eBayes, eb_args)
+
+    ## if specified, just return fits
+    if (.fits) {
+        return(fit)
+    }
 
     ## return SummarizedExperiment with test results - one coef per assay
     alist <- list(t = fit$t,
