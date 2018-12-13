@@ -155,11 +155,11 @@ fitCy3Models <- function(se, assay_name = "fore", refit = TRUE, .filter = 1L,
     pdrop <- dplyr::left_join(dplyr::select(full_rowdat, Row, Column), pdrop, by = c("Row", "Column"))
 
     pexps <- DataFrame(pexps, check.names = FALSE)
-    pexps <- pexps[, rownames(colData(se))]
+    pexps <- pexps[, rownames(colData(se)), drop = FALSE]
     pratios <- DataFrame(pratios, check.names = FALSE)
-    pratios <- pratios[, rownames(colData(se))]
+    pratios <- pratios[, rownames(colData(se)), drop = FALSE]
     pdrop <- DataFrame(pdrop, check.names = FALSE)
-    pdrop <- pdrop[, rownames(colData(se))]
+    pdrop <- pdrop[, rownames(colData(se)), drop = FALSE]
 
     ## add to SE object
     assay(se, "expected") <- pexps

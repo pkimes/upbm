@@ -171,13 +171,13 @@ fitCy3Empirical <- function(se, refse, assay_name = "fore", useMean = TRUE,
     plowq <- dplyr::left_join(dplyr::select(full_rowdat, one_of(ovnames)), plowq, by = ovnames)
 
     pexps <- DataFrame(pexps, check.names = FALSE)
-    pexps <- pexps[, rownames(colData(se))]
+    pexps <- pexps[, rownames(colData(se)), drop = FALSE]
     pratios <- DataFrame(pratios, check.names = FALSE)
-    pratios <- pratios[, rownames(colData(se))]
+    pratios <- pratios[, rownames(colData(se)), drop = FALSE]
     pscores <- DataFrame(pscores, check.names = FALSE)
-    pscores <- pscores[, rownames(colData(se))]
+    pscores <- pscores[, rownames(colData(se)), drop = FALSE]
     plowq <- DataFrame(plowq, check.names = FALSE)
-    plowq <- plowq[, rownames(colData(se))]
+    plowq <- plowq[, rownames(colData(se)), drop = FALSE]
 
     
     ## add to SE object
