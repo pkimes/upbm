@@ -7,19 +7,18 @@ using namespace Rcpp;
 using namespace arma;
 
 // [[Rcpp::export]]
-NumericMatrix blockmedian(NumericMatrix Xr, int w, bool center = true) {
+Rcpp::List blockmedian(NumericMatrix Xr, int w) {
     int n = Xr.nrow(), p = Xr.ncol();
     arma::mat X(Xr.begin(), n, p, false);
     arma::mat Xnew(n, p, arma::fill::zeros);
     arma::vec temp_v(w * w);
+    arma::vec v = arma::vectorise(X);
     int rmin = 0, rmax = 0, cmin = 0, cmax = 0;
     double med;
     
     // median of all non-NA values in matrix
-    if (center) {
-        arma::vec v = arma::vectorise(X);
-        med = arma::median(v.elem(arma::find_finite(v)));
-    };
+    med = arma::median(v.elem(arma::find_finite(v)));
+
     // median values in w x w windows
     for (int i = 0; i < n; ++i) {
         rmin = std::max(0, (int) (i - floor(w / 2.0)));
@@ -43,9 +42,7 @@ NumericMatrix blockmedian(NumericMatrix Xr, int w, bool center = true) {
             };
         };
     };
-    if (center) {
-        return wrap(Xnew - med);
-    } else {
-        return wrap(Xnew);
-    };
+    
+    return Rcpp::List::create(Named("local") = Xnew,
+                              Named("global") = med);
 }

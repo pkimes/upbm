@@ -5,7 +5,7 @@
 \title{Spatial Adjustment of Samples}
 \usage{
 spatiallyAdjust(se, assay_name = "fore", k = 15, returnBias = TRUE,
-  log_scale = FALSE, .force = FALSE, .nonnegative = TRUE)
+  .force = FALSE, .filter = 1L)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing PBM intensity data}
@@ -17,34 +17,28 @@ local bias (default = 15)}
 
 \item{returnBias}{logical whether to include the spatial bias as an
 additional 'assay' (called 'spatialbias') in the returned
-SummarizedExperiment object.}
-
-\item{log_scale}{logical whether to perform adjustment on log2 scale
-intensities. Returned values will be transformed back to non-log scale.
-STILL TESTING. (default = FALSE)}
+SummarizedExperiment object. (default = TRUE)}
 
 \item{.force}{logical whether to run adjustment even if data
 has already been spatially adjusted. (default = FALSE)}
 
-\item{.nonnegative}{logical whether to restrict intensities to non-negative
-values by setting negative values to 0. (default = TRUE)}
+\item{.filter}{integer specifying level of probe filtering to do before
+estimating spatial adjustment. (default = 1L)}
 }
 \value{
 SummarizedExperiment object with spatially adjusted intensities.
 Row and column metadata are copied from the original SummarizedExperiment
 object. A new column is additionally added to the column metadata,
 'spatialMedian' containing the reference median intensity used to compute
-the spatial bias for each sample. This can be used to plot relative-scale
-sptial biases using \code{pbmPlotChip} with the \code{relative_scale=}
-parameter.
+the spatial bias for each sample.
 }
 \description{
 Given PBM intensities stored as a SummarizedExperiment, this function
 computes the local intensity bias for each probe, and returns the
-same SummarizedExperiment object with the bias subtracted from each probe.
+same SummarizedExperiment object with each probe corrected (scaled) by the bias.
 Optionally, the per-probe bias can also be returned as an additional array
 in the bias corrected SummarizedExperiment object. The spatial bias at each
-probe is defined as the difference between the median intensity in a `k` by `k`
+probe is defined as the ratio between the median intensity in a `k` by `k`
 square region surrounding the probe, and the median intensity of all probes
 across the array. This approach is taken directly from the original PBM
 analysis pipeline described in Berger and Bulyk (Nature Protocols, 2008).
