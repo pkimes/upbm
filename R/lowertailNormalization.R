@@ -121,7 +121,7 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, q0 = 0, str
         assay_fits <- dplyr::mutate(assay_fits, est_scale = ul)
         
         assay_ref <- dplyr::filter(assay_fits, Stratify == baseline)
-                assay_fits <- dplyr::mutate(assay_fits, est_scale = est_scale / assay_ref$est_scale)
+        assay_fits <- dplyr::mutate(assay_fits, est_scale = est_scale / assay_ref$est_scale)
        
     } else if (method == "regression" || method == "pca" || method == "quantreg") {
         
