@@ -200,7 +200,10 @@ kmerAggregate <- function(se, kmers, positionbias = TRUE, .filter = 1L,
 #' @param baseline string name of baseline condition to compare other conditions against;
 #'        if not specified and \code{contrasts = TRUE}, baseline is guessed by looking for
 #'        'ref' in any of the conditions. (default = NULL)
-#'
+#' @param method character name of method to use for estimating cross-probe variance
+#'        in each K-mer probe set. Currently, the non-iterative DerSimonian-Laird ("dl")
+#'        and two-step Dersimonian-Laird ("dl2") methods are supported. (default = "dl2")
+#' 
 #' @return
 #' SummarizedExperiment of estimated K-mer affinities and/or differential affinities.
 #'
@@ -208,8 +211,59 @@ kmerAggregate <- function(se, kmers, positionbias = TRUE, .filter = 1L,
 #' @importFrom tidyr unnest spread
 #' @export
 #' @author Patrick Kimes
-kmerFit <- function(se, conditions = TRUE, contrasts = FALSE, baseline = NULL) {
+kmerFit <- function(se, conditions = TRUE, contrasts = FALSE, baseline = NULL,
+                    method = c("dl2", "dl")) {
 
+    method <- match.arg(method)
+    stopifnot(is(se, "SummarizedExperiment"))
+
+    ## turn assays into single tibble
+    rd <- rowData(se)
+    rd <- as.tibble(as.data.frame(rd, optional = TRUE))
+    adat <- replicate(ncol(se), rd, simplify = FALSE)
+    names(adat) <- colnames(se)
+    adat <- bind_rows(adat, .id = "condition")
+    adat$beta <- as.numeric(as.matrix(assay(se, "beta")))
+    adat$sd <- as.numeric(as.matrix(assay(se, "sd")))
+
+    ## only keep necessary columns
+    adat <- dplyr::select(adat, condition, seq, beta, sd)
+
+    ## compute probe set mixed effects model for each k-mer and condition
+    adat <- tidyr::nest(adat, -condition, -seq)
+    if (method == "dl") {
+        adat <- dplyr::mutate(adat, res = lapply(data, function(x) {
+            dl_tau2(x$beta, x$sd^2, nrow(x))
+        }))
+    } else if (method == "dl2") {
+        adat <- dplyr::mutate(adat, res = lapply(data, function(x) {
+            dl2_tau2(x$beta, x$sd^2, nrow(x))
+        }))
+    } else {
+        stop("specified method is invalid")
+    }
+    adat <- dplyr::select(adat, -data)
+
+    ## tidy results to assays
+    alist <- list(betaFE = .tidymat_alt(adat, kmers, "betaFE"),
+                  sdFE = .tidymat_alt(adat, kmers, "sdFE"),
+                  betaME = .tidymat_alt(adat, kmers, "betaME"),
+                  sdME = .tidymat_alt(adat, kmers, "sdME"),
+                  tau2 = .tidymat_alt(adat, kmers, "tau2"))
+
+    rdat <- dplyr::select(adat, seq)
+    rdat <- rdat[match(kmers, rdat$seq), ]
+
+    SummarizedExperiment(assays = alist, rowData = rdat)
+}
+
+
+.tidymat_alt <-  function (x, km, cn) {
+    x <- dplyr::mutate(x, value = vapply(res, `[[`, numeric(1), cn))
+    x <- dplyr::select(x, seq, condition, value)
+    x <- tidyr::spread(x, condition, value)
+    x <- x[match(km, x$seq), sort(names(x))]
+    as.matrix(dplyr::select(x, -seq))
 }
 
 
@@ -239,4 +293,99 @@ kmerFit <- function(se, conditions = TRUE, contrasts = FALSE, baseline = NULL) {
     coldat <- as.matrix(coldat)
     coldat[match(colnames(s), rord), , drop = FALSE]
 }
+
+
+
+## source: `metafor` CRAN package, R/misc.func.hidden.r (git hash: f037e1b)
+##   - unexported function from package
+.invcalc <- function(X, W, k) {
+   sWX <- sqrt(W) %*% X
+   res.qrs <- qr.solve(sWX, diag(k))
+   return(tcrossprod(res.qrs))
+}
+
+## source: `metafor` CRAN package, R/rma.uni.r (git hash: f037e1b)
+##   - subsection of `metafor::rma.uni` function, modified
+## ## X : probe design matrix
+## Y : probe effect sizes
+## vi: probe variances
+## k : number of probes
+## ## p : number of covariates in X
+dl_tau2 <- function(Y, vi, k) {
+    X     <- rep(1, k)
+    p     <- 1
+    
+    wi    <- 1/vi
+    W     <- diag(wi, nrow = k, ncol = k)
+    stXWX <- .invcalc(X = X, W = W, k = k)
+    stXWX_tXW <- stXWX %*% crossprod(X, W)
+    P     <- W - W %*% X %*% stXWX_tXW
+    RSS   <- crossprod(Y, P) %*% Y
+    trP   <- sum(diag(P))
+
+    tau2  <- max((RSS - k + p) / trP, 0)
+    
+    betaFE  <- as.numeric(stXWX_tXW %*% Y)
+    varFE <- 1 / sum(wi)
+
+    if (tau2 > 0) {
+        W_     <- diag(1 / (vi + tau2), nrow = k, ncol = k)
+        M_     <- diag(vi + tau2, nrow = k, ncol = k)
+        stXWX_ <- .invcalc(X = X, W = W_, k = k)
+        betaME  <- as.numeric(stXWX_ %*% crossprod(X, W_) %*% Y)
+        varME <- diag(stXWX_)
+    } else {
+        betaME <- betaFE
+        varME <- varFE
+    }
+    list(betaFE = betaFE,
+         varFE = varFE, sdFE = varFE^.5,
+         Q = RSS,
+         tau2 = tau2,
+         df = k - p,
+         betaME = betaME,
+         varME = varME, sdME = varME^.5)
+}
+
+## currently only implemented without any weights
+## - will derive formulation with weights if it
+##   seems promising.
+dl2_tau2 <- function(Y, vi, k) {
+    X   <- rep(1, k)
+    p   <- 1
+    res <- dl_tau2(Y, vi, k)
+    
+    wi    <- 1 / (vi + res$tau2)
+    W     <- diag(wi, nrow = k, ncol = k)
+    stXWX <- .invcalc(X = X, W = W, k = k)
+    stXWX_tXW <- stXWX %*% crossprod(X, W)
+    P     <- W - W %*% X %*% stXWX_tXW
+    RSS   <- crossprod(Y, P) %*% Y
+    trP   <- sum(diag(P))
+
+    SSE <- sum(wi * vi) - sum(wi^2 * vi) / sum(wi)
+    tau2  <- max((RSS - SSE) / trP, 0)
+
+    betaFE  <- as.numeric(stXWX_tXW %*% Y)
+    varFE <- 1 / sum(wi)
+    
+    if (tau2 > 0) {
+        W_     <- diag(1 / (vi + tau2), nrow = k, ncol = k)
+        M_     <- diag(vi + tau2, nrow = k, ncol = k)
+        stXWX_ <- .invcalc(X = X, W = W_, k = k)
+        betaME  <- as.numeric(stXWX_ %*% crossprod(X, W_) %*% Y)
+        varME <- diag(stXWX_)
+    } else {
+        betaME <- betaFE
+        varME <- varFE
+    }
+    list(betaFE = betaFE,
+         varFE = varFE, sdFE = varFE^.5,
+         Q = RSS,
+         tau2 = tau2,
+         df = k - p,
+         betaME = betaME,
+         varME = varME, sdME = varME^.5)
+}
+
 
