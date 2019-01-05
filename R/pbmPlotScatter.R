@@ -167,12 +167,6 @@ pbmPlotScatter <- function(se, assay_name = "fore", stratify = "condition", base
     sgtab <- table(strat_vals, group_vals)
     uniq_strat <- rownames(sgtab)
     
-    ## stratify vals only needs to be unique in groups
-    ## baseline only needs to be unique in groups
-    ## 1. make sure names are unique in each group
-    ## 2. make sure only one unique reference condition (if baseline not specified)
-    ## 3. make sure all replicates have a reference (or baseline)
-
     if (any(colMaxs(sgtab, na.rm = TRUE) > 1L)) {
         stop("Stratifying variable '", strat, "' is not unique across samples.\n",
              "Specify a different column in colData.")
