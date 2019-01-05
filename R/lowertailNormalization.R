@@ -33,9 +33,10 @@
 #'        normalization. (default = 0.4)
 #' @param q0 percentile between 0 and q specifying lower tail probes which are 
 #'        filtered out. It only works for fitting methods. (default = 0)
-#' @param stratify unquoted name of column in colData of SummarizedExperiment (or
-#'        '\code{sample}') to use for comparing samples; values in column must be
-#'        unique for each sample. (default = condition)
+#' @param stratify string name of column in colData of SummarizedExperiment to
+#'        use for comparing samples; values in column must be
+#'        unique for each sample. Alternatively, can specify '\code{"sample"}' to
+#'        use column names. (default = "condition")
 #' @param baseline string name of baseline condition to compare other conditions
 #'        against; if not specified, guessed by looking for
 #'        'ref' in any value of the stratifying variable. (default = NULL)
@@ -77,7 +78,7 @@
 #' @importFrom princurve principal_curve
 #' @export
 #' @author Dongyuan Song, Patrick Kimes    
-lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, q0 = 0, stratify = condition,
+lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, q0 = 0, stratify = "condition",
                                    baseline = NULL, log_scale = FALSE, shift = FALSE,
                                    method = c("regression", "pca", "quantreg", "quantile", "normal"),
                                    .filter_orth = FALSE, .filter_both = FALSE, .fits = FALSE, .filter = 1L) {
@@ -91,7 +92,6 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, q0 = 0, str
     fse <- pbmFilterProbes(se, .filter)
     
     ## check normalization stratification settings
-    stratify <- rlang::enquo(stratify)
     strats <- .pbmCheckStratify(fse, stratify, baseline)
     coldat <- strats$coldat
     baseline <- strats$baseline

@@ -5,7 +5,7 @@
 \title{Lower-Tail Normalization (TESTING)}
 \usage{
 lowertailNormalization(se, assay_name = "fore", q = 0.4, q0 = 0,
-  stratify = condition, baseline = NULL, log_scale = FALSE,
+  stratify = "condition", baseline = NULL, log_scale = FALSE,
   shift = FALSE, method = c("regression", "pca", "quantreg",
   "quantile", "normal"), .filter_orth = FALSE, .filter_both = FALSE,
   .fits = FALSE, .filter = 1L)
@@ -21,9 +21,10 @@ normalization. (default = 0.4)}
 \item{q0}{percentile between 0 and q specifying lower tail probes which are 
 filtered out. It only works for fitting methods. (default = 0)}
 
-\item{stratify}{unquoted name of column in colData of SummarizedExperiment (or
-'\code{sample}') to use for comparing samples; values in column must be
-unique for each sample. (default = condition)}
+\item{stratify}{string name of column in colData of SummarizedExperiment to
+use for comparing samples; values in column must be
+unique for each sample. Alternatively, can specify '\code{"sample"}' to
+use column names. (default = "condition")}
 
 \item{baseline}{string name of baseline condition to compare other conditions
 against; if not specified, guessed by looking for

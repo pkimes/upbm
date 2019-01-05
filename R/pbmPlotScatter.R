@@ -1,5 +1,6 @@
 #' Scatterplot of Intensities
 #'
+#' @description
 #' Probe-level intensities plotted pairwise against a reference
 #' condition. Given a baseline condition specified with \code{baseline=}
 #' (which must map uniquely in the \code{stratify=} column of the colData),
@@ -13,9 +14,10 @@
 #'        intensity information.
 #' @param assay_name string name of the assay to plot.
 #'        (default = "fore")
-#' @param stratify unquoted name of column in colData of SummarizedExperiment (or
-#'        '\code{sample}') to use for comparing samples; values in column must be
-#'        unique for each sample. (default = condition)
+#' @param stratify string name of column in colData of SummarizedExperiment to
+#'        use for comparing samples; values in column must be
+#'        unique for each sample. Alternatively, can specify '\code{"sample"}' to
+#'        use column names. (default = "condition")
 #' @param baseline string name of baseline condition to
 #'        compare other conditions against; if not specified, guessed by looking for
 #'        'ref' in any value of the stratifying variable. (default = NULL)
@@ -42,7 +44,7 @@
 #' @import ggplot2 SummarizedExperiment
 #' @export
 #' @author Patrick Kimes
-pbmPlotScatter <- function(se, assay_name = "fore", stratify = condition, baseline = NULL,
+pbmPlotScatter <- function(se, assay_name = "fore", stratify = "condition", baseline = NULL,
                            log_scale = TRUE, maplot = FALSE, .method = "auto", .filter = 1) {
     stopifnot(assay_name %in% assayNames(se))
 
@@ -56,7 +58,6 @@ pbmPlotScatter <- function(se, assay_name = "fore", stratify = condition, baseli
     }
 
     ## check plot stratification params
-    stratify <- rlang::enquo(stratify)
     strats <- .pbmCheckStratify(se, stratify, baseline)
     coldat <- strats$coldat
     baseline <- strats$baseline
@@ -152,37 +153,57 @@ pbmPlotScatter <- function(se, assay_name = "fore", stratify = condition, baseli
 }
 
 
-.pbmCheckStratify <- function(s, strat, bl) {
-    strat_str <- rlang::quo_name(strat)
-
+.pbmCheckStratify <- function(s, strat, bl, gp = NULL) {
+    
     ## check validity of stratifying colData column
-    stopifnot(strat_str %in% names(colData(s)))
-    strat_vals <- colData(s)[[strat_str]]
-    if (any(duplicated(strat_vals))) {
-        stop("Stratifying variable '", strat_str, "' is not unique across samples.\n",
+    stopifnot(strat %in% names(colData(s)))
+    
+    strat_vals <- colData(s)[[strat]]
+    if (!is.null(gp)) {
+        group_vals <- colData(s)[[gp]]
+    } else {
+        group_vals <- rep("noGroups", length(strat_vals))
+    }
+    sgtab <- table(strat_vals, group_vals)
+    uniq_strat <- rownames(sgtab)
+    
+    ## stratify vals only needs to be unique in groups
+    ## baseline only needs to be unique in groups
+    ## 1. make sure names are unique in each group
+    ## 2. make sure only one unique reference condition (if baseline not specified)
+    ## 3. make sure all replicates have a reference (or baseline)
+
+    if (any(colMaxs(sgtab, na.rm = TRUE) > 1L)) {
+        stop("Stratifying variable '", strat, "' is not unique across samples.\n",
              "Specify a different column in colData.")
     }
 
     ## determine baseline if necessary; check validity
     if (is.null(bl)) {
-        bl <- grep("ref", strat_vals, value = TRUE, ignore.case = TRUE)
+        bl <- grep("ref", uniq_strat, value = TRUE, ignore.case = TRUE)
         if (length(bl) > 1) {
             stop("Too many candidate baseline states in '", strat, "' column: ",
                  paste0(bl, collapse = ", "), ".\n",
                  "Specify correct baseline condition w/ 'baseline'.")
         }
     } else {
-        if (! bl %in% strat_vals) {
+        if (! bl %in% uniq_strat) {
             stop(bl, " is not a value in '", strat, "' column.\n",
                  "Specify correct baseline condition w/ 'baseline'.")
         }
     } 
+
+    if (any(sgtab[bl, ] < 1L)) {
+        stop("Baseline condition [", bl, "] is not present in all groups.\n",
+             "Missing from groups: ",
+             paste(colnames(sgtab)[sgtab[bl, ] < 1L], collapse = ", "))
+    }
     
     ## condition must be a unique column for faceting plot
     coldat <- data.frame(colData(s), check.names = FALSE,
                          check.rows = FALSE, stringsAsFactors = FALSE)
     coldat <- tibble::rownames_to_column(coldat, "sample")
-    coldat <- dplyr::mutate(coldat, Stratify = !!strat)
+    coldat <- dplyr::rename(coldat, Stratify = I(strat))
     coldat <- dplyr::select(coldat, sample, Stratify)
     return(list(coldat = coldat, baseline = bl))
 }

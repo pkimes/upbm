@@ -4,13 +4,25 @@
 \alias{normalizeReplicates}
 \title{Cross-Replicate Normalization}
 \usage{
-normalizeReplicates(se, assay_name = "scaled", pairwise = FALSE,
+normalizeReplicates(se, assay_name = "scaled", group = "id",
+  stratify = "condition", baseline = NULL, pairwise = FALSE,
   onlyref = FALSE, ...)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing GPR intensity information.}
 
 \item{assay_name}{string name of the assay to normalize. (default = "global")}
+
+\item{group}{string name of column in colData of SummarizedExperiment to
+use for grouping replicate experiments. (default = "id")}
+
+\item{stratify}{string name of column in colData of SummarizedExperiment to
+use for matching conditions across replicates; values in column must be
+unique for each samples within each replicate group. (default = "condition")}
+
+\item{baseline}{string name of baseline condition to
+compare other conditions against; if not specified, guessed by looking for
+'ref' in any value of the stratifying variable. (default = NULL)}
 
 \item{pairwise}{logical whether scaling factors should be computed using all
 pairwise comparisons or just using a single comparison against a median
