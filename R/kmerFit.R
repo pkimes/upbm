@@ -233,11 +233,11 @@ kmerFit <- function(se, conditions = TRUE, contrasts = FALSE, baseline = NULL,
     adat <- tidyr::nest(adat, -condition, -seq)
     if (method == "dl") {
         adat <- dplyr::mutate(adat, res = lapply(data, function(x) {
-            dl_tau2(x$beta, x$sd^2, nrow(x))
+            dl_estimator(x$beta, x$sd^2, nrow(x))
         }))
     } else if (method == "dl2") {
         adat <- dplyr::mutate(adat, res = lapply(data, function(x) {
-            dl2_tau2(x$beta, x$sd^2, nrow(x))
+            dl2_estimator(x$beta, x$sd^2, nrow(x))
         }))
     } else {
         stop("specified method is invalid")
@@ -246,9 +246,9 @@ kmerFit <- function(se, conditions = TRUE, contrasts = FALSE, baseline = NULL,
 
     ## tidy results to assays
     alist <- list(betaFE = .tidymat_alt(adat, kmers, "betaFE"),
-                  sdFE = .tidymat_alt(adat, kmers, "sdFE"),
+                  varFE = .tidymat_alt(adat, kmers, "varFE"),
                   betaME = .tidymat_alt(adat, kmers, "betaME"),
-                  sdME = .tidymat_alt(adat, kmers, "sdME"),
+                  varME = .tidymat_alt(adat, kmers, "varME"),
                   tau2 = .tidymat_alt(adat, kmers, "tau2"))
 
     rdat <- dplyr::select(adat, seq)
@@ -265,7 +265,6 @@ kmerFit <- function(se, conditions = TRUE, contrasts = FALSE, baseline = NULL,
     x <- x[match(km, x$seq), sort(names(x))]
     as.matrix(dplyr::select(x, -seq))
 }
-
 
 .pbmCheckGroups <- function(s, grp) {
     grp_str <- rlang::quo_name(grp)
@@ -294,24 +293,44 @@ kmerFit <- function(se, conditions = TRUE, contrasts = FALSE, baseline = NULL,
     coldat[match(colnames(s), rord), , drop = FALSE]
 }
 
-
-
 ## source: `metafor` CRAN package, R/misc.func.hidden.r (git hash: f037e1b)
-##   - unexported function from package
 .invcalc <- function(X, W, k) {
    sWX <- sqrt(W) %*% X
    res.qrs <- qr.solve(sWX, diag(k))
    return(tcrossprod(res.qrs))
 }
 
-## source: `metafor` CRAN package, R/rma.uni.r (git hash: f037e1b)
-##   - subsection of `metafor::rma.uni` function, modified
-## ## X : probe design matrix
-## Y : probe effect sizes
-## vi: probe variances
-## k : number of probes
-## ## p : number of covariates in X
-dl_tau2 <- function(Y, vi, k) {
+#' DerSimonian and Laird Estimator
+#'
+#' @description
+#' This is an implementation of the DerSimonian and Laird one step estimator of
+#' cross-study variance, originally proposed in the context of meta analysis,
+#' adapted from the \code{metafor} package. The function is used to estimate
+#' the cross-probe variance for each K-mer probe set.  
+#' 
+#' @param Y probe effect sizes
+#' @param vi probe variances
+#' @param k number of probes
+#'
+#' @return
+#' list of estimates:
+#' \itemize{
+#' \item betaFE: effect size with no cross-study variance
+#' \item varFE: total variance with no cross-study variance
+#' \item betaME: effect size with cross-study variance
+#' \item varME: total variance with cross-study variance
+#' \item tau2: cross-study variance 
+#' }
+#'
+#' @references
+#' \itemize{
+#' \item DerSimonian, R., & Laird, N. (1986). Meta-analysis in clinical trials. Controlled Clinical Trials, 7(3), 177-188.
+#' \item Viechtbauer, W. (2010). Conducting meta-analyses in R with the metafor package. Journal of Statistical Software, 36(3), 1-48. URL: http://www.jstatsoft.org/v36/i03/
+#' }
+#' 
+#' @export 
+#' @author Patrick Kimes
+dl_estimator <- function(Y, vi, k) {
     X     <- rep(1, k)
     p     <- 1
     
@@ -338,19 +357,40 @@ dl_tau2 <- function(Y, vi, k) {
         betaME <- betaFE
         varME <- varFE
     }
-    list(betaFE = betaFE,
-         varFE = varFE, sdFE = varFE^.5,
-         Q = RSS,
-         tau2 = tau2,
-         df = k - p,
-         betaME = betaME,
-         varME = varME, sdME = varME^.5)
+    list(betaFE = betaFE, varFE = varFE,
+         betaME = betaME, varME = varME,
+         tau2 = tau2)
 }
 
-## currently only implemented without any weights
-## - will derive formulation with weights if it
-##   seems promising.
-dl2_tau2 <- function(Y, vi, k) {
+#' Two-Step DerSimonian aand Kacker Estimator
+#'
+#' @description
+#' This is an implementation of the DerSimonian and Kacker two-step estimator of
+#' cross-study variance, originally proposed as an improvement over the one-step
+#' DerSimonian and Laird estimator in the context of meta analysis.
+#' 
+#' @param Y probe effect sizes
+#' @param vi probe variances
+#' @param k number of probes
+#'
+#' @return
+#' list of estimates:
+#' \itemize{
+#' \item betaFE: effect size with no cross-study variance
+#' \item varFE: total variance with no cross-study variance
+#' \item betaME: effect size with cross-study variance
+#' \item varME: total variance with cross-study variance
+#' \item tau2: cross-study variance 
+#' }
+#' 
+#' @references
+#' \itemize{
+#' \item DerSimonian, R., & Kacker, R. (2007). Random-effects model for meta-analysis of clinical trials: an update. Contemporary Clinical Trials, 28(2), 105-114.
+#' }
+#' 
+#' @export 
+#' @author Patrick Kimes
+dl2_estimator <- function(Y, vi, k) {
     X   <- rep(1, k)
     p   <- 1
     res <- dl_tau2(Y, vi, k)
@@ -379,13 +419,9 @@ dl2_tau2 <- function(Y, vi, k) {
         betaME <- betaFE
         varME <- varFE
     }
-    list(betaFE = betaFE,
-         varFE = varFE, sdFE = varFE^.5,
-         Q = RSS,
-         tau2 = tau2,
-         df = k - p,
-         betaME = betaME,
-         varME = varME, sdME = varME^.5)
+    list(betaFE = betaFE, varFE = varFE,
+         betaME = betaME, varME = varME,
+         tau2 = tau2)
 }
 
 
