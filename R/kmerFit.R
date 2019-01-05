@@ -393,7 +393,7 @@ dl_estimator <- function(Y, vi, k) {
 dl2_estimator <- function(Y, vi, k) {
     X   <- rep(1, k)
     p   <- 1
-    res <- dl_tau2(Y, vi, k)
+    res <- dl_estimator(Y, vi, k)
     
     wi    <- 1 / (vi + res$tau2)
     W     <- diag(wi, nrow = k, ncol = k)
