@@ -2,34 +2,24 @@
 % Please edit documentation in R/kmerTest.R
 \name{kmerTest}
 \alias{kmerTest}
-\title{Test K-mers Probe Differences}
+\title{Test k-mers Differences}
 \usage{
-kmerTest(se, kmers, assay_name = NULL, .filter = 1L, .trim = if
-  (.filter > 0L) {     c(1, 36) } else {     NULL })
+kmerTest(se, baseline = NULL)
 }
 \arguments{
-\item{se}{probe-level testing results}
+\item{se}{SummarizedExperiment of K-mer affinities.}
 
-\item{kmers}{character vector of k-mers to predict.}
-
-\item{assay_name}{string name of the assay to aggregate. If NULL, all assays
-are aggregated. (default = NULL)}
-
-\item{.filter}{integer specifying level of probe filtering to
-perform prior to estimating affinities. See \code{pbmFilterProbes}
-for more details on probe filter levels. (default = 1)}
-
-\item{.trim}{interger vector of length two specifying start and end
-of probe sequence to be used. Default is based on the universal
-PBM probe design where only leading 36nt should be used. 
-Ignored if NULL. (default = c(1, 36))}
+\item{baseline}{string name of baseline condition to compare other conditions against.
+If NULL, baseline is guessed by looking for 'ref' in any of the conditions.
+(default = NULL)}
 }
 \value{
-SummarizedExperiment of estimated K-mer testing results.
+SummarizedExperiment of estimated k-mer affinity differences.
 }
 \description{
-After performing probe-level testing, this function applies probe set
-aggregation to obtain K-mer level inference.
+After estimating k-mer affinities from probe sets using \code{kmerFit},
+this function computes affinity differences across conditions, relative to
+a baseline condition (typically the reference condition).
 }
 \author{
 Patrick Kimes
