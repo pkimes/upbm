@@ -53,7 +53,7 @@ probeFit <- function(se, assay_name = "fore", groups = condition,
     ## check stratification params
     groups <- rlang::enquo(groups)
     coldat <- .pbmCheckGroups(se, groups)
-
+        
     ## fit limma model
     fit <- limma::lmFit(datp, coldat)
 
@@ -217,6 +217,12 @@ kmerFit <- function(se, conditions = TRUE, contrasts = FALSE, baseline = NULL,
     method <- match.arg(method)
     stopifnot(is(se, "SummarizedExperiment"))
 
+    ## kmers should be in rowData as "seq"
+    if (! "seq" %in% names(rowData(se))) {
+        stop("K-mers must be in rowData as column 'seq'")
+    }
+    kmers <- levels(rowData(se)$seq)
+    
     ## turn assays into single tibble
     rd <- rowData(se)
     rd <- as.tibble(as.data.frame(rd, optional = TRUE))
@@ -231,6 +237,7 @@ kmerFit <- function(se, conditions = TRUE, contrasts = FALSE, baseline = NULL,
 
     ## compute probe set mixed effects model for each k-mer and condition
     adat <- tidyr::nest(adat, -condition, -seq)
+
     if (method == "dl") {
         adat <- dplyr::mutate(adat, res = lapply(data, function(x) {
             dl_estimator(x$beta, x$sd^2, nrow(x))
@@ -250,7 +257,7 @@ kmerFit <- function(se, conditions = TRUE, contrasts = FALSE, baseline = NULL,
                   betaME = .tidymat_alt(adat, kmers, "betaME"),
                   varME = .tidymat_alt(adat, kmers, "varME"),
                   tau2 = .tidymat_alt(adat, kmers, "tau2"))
-
+    
     rdat <- dplyr::select(adat, seq)
     rdat <- rdat[match(kmers, rdat$seq), ]
 
