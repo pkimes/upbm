@@ -4,7 +4,7 @@
 #' PBM data. 
 #' 
 #' @param se SummarizedExperiment object containing PBM intensity data.
-#' @param assay_name string name of the assay to use. (default = "fore")
+#' @param assay string name of the assay to use. (default = \code{SummarizedExperiment::assayNames(se)[1]})
 #' @param kmers character vector of k-mers to predict.
 #' @param stat_set character vector of statistics to calculate for each sample.
 #'        The set of supported statistics are listed in the details. By default,
@@ -54,7 +54,7 @@
 #' @importFrom matrixStats colMedians colMeans2 colSds colMads colQuantiles
 #' @export
 #' @author Patrick Kimes
-summarizeKmers <- function(se, assay_name = "fore", kmers = NULL, 
+summarizeKmers <- function(se, assay = SummarizedExperiment::assayNames(se)[1], kmers = NULL, 
                            stat_set = c("median", "mean", "mad", "sd", "log2mean",
                                         "log2mad", "log2sd", "na", "quantile"),
                            offset = 1, weights = NULL, q = 0.25, verbose = FALSE, .filter = 1L,
@@ -86,7 +86,7 @@ summarizeKmers <- function(se, assay_name = "fore", kmers = NULL,
     kmermap$seq <- factor(kmermap$seq, levels = kmers)
     
     ## extract intensities
-    pdat <- assay(se, assay_name)
+    pdat <- SummarizedExperiment::assay(se, assay)
     pdat <- as.data.frame(pdat, optional = TRUE)
     pdat <- dplyr::as_tibble(pdat)
 

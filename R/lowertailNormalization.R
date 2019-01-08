@@ -28,7 +28,8 @@
 #' \emph{This code is still under testing and not a finalized normalization procedure}.
 #'
 #' @param se SummarizedExperiment object containing GPR intensity information.
-#' @param assay_name string name of the assay to normalize. (default = "fore")
+#' @param assay string name of the assay to normalize.
+#'        (default = \code{SummarizedExperiment::assayNames(se)[1]})
 #' @param q percentile between 0 and 1 specifying lower tail probes to use for
 #'        normalization. (default = 0.4)
 #' @param q0 percentile between 0 and q specifying lower tail probes which are 
@@ -78,14 +79,15 @@
 #' @importFrom princurve principal_curve
 #' @export
 #' @author Dongyuan Song, Patrick Kimes    
-lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, q0 = 0, stratify = "condition",
+lowertailNormalization <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
+                                   q = 0.4, q0 = 0, stratify = "condition",
                                    baseline = NULL, log_scale = FALSE, shift = FALSE,
                                    method = c("regression", "pca", "quantreg", "quantile", "normal"),
                                    .filter_orth = FALSE, .filter_both = FALSE, .fits = FALSE, .filter = 1L) {
     stopifnot(q > 0, q < 1)
     stopifnot(q0 >= 0, q0 < q)
     stopifnot(!(.filter_orth & .filter_both))
-    stopifnot(assay_name %in% assayNames(se))
+    stopifnot(assay %in% SummarizedExperiment::assayNames(se))
     method <- match.arg(method)
 
     ## filter probes - only for computing shift/scale factors (return original se)
@@ -97,7 +99,7 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, q0 = 0, str
     baseline <- strats$baseline
     
     ## tidy up data for computing factors
-    scale_assay <- as.data.frame(assay(fse, assay_name), optional = TRUE)
+    scale_assay <- as.data.frame(SummarizedExperiment::assay(fse, assay), optional = TRUE)
     scale_assay <- dplyr::as_tibble(scale_assay)
     scale_assay <- dplyr::mutate(scale_assay,
                                  Row = rowData(fse)[, "Row"],
@@ -226,7 +228,7 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, q0 = 0, str
     ref_scale <- assay_fits$est_scale[assay_fits$Stratify == baseline]
 
     ## tidy up original data
-    new_assay <- as.data.frame(assay(se, assay_name), optional = TRUE)
+    new_assay <- as.data.frame(SummarizedExperiment::assay(se, assay), optional = TRUE)
     new_assay <- dplyr::as_tibble(new_assay)
     new_assay <- dplyr::mutate(new_assay,
                                Row = rowData(se)[, "Row"],
@@ -262,7 +264,7 @@ lowertailNormalization <- function(se, assay_name = "fore", q = 0.4, q0 = 0, str
     new_assay <- new_assay[, colnames(se)]
 
     ## add new assay to se object
-    assay(se, "scaled") <- DataFrame(new_assay, check.names = FALSE)
+    SummarizedExperiment::assay(se, "scaled") <- DataFrame(new_assay, check.names = FALSE)
 
     ## store reference mean, sd information
     metadata(se)$ref_shift <- ref_shift

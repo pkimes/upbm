@@ -4,15 +4,15 @@
 \alias{pbmPlotDensity}
 \title{Plot of Intensity Densities}
 \usage{
-pbmPlotDensity(se, assay_name = "fore", log_scale = TRUE,
-  .facet = TRUE, .filter = 1)
+pbmPlotDensity(se, assay = SummarizedExperiment::assayNames(se)[1],
+  log_scale = TRUE, .facet = TRUE, .filter = 1)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing GPR
 intensity information.}
 
-\item{assay_name}{string name of the assay to plot.
-(default = "fore")}
+\item{assay}{string name of the assay to plot.
+(default = \code{SummarizedExperiment::assayNames(se)[1]})}
 
 \item{log_scale}{logical whether to plot the intensities
 on the log-scale. (default = TRUE)}

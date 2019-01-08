@@ -2,14 +2,16 @@
 % Please edit documentation in R/assay2tidy.R
 \name{assay2tidy}
 \alias{assay2tidy}
-\title{SummarizedExperiment Assay to Tidy Object}
+\title{Tidy SummarizedExperiment Object}
 \usage{
-assay2tidy(se, assay_name = "fore", long = FALSE, .filter = 1L)
+assay2tidy(se, assay = SummarizedExperiment::assayNames(se)[1],
+  long = FALSE, .filter = 1L)
 }
 \arguments{
-\item{se}{SummarizedExpierment object.}
+\item{se}{SummarizedExperiment object.}
 
-\item{assay_name}{string name of the assay to use. (default = "fore")}
+\item{assay}{string name of the assay to use.
+(default = \code{assayNames(se)[1]})}
 
 \item{long}{logical whether to transform data to long format and
 include colData in output rather than default wide format with
@@ -24,7 +26,7 @@ tibble with assay data.
 }
 \description{
 Simple helper function to convert assay format data in SummarizedExperiment
-object into a tidy tibble/data.frame for interactive analysis.
+object into a tidy tibble for interactive analysis.
 }
 \author{
 Patrick Kimes

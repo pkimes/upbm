@@ -4,13 +4,13 @@
 \alias{generateCy3Ref}
 \title{Generate Cy3 Empirical Reference}
 \usage{
-generateCy3Ref(cy3se, assay_name = "fore", offset = 1L,
-  register = TRUE, .filter = 1L)
+generateCy3Ref(cy3se, assay = SummarizedExperiment::assayNames(cy3se)[1],
+  offset = 1L, register = TRUE, .filter = 1L)
 }
 \arguments{
 \item{cy3se}{SummarizedExperiment object containing Cy3 scan data.}
 
-\item{assay_name}{string name of assay to use. (default = "fore")}
+\item{assay}{string name of assay to use. (default = \code{SummarizedExperiment::assayNames(cy3se)[1]})}
 
 \item{offset}{numeric offset to add to intensities before log2 transforming
 to prevent errors with zero intensities. (default = 1L)}

@@ -26,7 +26,7 @@
 #' group in the specified \code{groups} variable.
 #'
 #' @md
-#' @importFrom SummarizedExperiment assayNames assay
+#' @importFrom SummarizedExperiment SummarizedExperiment assayNames assay
 #' @importFrom dplyr left_join distinct
 #' @importFrom limma lmFit eBayes
 #' @export

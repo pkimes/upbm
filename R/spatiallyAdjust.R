@@ -13,7 +13,7 @@
 #' size of 15 x 15 (as used in the aforementioned publication). 
 #' 
 #' @param se SummarizedExperiment object containing PBM intensity data
-#' @param assay_name string name of the assay to adjust. (default = "fore")
+#' @param assay string name of the assay to adjust. (default = \code{SummarizedExperiment::assayNames(se)[1]})
 #' @param k odd integer specifying size of region to use to for computing
 #'        local bias (default = 15)
 #' @param returnBias logical whether to include the spatial bias as an
@@ -37,8 +37,8 @@
 #' @importFrom dplyr select mutate select_ do group_by left_join
 #' @export
 #' @author Patrick Kimes
-spatiallyAdjust <- function(se, assay_name = "fore", k = 15, returnBias = TRUE,
-                            .force = FALSE, .filter = 1L) {
+spatiallyAdjust <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
+                            k = 15, returnBias = TRUE, .force = FALSE, .filter = 1L) {
 
     ## don't show progress when running `do` here
     base_showprogress <- getOption("dplyr.show_progress")
@@ -59,13 +59,13 @@ spatiallyAdjust <- function(se, assay_name = "fore", k = 15, returnBias = TRUE,
              "'Row' and 'Column' information in rowData to perform ",
              "spatial adjustment")
     }
-    stopifnot(assay_name %in% assayNames(se))
+    stopifnot(assay %in% SummarizedExperiment::assayNames(se))
 
     ## specify whether non-deBruijn probes should be used
     se <- pbmFilterProbes(se, level = .filter)
     
     ## extract intensities for easier manipulation
-    raw_intensity <- assay(se, assay_name)
+    raw_intensity <- SummarizedExperiment::assay(se, assay)
     raw_intensity <- as.data.frame(raw_intensity, optional = TRUE)
     raw_intensity <- tibble::as_tibble(raw_intensity)
 
@@ -118,16 +118,16 @@ spatiallyAdjust <- function(se, assay_name = "fore", k = 15, returnBias = TRUE,
     sub_intensity <- sub_intensity[, rownames(colData(se)), drop = FALSE]
 
     ## modify input SummarizedExperiment
-    assay(se, assay_name) <- sub_intensity
+    SummarizedExperiment::assay(se, assay) <- sub_intensity
     if (returnBias) {
-        assay(se, "spatialbias") <- med_intensity
+        SummarizedExperiment::assay(se, "spatialbias") <- med_intensity
     }
 
     ## add median intensities for raw data used for spatial scaling, match colnames order
     colData(se)$spatialMedian <- raw_medians$spatialMedian[match(colnames(se), raw_medians$sample)]
     
     ## add step to metadata
-    method_str <- paste("BlockMedianDetrend ->", assay_name)
+    method_str <- paste("BlockMedianDetrend ->", assay)
     metadata(se)$steps <- c(metadata(se)$steps, method_str)
     if (.force) {
         metadata(se)$spatialAdjustment <-

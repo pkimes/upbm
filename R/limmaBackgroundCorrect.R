@@ -5,9 +5,9 @@
 #' \code{backgroundCorrect} function, and returns the same
 #' SummarizedExperiment object with the background corrected intensities.
 #'
-#' @param se SummarizedExperiment object containing PBM intensity data
-#' @param assay_name string name of the assay to adjust. (default = "fore")
-#' @param assayb_name string name of the background assay to use for
+#' @param se SummarizedExperiment object containing PBM intensity data.
+#' @param assay string name of the assay to adjust. (default = \code{SummarizedExperiment::assayNames(se)[1]})
+#' @param assayb string name of the background assay to use for
 #'        adjustment. (default = NULL)
 #' @param ... parameters to pass to \code{limma::backgroundCorrect.matrix}.
 #'        See details below for more information on main parameters.
@@ -32,24 +32,25 @@
 #' @importFrom limma backgroundCorrect.matrix
 #' @export 
 #' @author Patrick Kimes
-limmaBackgroundCorrect <- function(se, assay_name = "fore", assayb_name = NULL,
-                                   ..., .force = FALSE, .nonnegative = TRUE) {
+limmaBackgroundCorrect <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
+                                   assayb = NULL, ..., .force = FALSE,
+                                   .nonnegative = TRUE) {
     
     ## check if already corrected
     if (!.force) {
         stopifnot(is.null(metadata(se)$backgroundCorrection))
     }
-    stopifnot(assay_name %in% assayNames(se))
-    new_assay <- as.matrix(assay(se, assay_name))
+    stopifnot(assay %in% SummarizedExperiment::assayNames(se))
+    new_assay <- as.matrix(SummarizedExperiment::assay(se, assay))
 
-    assayb <- NULL
-    if (!is.null(assayb_name)) {
-        stopifnot(assayb_name %in% assayNames(se))
-        assayb <- as.matrix(assay(se, assayb_name))
+    bkgd_assay <- NULL
+    if (!is.null(assayb)) {
+        stopifnot(assayb %in% SummarizedExperiment::assayNames(se))
+        bkgd_assay <- as.matrix(SummarizedExperiment::assay(se, assayb))
     }
     
     ## perform RMA background correction (normal, exponential mixture)
-    new_assay <- limma::backgroundCorrect.matrix(E = new_assay, Eb = assayb, ...)
+    new_assay <- limma::backgroundCorrect.matrix(E = new_assay, Eb = bkgd_assay, ...)
     if (.nonnegative) {
         new_assay[new_assay < 0] <- NA
     }
@@ -57,10 +58,10 @@ limmaBackgroundCorrect <- function(se, assay_name = "fore", assayb_name = NULL,
     names(new_assay) <- rownames(colData(se))
     
     ## modify input SummarizedExperiment
-    assay(se, assay_name) <- new_assay
+    SummarizedExperiment::assay(se, assay) <- new_assay
     
     ## add step to metadata
-    method_str <- paste("limma::backgroundCorrect ->", assay_name)
+    method_str <- paste("limma::backgroundCorrect ->", assay)
     metadata(se)$steps <- c(metadata(se)$steps, method_str)
     if (.force) {
         metadata(se)$backgroundCorrection <-

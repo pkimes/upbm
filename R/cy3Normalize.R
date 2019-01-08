@@ -6,7 +6,7 @@
 #' @param se SummarizedExperiment object containing GPR intensity information.
 #' @param cy3se SummarizedExperiment object containing Cy3 GPR model output from
 #'        \code{fitCy3Models}.
-#' @param assay_name string name of the assay to normalize in \code{se}. (default = "fore")
+#' @param assay string name of the assay to normalize. (default = \code{SummarizedExperiment::assayNames(se)[1]})
 #' @param match_by unquoted name of column in colData of SummarizedExperiments
 #'        to use for matching samples across the two experiments; values of
 #'        column must be unique for each sample in each experiment.
@@ -24,9 +24,10 @@
 #' @importFrom tidyr gather spread
 #' @export
 #' @author Patrick Kimes
-cy3Normalize <- function(se, cy3se, assay_name = "fore", match_by = condition, filter = TRUE, scale = FALSE) {
+cy3Normalize <- function(se, cy3se, assay = SummarizedExperiment::assayNames(se)[1],
+                         match_by = condition, filter = TRUE, scale = FALSE) {
 
-    stopifnot("ratio" %in% assayNames(cy3se))
+    stopifnot("ratio" %in% SummarizedExperiment::assayNames(cy3se))
     
     if (!filter & !scale) {
         return(se)
@@ -78,7 +79,7 @@ cy3Normalize <- function(se, cy3se, assay_name = "fore", match_by = condition, f
     coldat2 <- dplyr::select(coldat2, sample, Match)
 
     
-    new_assay <- as.data.frame(assay(se, assay_name), optional = TRUE)
+    new_assay <- as.data.frame(SummarizedExperiment::assay(se, assay), optional = TRUE)
     new_assay <- dplyr::as_tibble(new_assay)
     new_assay <- dplyr::mutate(new_assay,
                                Row = rowData(se)[, "Row"],
@@ -89,7 +90,7 @@ cy3Normalize <- function(se, cy3se, assay_name = "fore", match_by = condition, f
 
     
     if (scale) {
-        scale_assay <- as.data.frame(assay(cy3se, "ratio"), optional = TRUE)
+        scale_assay <- as.data.frame(SummarizedExperiment::assay(cy3se, "ratio"), optional = TRUE)
         scale_assay <- dplyr::as_tibble(scale_assay)
         scale_assay <- dplyr::mutate(scale_assay,
                                    Row = rowData(cy3se)[, "Row"],
@@ -104,7 +105,7 @@ cy3Normalize <- function(se, cy3se, assay_name = "fore", match_by = condition, f
     }
         
     if (filter) {
-        filter_assay <- as.data.frame(assay(cy3se, "lowq"), optional = TRUE)
+        filter_assay <- as.data.frame(SummarizedExperiment::assay(cy3se, "lowq"), optional = TRUE)
         filter_assay <- dplyr::as_tibble(filter_assay)
         filter_assay <- dplyr::mutate(filter_assay,
                                       Row = rowData(cy3se)[, "Row"],
@@ -137,7 +138,7 @@ cy3Normalize <- function(se, cy3se, assay_name = "fore", match_by = condition, f
     new_assay <- new_assay[, colnames(se)]
 
     ## replace assay in se object
-    assay(se, assay_name) <- DataFrame(new_assay, check.names = FALSE)
+    SummarizedExperiment::assay(se, assay) <- DataFrame(new_assay, check.names = FALSE)
 
     return(se)
 }

@@ -12,8 +12,8 @@
 #' 
 #' @param se SummarizedExperiment object containing GPR
 #'        intensity information.
-#' @param assay_name string name of the assay to plot.
-#'        (default = "fore")
+#' @param assay string name of the assay to plot.
+#'        (default = \code{SummarizedExperiment::assayNames(se)[1]})
 #' @param stratify string name of column in colData of SummarizedExperiment to
 #'        use for comparing samples; values in column must be
 #'        unique for each sample. Alternatively, can specify '\code{"sample"}' to
@@ -44,9 +44,10 @@
 #' @import ggplot2 SummarizedExperiment
 #' @export
 #' @author Patrick Kimes
-pbmPlotScatter <- function(se, assay_name = "fore", stratify = "condition", baseline = NULL,
+pbmPlotScatter <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
+                           stratify = "condition", baseline = NULL,
                            log_scale = TRUE, maplot = FALSE, .method = "auto", .filter = 1) {
-    stopifnot(assay_name %in% assayNames(se))
+    stopifnot(assay %in% SummarizedExperiment::assayNames(se))
 
     if (! "Row" %in% names(rowData(se)) || ! "Column" %in% names(rowData(se))) {
         if ("kmer" %in% names(rowData(se))) {
@@ -66,7 +67,7 @@ pbmPlotScatter <- function(se, assay_name = "fore", stratify = "condition", base
     se <- pbmFilterProbes(se, .filter) 
     
     ## extract intensities
-    pdat <- assay(se, assay_name)
+    pdat <- SummarizedExperiment::assay(se, assay)
     pdat <- as.data.frame(pdat, optional = TRUE)
     pdat <- tibble::as_tibble(pdat)
     pdat <- dplyr::mutate(pdat,

@@ -7,8 +7,8 @@
 #' 
 #' @param se SummarizedExperiment object containing GPR
 #'        intensity information.
-#' @param assay_name string name of the assay to plot.
-#'        (default = "fore")
+#' @param assay string name of the assay to plot.
+#'        (default = \code{SummarizedExperiment::assayNames(se)[1]})
 #' @param log_scale logical whether to plot the intensities
 #'        on the log-scale. (default = TRUE)
 #' @param relative_scale string name of column to in \code{colData}
@@ -40,12 +40,14 @@
 #' @importFrom tidyr gather
 #' @importFrom dplyr left_join
 #' @importFrom rlang sym
-#' @import ggplot2 SummarizedExperiment
+#' @import ggplot2
+#' @importFrom SummarizedExperiment assay assayNames rowData colData
 #' @export
 #' @author Patrick Kimes
-pbmPlotChip <- function(se, assay_name = "fore", log_scale = TRUE, relative_scale = NULL,
+pbmPlotChip <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
+                        log_scale = TRUE, relative_scale = NULL,
                         bound = Inf, .facet = TRUE, .filter = 1) {
-    stopifnot(assay_name %in% assayNames(se))
+    stopifnot(assay %in% SummarizedExperiment::assayNames(se))
     stopifnot("Row" %in% names(rowData(se)))
     stopifnot("Column" %in% names(rowData(se)))
 
@@ -63,7 +65,7 @@ pbmPlotChip <- function(se, assay_name = "fore", log_scale = TRUE, relative_scal
     coldat <- tibble::rownames_to_column(coldat, "sample")
 
     ## extract intensities
-    pdat <- assay(se, assay_name)
+    pdat <- SummarizedExperiment::assay(se, assay)
     pdat <- as.data.frame(pdat, optional = TRUE)
     pdat <- tibble::as_tibble(pdat)
     pdat <- dplyr::mutate(pdat,
@@ -116,7 +118,7 @@ pbmPlotChip <- function(se, assay_name = "fore", log_scale = TRUE, relative_scal
     
     ## handle fill-scales if negative values present 
     if (pdat_negative) {
-        pfill <- scale_fill_gradient2(assay_name)
+        pfill <- scale_fill_gradient2(assay)
         if (bound == 0L) {
             pfill$limits <- c(-1, 1)
         } else if (bound < Inf) {
@@ -124,10 +126,10 @@ pbmPlotChip <- function(se, assay_name = "fore", log_scale = TRUE, relative_scal
         }
     } else {
         if (log_scale) {
-            pfill <- scale_fill_distiller(assay_name, direction = 1,
+            pfill <- scale_fill_distiller(assay, direction = 1,
                                           labels = function(x) {2^as.numeric(x)})
         } else {
-            pfill <- scale_fill_distiller(assay_name, direction = 1)
+            pfill <- scale_fill_distiller(assay, direction = 1)
         }
         if (bound < Inf) {
             pfill$limits <- c(0, abs(bound))

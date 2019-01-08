@@ -7,7 +7,7 @@
 #' This function returns the model parameter estimates for each sample in a dataframe.
 #' 
 #' @param se SummarizedExperiment object containing GPR intensity information.
-#' @param assay_name string name of the assay to normalize. (default = "fore")
+#' @param assay string name of the assay. (default = \code{SummarizedExperiment::assayNames(se)[1]})
 #' @param model character string specifying model for fitting intensityies. 
 #'        Must be one of "NormGam", "NormExp". (default = "NormGam")
 #' @param method method used to estimate the parameters for normal+exponential model. See more details from 
@@ -17,24 +17,25 @@
 #'        for more details on probe filter levels. (default = 1)
 #'        
 #' @return A dataframe with rows as condition and cols as parameter
-#' 
+#'
+#' @importFrom SummarizedExperiment assayNames assay
 #' @importFrom limma normexp.fit
 #' @importFrom NormalGamma normgam.fit
 #' @export
 #' @author Dongyuan Song, Patrick Kimes
 fitProbeDistribution <- function(se,
-                                 assay_name = "fore",
+                                 assay = SummarizedExperiment::assayNames(se)[1],
                                  model = c("NormGam", "NormExp"),
                                  method = "mle",
                                  .filter = 1L) {
-  stopifnot(assay_name %in% assayNames(se))
+  stopifnot(assay %in% SummarizedExperiment::assayNames(se))
   
   model <- match.arg(model)
   
   se <- pbmFilterProbes(se, .filter)
   
   # extract intensity matrix
-  new_assay <- as.matrix(assay(se, assay_name))
+  new_assay <- as.matrix(SummarizedExperiment::assay(se, assay))
   assay_vector <- apply(new_assay, 2, na.omit)
   
   if (model == "NormGam") {

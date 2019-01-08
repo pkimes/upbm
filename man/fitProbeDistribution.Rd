@@ -4,13 +4,13 @@
 \alias{fitProbeDistribution}
 \title{Fit Probe-Level Convolution Distributions}
 \usage{
-fitProbeDistribution(se, assay_name = "fore", model = c("NormGam",
-  "NormExp"), method = "mle", .filter = 1L)
+fitProbeDistribution(se, assay = SummarizedExperiment::assayNames(se)[1],
+  model = c("NormGam", "NormExp"), method = "mle", .filter = 1L)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing GPR intensity information.}
 
-\item{assay_name}{string name of the assay to normalize. (default = "fore")}
+\item{assay}{string name of the assay. (default = \code{SummarizedExperiment::assayNames(se)[1]})}
 
 \item{model}{character string specifying model for fitting intensityies. 
 Must be one of "NormGam", "NormExp". (default = "NormGam")}

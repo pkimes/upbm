@@ -4,7 +4,8 @@
 \alias{lowertailNormalization}
 \title{Lower-Tail Normalization (TESTING)}
 \usage{
-lowertailNormalization(se, assay_name = "fore", q = 0.4, q0 = 0,
+lowertailNormalization(se,
+  assay = SummarizedExperiment::assayNames(se)[1], q = 0.4, q0 = 0,
   stratify = "condition", baseline = NULL, log_scale = FALSE,
   shift = FALSE, method = c("regression", "pca", "quantreg",
   "quantile", "normal"), .filter_orth = FALSE, .filter_both = FALSE,
@@ -13,7 +14,8 @@ lowertailNormalization(se, assay_name = "fore", q = 0.4, q0 = 0,
 \arguments{
 \item{se}{SummarizedExperiment object containing GPR intensity information.}
 
-\item{assay_name}{string name of the assay to normalize. (default = "fore")}
+\item{assay}{string name of the assay to normalize.
+(default = \code{SummarizedExperiment::assayNames(se)[1]})}
 
 \item{q}{percentile between 0 and 1 specifying lower tail probes to use for
 normalization. (default = 0.4)}

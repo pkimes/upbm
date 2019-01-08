@@ -8,7 +8,7 @@
 #' computing log-scale scaling factors at the level of replicates.
 #'
 #' @param se SummarizedExperiment object containing GPR intensity information.
-#' @param assay_name string name of the assay to normalize. (default = "global")
+#' @param assay string name of the assay to normalize. (default = \code{SummarizedExperiment::assayNames(se)[1]})
 #' @param group string name of column in colData of SummarizedExperiment to
 #'        use for grouping replicate experiments. (default = "id")
 #' @param stratify string name of column in colData of SummarizedExperiment to
@@ -48,15 +48,15 @@
 #' the number of replicates is large, as it only requires a single comparison
 #' for each sample in the data set. Specifying \code{pairwise = FALSE} will
 #' use this approach.
-#' 
+#'
 #' @export
 #' @author Patrick Kimes
-normalizeReplicates <- function(se, assay_name = "scaled", group = "id",
-                                stratify = "condition", baseline = NULL,
+normalizeReplicates <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
+                                group = "id", stratify = "condition", baseline = NULL,
                                 pairwise = FALSE, onlyref = FALSE, ...) {
 
     stopifnot(is(se, "SummarizedExperiment"))
-    stopifnot(assay_name %in% assayNames(se))
+    stopifnot(assay %in% SummarizedExperiment::assayNames(se))
     stopifnot(is(pairwise, "logical"))
     stopifnot(is(onlyref, "logical"))
     
@@ -69,7 +69,7 @@ normalizeReplicates <- function(se, assay_name = "scaled", group = "id",
     coldat <- strats$coldat
     baseline <- strats$baseline
 
-    setidy <- assay2tidy(se, assay_name, long = TRUE)
+    setidy <- assay2tidy(se, assay, long = TRUE)
     setidy <- dplyr::rename(setidy, upbmGrp__ = I(group))
     setidy <- dplyr::select(setidy, upbmGrp__, condition, value)
     setidy <- dplyr::mutate(setidy, value = log2(value))
@@ -138,8 +138,9 @@ normalizeReplicates <- function(se, assay_name = "scaled", group = "id",
     
     ## first, scale replicates to put on same variability
     colData(se)$repScale <- tab$sfactor[match(colData(se)[[group]], tab$upbmGrp__)]
-    assay(se, "repScaled") <- sweep(as.matrix(assay(se, assay_name)), 2,
-                                    colData(se)$repScale, `^`)
+    SummarizedExperiment::assay(se, "repScaled") <-
+        sweep(as.matrix(SummarizedExperiment::assay(se, assay)), 2,
+              colData(se)$repScale, `^`)
 
     ## second, shift replicates to put in same range
 
@@ -153,7 +154,7 @@ normalizeReplicates <- function(se, assay_name = "scaled", group = "id",
 
     ## compute mean reference medians (pre-stretching)
     sourceMed <- assay2tidy(se[, grepl("-REF$", colData(se)$condition)],
-                            assay_name, long = TRUE)
+                            assay, long = TRUE)
     sourceMed <- dplyr::rename(sourceMed, upbmGrp__ = I(group))
     sourceMed <- group_by(sourceMed, upbmGrp__)
     sourceMed <- summarize(sourceMed, med = median(log2(value), na.rm = TRUE))
@@ -164,8 +165,9 @@ normalizeReplicates <- function(se, assay_name = "scaled", group = "id",
     
     ## add scaled assay to data - non-log scale
     colData(se)$repShift <- seriesMed$scaleMed[match(colData(se)[[group]], seriesMed$upbmGrp__)]
-    assay(se, "repScaled") <- sweep(as.matrix(assay(se, "repScaled")), 2,
-                                     2^colData(se)$repShift, `*`)
+    SummarizedExperiment::assay(se, "repScaled") <-
+        sweep(as.matrix(SummarizedExperiment::assay(se, "repScaled")), 2,
+              2^colData(se)$repShift, `*`)
     se
 }
 

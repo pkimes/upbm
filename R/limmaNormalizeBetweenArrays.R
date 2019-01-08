@@ -6,7 +6,8 @@
 #' SummarizedExperiment object with the normalized intensities.
 #'
 #' @param se SummarizedExperiment object containing PBM intensity data
-#' @param assay_name string name of the assay to adjust. (default = "fore")
+#' @param assay string name of the assay to adjust.
+#'        (default = \code{SummarizedExperiment::assayNames(se)[1]})
 #' @param ... parameters to pass to \code{limma::normalizeBetweenArrays}.
 #'        See details below for more information on main parameters.
 #' @param .force logical whether to run normalization even if data
@@ -22,18 +23,19 @@
 #' For other parameter, see the \code{limma::normalizeBetweenArrays}
 #' documentation.
 #' 
-#' @import SummarizedExperiment
+#' @importFrom SummarizedExperiment assayNames assay
 #' @importFrom limma normalizeBetweenArrays
 #' @export
 #' @author Patrick Kimes
-limmaNormalizeBetweenArrays <- function(se, assay_name = "fore", ..., .force = FALSE) {
+limmaNormalizeBetweenArrays <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
+                                        ..., .force = FALSE) {
 
     ## check if already normalized
     if (!.force) {
         stopifnot(is.null(metadata(se)$betweenArrayNormalization))
     }
     
-    new_assay <- as.matrix(assay(se, assay_name))
+    new_assay <- as.matrix(SummarizedExperiment::assay(se, assay))
 
     ## perform quantile normalization
     new_assay <- limma::normalizeBetweenArrays(object = new_assay, ...)
@@ -41,11 +43,11 @@ limmaNormalizeBetweenArrays <- function(se, assay_name = "fore", ..., .force = F
     names(new_assay) <- rownames(colData(se))
     
     ## modify input SummarizedExperiment
-    assay(se, assay_name) <- new_assay
+    SummarizedExperiment::assay(se, assay) <- new_assay
 
 
     ## add step to metadata
-    method_str <- paste("limma::normalizeBetweenArrays ->", assay_name)
+    method_str <- paste("limma::normalizeBetweenArrays ->", assay)
     metadata(se)$steps <- c(metadata(se)$steps, method_str)
     if (.force) {
         metadata(se)$betweenArrayNormalization <-

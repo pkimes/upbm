@@ -11,7 +11,7 @@
 #' @param se_list a list object of SummarizedExperiment objects containing GPR intensity 
 #'        information.
 #' @param ref_rep integer specifying which replicate will be used for scaling before normalization. (default = 1)
-#' @param assay_name string name of the assay to normalize. (default = "fore")
+#' @param assay string name of the assay to normalize. (default = "fore")
 #' @param scaling_between_rep logical whether to scale two reps into same median. (default = TRUE)
 #' @param scaling_within_rep logical whether to perform scaling within arrays in advance. (default = TRUE)
 #' @param q percentile between 0 and 1 specifying the quantile to align different tfs within a rep.
@@ -35,7 +35,7 @@
 #' @author Dongyuan Song, Patrick Kimes 
 qsmoothNormalization <- function(se_list, 
                                  ref_rep = 1,
-                                 assay_name = "fore",
+                                 assay = "fore",
                                  scaling_between_rep = TRUE,
                                  scaling_within_rep = TRUE,
                                  q = 0.5,
@@ -56,7 +56,7 @@ qsmoothNormalization <- function(se_list,
   ## perform median scaling within reps
   if (scaling_within_rep) {
     new_assay_list <- lapply(se_list, lowertailNormalization, 
-                             assay_name = assay_name,  q = q,  shift = FALSE, method = "quantile", .filter = .filter)
+                             assay = assay,  q = q,  shift = FALSE, method = "quantile", .filter = .filter)
     new_assay_list <- lapply(new_assay_list, function(x) {as.matrix(assay(x, "scaled"))})
   }
   else {
@@ -110,13 +110,13 @@ qsmoothNormalization <- function(se_list,
   
   for(i in 1:length(se_list)) {
     temp_df <- new_assay[, 1:var_num + (i-1)*var_num]
-    dimnames(temp_df) <- dimnames(assay(se_list[[i]], assay_name))
-    assay(se_list[[i]], assay_name) <- temp_df
+    dimnames(temp_df) <- dimnames(assay(se_list[[i]], assay))
+    assay(se_list[[i]], assay) <- temp_df
   }
   
   
   ## add step to metadata
-  method_str <- paste("qsmooth::normalizeBetweenArrays ->", assay_name)
+  method_str <- paste("qsmooth::normalizeBetweenArrays ->", assay)
   se_list <- lapply(se_list, function(x) {metadata(x)$steps <- c(metadata(x)$steps, method_str)
   return(x)})
   

@@ -4,10 +4,10 @@
 #' dsDNA abundance at each probe, and again for the Alexa488-tagged 
 #' protein. Given a reference
 #' 
-#' @param se SummarizedExpirement object containing PBM Cy3 intensity data.
+#' @param se SummarizedExperiment object containing PBM Cy3 intensity data.
 #' @param refse SummarizedExperiment object containing PBM Cy3 reference
 #'        intensities.
-#' @param assay_name string name of the assay to use. (default = "fore")
+#' @param assay string name of the assay to use. (default = \code{SummarizedExperiment::assayNames(se)[1]})
 #' @param useMean logical whether to use the probe-level mean, rather than
 #'        the probe-level median as the Cy3 reference (default = TRUE)
 #' @param standardize logical whether to standardize residuals using
@@ -32,14 +32,14 @@
 #' @importFrom tidyr gather spread
 #' @export
 #' @author Patrick Kimes
-fitCy3Empirical <- function(se, refse, assay_name = "fore", useMean = TRUE,
-                            standardize = TRUE, threshold = 1L, .filter = 1L) {
+fitCy3Empirical <- function(se, refse, assay = SummarizedExperiment::assayNames(se)[1],
+                            useMean = TRUE, standardize = TRUE, threshold = 1L, .filter = 1L) {
 
     ## filter probes
     nse <- pbmFilterProbes(se, .filter)
 
     ## check validity of Cy3 empirical reference
-    stopifnot("ref" %in% assayNames(refse))
+    stopifnot("ref" %in% SummarizedExperiment::assayNames(refse))
     stopifnot("sfactor" %in% names(metadata(refse)))
     stopifnot("params" %in% names(metadata(refse)))
     stopifnot("probe_mad" %in% colnames(refse))
@@ -89,14 +89,14 @@ fitCy3Empirical <- function(se, refse, assay_name = "fore", useMean = TRUE,
 
 
     ## extract intensities for Cy3 scans
-    pdat1 <- assay(nse, assay_name)
+    pdat1 <- SummarizedExperiment::assay(nse, assay)
     pdat1 <- as.data.frame(pdat1, optional = TRUE)
     pdat1 <- dplyr::as_tibble(pdat1)
     pdat1 <- dplyr::bind_cols(pdat1, rowdat1)
     pdat1 <- tidyr::gather(pdat1, condition, intensity, colnames(nse))
 
     ## extract intensities for Cy3 reference
-    pdat2 <- assay(refse, "ref")
+    pdat2 <- SummarizedExperiment::assay(refse, "ref")
     pdat2 <- as.data.frame(pdat2, optional = TRUE)
     pdat2 <- dplyr::as_tibble(pdat2)
     pdat2 <- dplyr::bind_cols(pdat2, rowdat2)
@@ -140,7 +140,7 @@ fitCy3Empirical <- function(se, refse, assay_name = "fore", useMean = TRUE,
 
     ## scale threshold cutoff if standardize specified
     if (standardize) {
-        median_mad <- median(assay(refse, "ref")$probe_mad, na.rm = TRUE)
+        median_mad <- median(SummarizedExperiment::assay(refse, "ref")$probe_mad, na.rm = TRUE)
         pdat <- dplyr::mutate(pdat, pscores = pscores / probe_mad * median_mad)
     }
 
@@ -181,10 +181,10 @@ fitCy3Empirical <- function(se, refse, assay_name = "fore", useMean = TRUE,
 
     
     ## add to SE object
-    assay(se, "expected") <- pexps
-    assay(se, "ratio") <- pratios
-    assay(se, "scores") <- pscores
-    assay(se, "lowq") <- plowq
+    SummarizedExperiment::assay(se, "expected") <- pexps
+    SummarizedExperiment::assay(se, "ratio") <- pratios
+    SummarizedExperiment::assay(se, "scores") <- pscores
+    SummarizedExperiment::assay(se, "lowq") <- plowq
 
     return(se)
 }

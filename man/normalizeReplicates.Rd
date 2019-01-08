@@ -4,14 +4,14 @@
 \alias{normalizeReplicates}
 \title{Cross-Replicate Normalization}
 \usage{
-normalizeReplicates(se, assay_name = "scaled", group = "id",
-  stratify = "condition", baseline = NULL, pairwise = FALSE,
-  onlyref = FALSE, ...)
+normalizeReplicates(se, assay = SummarizedExperiment::assayNames(se)[1],
+  group = "id", stratify = "condition", baseline = NULL,
+  pairwise = FALSE, onlyref = FALSE, ...)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing GPR intensity information.}
 
-\item{assay_name}{string name of the assay to normalize. (default = "global")}
+\item{assay}{string name of the assay to normalize. (default = \code{SummarizedExperiment::assayNames(se)[1]})}
 
 \item{group}{string name of column in colData of SummarizedExperiment to
 use for grouping replicate experiments. (default = "id")}

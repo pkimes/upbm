@@ -4,16 +4,16 @@
 \alias{pbmPlotScatter}
 \title{Scatterplot of Intensities}
 \usage{
-pbmPlotScatter(se, assay_name = "fore", stratify = "condition",
-  baseline = NULL, log_scale = TRUE, maplot = FALSE,
-  .method = "auto", .filter = 1)
+pbmPlotScatter(se, assay = SummarizedExperiment::assayNames(se)[1],
+  stratify = "condition", baseline = NULL, log_scale = TRUE,
+  maplot = FALSE, .method = "auto", .filter = 1)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing GPR
 intensity information.}
 
-\item{assay_name}{string name of the assay to plot.
-(default = "fore")}
+\item{assay}{string name of the assay to plot.
+(default = \code{SummarizedExperiment::assayNames(se)[1]})}
 
 \item{stratify}{string name of column in colData of SummarizedExperiment to
 use for comparing samples; values in column must be
