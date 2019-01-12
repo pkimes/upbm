@@ -135,10 +135,11 @@ kmerAggregate <- function(se, kmers, positionbias = TRUE, .filter = 1L,
 
         ## compute average bias over 2% bins
         bdat <- dplyr::group_by(bdat, sample)
-        bdat <- dplyr::mutate(bdat, qbin = as.numeric(ggplot2::cut_number(pbias, 1 / .02)))
+        bdat <- dplyr::mutate(bdat, qbin = as.numeric(ggplot2::cut_number(pmean, 1 / .02)))
         bdat <- dplyr::group_by(bdat, sample, qbin, pos)
         bdat <- dplyr::mutate(bdat, pbias = mean(pbias, na.rm = TRUE))
         bdat <- dplyr::ungroup(bdat)
+        bdat <- dplyr::mutate(bdat, value = value - pbias)
         bdat <- dplyr::select(bdat, -pmean, -qbin)
 
         ## create table of adjusted beta estimates, samples as cols (so slow..)
