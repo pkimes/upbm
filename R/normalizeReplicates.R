@@ -69,7 +69,7 @@ normalizeReplicates <- function(se, assay = SummarizedExperiment::assayNames(se)
     coldat <- strats$coldat
     baseline <- strats$baseline
 
-    setidy <- assay2tidy(se, assay, long = TRUE)
+    setidy <- tidy.SummarizedExperiment(se, assay, long = TRUE)
     setidy <- dplyr::rename(setidy, upbmGrp__ = I(group))
     setidy <- dplyr::select(setidy, upbmGrp__, condition, value)
     setidy <- dplyr::mutate(setidy, value = log2(value))
@@ -145,16 +145,16 @@ normalizeReplicates <- function(se, assay = SummarizedExperiment::assayNames(se)
     ## second, shift replicates to put in same range
 
     ## compute REF log2 medians for scaled data
-    seriesMed <- assay2tidy(se[, grepl("-REF$", colData(se)$condition)],
-                            "repScaled", long = TRUE)
+    seriesMed <- tidy.SummarizedExperiment(se[, grepl("-REF$", colData(se)$condition)],
+                                           "repScaled", long = TRUE)
     seriesMed <- dplyr::rename(seriesMed, upbmGrp__ = I(group))
     seriesMed <- group_by(seriesMed, upbmGrp__)
     seriesMed <- summarize(seriesMed, med = median(log2(value), na.rm = TRUE))
     seriesMed <- ungroup(seriesMed)
 
     ## compute mean reference medians (pre-stretching)
-    sourceMed <- assay2tidy(se[, grepl("-REF$", colData(se)$condition)],
-                            assay, long = TRUE)
+    sourceMed <- tidy.SummarizedExperiment(se[, grepl("-REF$", colData(se)$condition)],
+                                           assay, long = TRUE)
     sourceMed <- dplyr::rename(sourceMed, upbmGrp__ = I(group))
     sourceMed <- group_by(sourceMed, upbmGrp__)
     sourceMed <- summarize(sourceMed, med = median(log2(value), na.rm = TRUE))

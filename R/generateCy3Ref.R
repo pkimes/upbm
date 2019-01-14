@@ -51,7 +51,7 @@ generateCy3Ref <- function(cy3se, assay = SummarizedExperiment::assayNames(cy3se
     }
     
     ## tidy scan data for parsing
-    cy3vals <- upbm::assay2tidy(cy3se, assay, long = TRUE, .filter = .filter)
+    cy3vals <- tidy.SummarizedExperiment(cy3se, assay, long = TRUE, .filter = .filter)
     
     ## scale scans
     if (register) {
