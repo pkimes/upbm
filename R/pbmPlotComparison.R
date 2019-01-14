@@ -12,8 +12,8 @@
 #'        intensity information.
 #' @param se2 second SummarizedExperiment object containing GPR
 #'        intensity information to be compared with first experiment.
-#' @param assay_name string name of the assay to plot.
-#'        (default = "fore")
+#' @param assay string name of the assay to plot.
+#'        (default = \code{SummarizedExperiment::assayNames(se1)[1]})
 #' @param match_by unquoted name of column in colData of SummarizedExperiments
 #'        to use for matching samples across the two experiments; values of
 #'        column must be unique for each sample in each experiment.
@@ -44,13 +44,14 @@
 #' @importFrom tidyr spread gather
 #' @importFrom dplyr mutate select left_join rename bind_rows
 #' @importFrom rlang enquo quo_name UQ
-#' @import ggplot2 SummarizedExperiment
+#' @import ggplot2
+#' @importFrom SummarizedExperiment assay assayNames rowData colData
 #' @export
 #' @author Patrick Kimes
-pbmPlotComparison <- function(se1, se2, assay_name  = "fore", match_by = condition,
-                              log_scale = TRUE,  maplot = FALSE,
+pbmPlotComparison <- function(se1, se2, assay = SummarizedExperiment::assayNames(se1)[1],
+                              match_by = condition, log_scale = TRUE,  maplot = FALSE,
                               .method = "auto", .filter = 1) {
-    stopifnot(assay_name %in% assayNames(se1))
+    stopifnot(assay %in% SummarizedExperiment::assayNames(se1))
     if (! "Row" %in% names(rowData(se1)) || ! "Column" %in% names(rowData(se1))) {
         if ("kmer" %in% names(rowData(se1))) {
             rowData(se1)$Row <- rowData(se1)$kmer
@@ -60,7 +61,7 @@ pbmPlotComparison <- function(se1, se2, assay_name  = "fore", match_by = conditi
         }
     }
 
-    stopifnot(assay_name %in% assayNames(se2))
+    stopifnot(assay %in% SummarizedExperiment::assayNames(se2))
     if (! "Row" %in% names(rowData(se2)) || ! "Column" %in% names(rowData(se2))) {
         if ("kmer" %in% names(rowData(se2))) {
             rowData(se2)$Row <- rowData(se2)$kmer
@@ -119,7 +120,7 @@ pbmPlotComparison <- function(se1, se2, assay_name  = "fore", match_by = conditi
     coldat2 <- dplyr::select(coldat2, sample, Match)
     
     ## extract intensities
-    pdat1 <- assay(se1, assay_name)
+    pdat1 <- SummarizedExperiment::assay(se1, assay)
     pdat1 <- as.data.frame(pdat1, optional = TRUE)
     pdat1 <- tibble::as_tibble(pdat1)
     pdat1 <- dplyr::mutate(pdat1,
@@ -129,7 +130,7 @@ pbmPlotComparison <- function(se1, se2, assay_name  = "fore", match_by = conditi
     pdat1 <- dplyr::left_join(pdat1, coldat1, by = "sample")
     pdat1 <- dplyr::select(pdat1, -sample)
 
-    pdat2 <- assay(se2, assay_name)
+    pdat2 <- SummarizedExperiment::assay(se2, assay)
     pdat2 <- as.data.frame(pdat2, optional = TRUE)
     pdat2 <- tibble::as_tibble(pdat2)
     pdat2 <- dplyr::mutate(pdat2,
@@ -166,8 +167,8 @@ pbmPlotComparison <- function(se1, se2, assay_name  = "fore", match_by = conditi
     } else {
         if (log_scale) {
             ptitle <- "PBM Intensity Comparison (log2)"
-            pxaxis <- scale_x_continuous("rep1 intensity (log)", breaks = 2^(0:100), trans = "log10")
-            pyaxis <- scale_y_continuous("rep2 intensity (log)", breaks = 2^(0:100), trans = "log10")
+            pxaxis <- scale_x_continuous("rep1 intensity (log)", breaks = 2^(0:100), trans = "log2")
+            pyaxis <- scale_y_continuous("rep2 intensity (log)", breaks = 2^(0:100), trans = "log2")
         } else {
             ptitle <- "PBM Intensity Comparison"
             pxaxis <- scale_x_continuous("rep1 intensity")

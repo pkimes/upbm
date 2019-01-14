@@ -4,16 +4,18 @@
 \alias{lowertailNormalization}
 \title{Lower-Tail Normalization (TESTING)}
 \usage{
-lowertailNormalization(se, assay_name = "fore", q = 0.4, q0 = 0,
-  stratify = condition, baseline = NULL, log_scale = FALSE,
-  shift = TRUE, method = c("regression", "pca", "quantreg", "quantile",
-  "normal"), .filter_ver = FALSE, .filter_both = FALSE,
+lowertailNormalization(se,
+  assay = SummarizedExperiment::assayNames(se)[1], q = 0.4, q0 = 0,
+  stratify = "condition", baseline = NULL, log_scale = FALSE,
+  shift = FALSE, method = c("regression", "pca", "quantreg",
+  "quantile", "normal"), .filter_orth = FALSE, .filter_both = FALSE,
   .fits = FALSE, .filter = 1L)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing GPR intensity information.}
 
-\item{assay_name}{string name of the assay to normalize. (default = "fore")}
+\item{assay}{string name of the assay to normalize.
+(default = \code{SummarizedExperiment::assayNames(se)[1]})}
 
 \item{q}{percentile between 0 and 1 specifying lower tail probes to use for
 normalization. (default = 0.4)}
@@ -21,9 +23,10 @@ normalization. (default = 0.4)}
 \item{q0}{percentile between 0 and q specifying lower tail probes which are 
 filtered out. It only works for fitting methods. (default = 0)}
 
-\item{stratify}{unquoted name of column in colData of SummarizedExperiment (or
-'\code{sample}') to use for comparing samples; values in column must be
-unique for each sample. (default = condition)}
+\item{stratify}{string name of column in colData of SummarizedExperiment to
+use for comparing samples; values in column must be
+unique for each sample. Alternatively, can specify '\code{"sample"}' to
+use column names. (default = "condition")}
 
 \item{baseline}{string name of baseline condition to compare other conditions
 against; if not specified, guessed by looking for
@@ -33,24 +36,24 @@ against; if not specified, guessed by looking for
 using log2-scaled intensities rather than raw intensities. (default = FALSE)}
 
 \item{shift}{logical whether to apply linear shift before/after scaling.
-(default = TRUE).}
+(default = FALSE).}
 
 \item{method}{character string specifying method to use for normalization.
 Must be one of "regression", "pca", "quantreg", "quantile"  or "normal".
 (default = "regression")}
 
-\item{.filter_ver}{logical whether to fit models only by probes falling in the left side of 
+\item{.filter_orth}{logical whether to fit models only by probes falling in the left side of 
 the orthogonal line of the given \code{q} value on a principal curve. Note here
 the function uses the two closest points of the given \code{q} value. The purpose of the function
 is to generate more "symmetric" cutoffs. Recommend to set as TRUE only when using 
-"pca". (default = FALSE)}
+"pca". (default = TRUE if \code{method = "pca"}, FALSE otherwise)}
 
 \item{.filter_both}{logical whether to fit models only probes in both the lower
 \code{q} quantiles of the baseline and non-baseline samples (TRUE) or
 probes in lower \code{q} quantile of the baseline samples (FALSE). Note that
 setting this to TRUE will result in less probes being used for fitting the
 normalization parameters. Note that \code{.filter_both}
-and \code{.filter_ver} can not be true simultaneously. (default = FALSE)}
+and \code{.filter_orth} can not be true simultaneously. (default = FALSE)}
 
 \item{.fits}{logical whether to just return a table of fits rather
 than the normalized SummarizedExperiment object. (default = FALSE)}

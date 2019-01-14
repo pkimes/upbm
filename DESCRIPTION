@@ -1,17 +1,20 @@
-Package: PBMExperiment
-Title: Tools for the analysis of Protein Binding Microarrays
+Package: upbm
+Type: Package
+Title: Tools for the analysis of universal Protein Binding Microarrays
 Version: 0.99.0
-Authors@R: person("Patrick", "Kimes", email = "patrick.kimes@gmail.com", role = c("aut", "cre"))
+Authors@R: c(person("Patrick", "Kimes", email = "patrick.kimes@gmail.com", role = c("aut", "cre")),
+             person("Dongyuan", "Song", email = "dsong@hsph.harvard.edu", role = "ctb"))
+BugReports: https://github.com/pkimes/upbm/issues
+URL: https://github.com/pkimes/upbm
 Description: Classes and methods for the organization and analysis of transcription factor binding affinities
-  quantified in vitro using Protein Binding Microarrays.
-Depends: R (>= 3.4.1),
+  quantified in vitro using universal protein binding microarrays (uPBMs).
+Depends: R (>= 3.5),
          SummarizedExperiment,
          S4Vectors,
          readr,
          Biostrings,
          Matrix,
          dplyr,
-         glmnet,
          preprocessCore,
          tibble,
          tidyr,
@@ -19,24 +22,25 @@ Depends: R (>= 3.4.1),
          stringr,
          ggplot2,
          rlang,
-         limma,
          stats,
          utils,
          matrixStats,
          fitdistrplus,
          truncnorm,
-         affy,
          quantreg,
          qsmooth,
          NormalGamma,
          princurve
+Imports: Rcpp,
+         methods,
+         limma,
+         affy,
+         broom
 Suggests: BiocStyle,
           knitr
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 LinkingTo: Rcpp, RcppArmadillo
-Imports: Rcpp,
-         methods
 VignetteBuilder: knitr
 RoxygenNote: 6.1.0

@@ -4,20 +4,21 @@
 \alias{pbmPlotScatter}
 \title{Scatterplot of Intensities}
 \usage{
-pbmPlotScatter(se, assay_name = "fore", stratify = condition,
-  baseline = NULL, log_scale = TRUE, maplot = FALSE,
-  .method = "auto", .filter = 1)
+pbmPlotScatter(se, assay = SummarizedExperiment::assayNames(se)[1],
+  stratify = "condition", baseline = NULL, log_scale = TRUE,
+  maplot = FALSE, .method = "auto", .filter = 1)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing GPR
 intensity information.}
 
-\item{assay_name}{string name of the assay to plot.
-(default = "fore")}
+\item{assay}{string name of the assay to plot.
+(default = \code{SummarizedExperiment::assayNames(se)[1]})}
 
-\item{stratify}{unquoted name of column in colData of SummarizedExperiment (or
-'\code{sample}') to use for comparing samples; values in column must be
-unique for each sample. (default = condition)}
+\item{stratify}{string name of column in colData of SummarizedExperiment to
+use for comparing samples; values in column must be
+unique for each sample. Alternatively, can specify '\code{"sample"}' to
+use column names. (default = "condition")}
 
 \item{baseline}{string name of baseline condition to
 compare other conditions against; if not specified, guessed by looking for
@@ -45,13 +46,12 @@ Probe-level intensities plotted pairwise against a reference
 condition. Given a baseline condition specified with \code{baseline=}
 (which must map uniquely in the \code{stratify=} column of the colData),
 pairwise probe intensities are plotted with the identity line (x = y).
-}
-\details{
+
 Alternatively, if \code{maplot} is TRUE, a MA plot is created with the
 same data, plotting A (log-scale mean intensity) against M (log-scale
 difference in intensities).
-
-
+}
+\details{
 MA plots are drawn on the log scale by definition.
 }
 \author{

@@ -4,13 +4,15 @@
 \alias{fitCy3Models}
 \title{Compute Cy3 Scaling Factors}
 \usage{
-fitCy3Models(se, assay_name = "fore", refit = TRUE, .filter = 1L,
-  .trim = if (.filter > 0L) {     c(1, 36) } else {     NULL })
+fitCy3Models(se, assay = SummarizedExperiment::assayNames(se)[1],
+  refit = TRUE, .filter = 1L, .trim = if (.filter > 0L) {     c(1,
+  36) } else {     NULL })
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing PBM Cy3 intensity data.}
 
-\item{assay_name}{string name of the assay to use. (default = "fore")}
+\item{assay}{string name of the assay to use.
+(default = \code{SummarizedExperiment::assayNames(se)[1]})}
 
 \item{refit}{logical whether to filter outliers and refit trinucleotide
 linear regression model. (default = TRUE)}

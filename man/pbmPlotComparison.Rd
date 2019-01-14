@@ -4,8 +4,10 @@
 \alias{pbmPlotComparison}
 \title{Paired Scatterplot of Intensities}
 \usage{
-pbmPlotComparison(se1, se2, assay_name = "fore", match_by = condition,
-  log_scale = TRUE, maplot = FALSE, .method = "auto", .filter = 1)
+pbmPlotComparison(se1, se2,
+  assay = SummarizedExperiment::assayNames(se1)[1],
+  match_by = condition, log_scale = TRUE, maplot = FALSE,
+  .method = "auto", .filter = 1)
 }
 \arguments{
 \item{se1}{first SummarizedExperiment object containing GPR
@@ -14,8 +16,8 @@ intensity information.}
 \item{se2}{second SummarizedExperiment object containing GPR
 intensity information to be compared with first experiment.}
 
-\item{assay_name}{string name of the assay to plot.
-(default = "fore")}
+\item{assay}{string name of the assay to plot.
+(default = \code{SummarizedExperiment::assayNames(se1)[1]})}
 
 \item{match_by}{unquoted name of column in colData of SummarizedExperiments
 to use for matching samples across the two experiments; values of

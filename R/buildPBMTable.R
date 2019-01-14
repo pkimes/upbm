@@ -88,8 +88,8 @@ buildPBMTable <- function(gpr_dir = NULL, gpr_type = "Alexa", gpr_files = NULL) 
     fl <- gsub("^.*?_?(v[[:digit:]]+.*)", "\\1", fl, ignore.case = TRUE)
 
     ## peel off assay version (if available)
-    fl_vers <- tolower(gsub("(^v?[[:digit:]]+)_?.*", "\\1", fl))
-    fl <- gsub("^v?[[:digit:]]+_?(.*)", "\\1", fl)
+    fl_vers <- tolower(gsub("(^v?[[:digit:]]+)_?.*", "\\1", fl, ignore.case = TRUE))
+    fl <- gsub("^v?[[:digit:]]+_?(.*)", "\\1", fl, ignore.case = TRUE)
 
     ## peel off assay id (if available)
     fl_id <- gsub("(^[[:digit:]_]*)[[:alpha:]]+.*", "\\1", fl)

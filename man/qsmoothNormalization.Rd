@@ -4,7 +4,7 @@
 \alias{qsmoothNormalization}
 \title{qsmooth Normalization (TESTING)}
 \usage{
-qsmoothNormalization(se_list, ref_rep = 1, assay_name = "fore",
+qsmoothNormalization(se_list, ref_rep = 1, assay = "fore",
   scaling_between_rep = TRUE, scaling_within_rep = TRUE, q = 0.5,
   .force = FALSE, .filter = 1L, plot_weight = TRUE, ...)
 }
@@ -14,7 +14,7 @@ information.}
 
 \item{ref_rep}{integer specifying which replicate will be used for scaling before normalization. (default = 1)}
 
-\item{assay_name}{string name of the assay to normalize. (default = "fore")}
+\item{assay}{string name of the assay to normalize. (default = "fore")}
 
 \item{scaling_between_rep}{logical whether to scale two reps into same median. (default = TRUE)}
 

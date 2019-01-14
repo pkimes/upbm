@@ -21,7 +21,8 @@
 #' computed ratios.
 #' 
 #' @param se SummarizedExperiment object containing PBM Cy3 intensity data.
-#' @param assay_name string name of the assay to use. (default = "fore")
+#' @param assay string name of the assay to use.
+#'        (default = \code{SummarizedExperiment::assayNames(se)[1]})
 #' @param refit logical whether to filter outliers and refit trinucleotide
 #'        linear regression model. (default = TRUE)
 #' @param .filter integer specifying level of probe filtering to
@@ -45,7 +46,8 @@
 #' @importFrom Biostrings DNAStringSet oligonucleotideFrequency
 #' @export
 #' @author Patrick Kimes
-fitCy3Models <- function(se, assay_name = "fore", refit = TRUE, .filter = 1L, 
+fitCy3Models <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
+                         refit = TRUE, .filter = 1L, 
                          .trim = if (.filter > 0L) { c(1, 36) } else { NULL }) {
 
     ## check Sequence info in rowData
@@ -70,7 +72,7 @@ fitCy3Models <- function(se, assay_name = "fore", refit = TRUE, .filter = 1L,
     rowdat <- dplyr::bind_cols(rowdat, nt_freq)
 
     ## extract intensities
-    pdat <- assay(nse, assay_name)
+    pdat <- SummarizedExperiment::assay(nse, assay)
     pdat <- as.data.frame(pdat, optional = TRUE)
     pdat <- dplyr::as_tibble(pdat)
     pdat <- dplyr::bind_cols(pdat, rowdat)
@@ -155,16 +157,16 @@ fitCy3Models <- function(se, assay_name = "fore", refit = TRUE, .filter = 1L,
     pdrop <- dplyr::left_join(dplyr::select(full_rowdat, Row, Column), pdrop, by = c("Row", "Column"))
 
     pexps <- DataFrame(pexps, check.names = FALSE)
-    pexps <- pexps[, rownames(colData(se))]
+    pexps <- pexps[, rownames(colData(se)), drop = FALSE]
     pratios <- DataFrame(pratios, check.names = FALSE)
-    pratios <- pratios[, rownames(colData(se))]
+    pratios <- pratios[, rownames(colData(se)), drop = FALSE]
     pdrop <- DataFrame(pdrop, check.names = FALSE)
-    pdrop <- pdrop[, rownames(colData(se))]
+    pdrop <- pdrop[, rownames(colData(se)), drop = FALSE]
 
     ## add to SE object
-    assay(se, "expected") <- pexps
-    assay(se, "ratio") <- pratios
-    assay(se, "lowq") <- pdrop
+    SummarizedExperiment::assay(se, "expected") <- pexps
+    SummarizedExperiment::assay(se, "ratio") <- pratios
+    SummarizedExperiment::assay(se, "lowq") <- pdrop
 
     ## add fits to metadata
     fits <- pfits$fit

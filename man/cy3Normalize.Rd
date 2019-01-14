@@ -4,8 +4,8 @@
 \alias{cy3Normalize}
 \title{Perform Cy3 Normalization}
 \usage{
-cy3Normalize(se, cy3se, assay_name = "fore", match_by = condition,
-  filter = TRUE, scale = FALSE)
+cy3Normalize(se, cy3se, assay = SummarizedExperiment::assayNames(se)[1],
+  match_by = condition, filter = TRUE, scale = FALSE)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing GPR intensity information.}
@@ -13,7 +13,7 @@ cy3Normalize(se, cy3se, assay_name = "fore", match_by = condition,
 \item{cy3se}{SummarizedExperiment object containing Cy3 GPR model output from
 \code{fitCy3Models}.}
 
-\item{assay_name}{string name of the assay to normalize in \code{se}. (default = "fore")}
+\item{assay}{string name of the assay to normalize. (default = \code{SummarizedExperiment::assayNames(se)[1]})}
 
 \item{match_by}{unquoted name of column in colData of SummarizedExperiments
 to use for matching samples across the two experiments; values of

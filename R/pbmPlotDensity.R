@@ -4,8 +4,8 @@
 #'
 #' @param se SummarizedExperiment object containing GPR
 #'        intensity information.
-#' @param assay_name string name of the assay to plot.
-#'        (default = "fore")
+#' @param assay string name of the assay to plot.
+#'        (default = \code{SummarizedExperiment::assayNames(se)[1]})
 #' @param log_scale logical whether to plot the intensities
 #'        on the log-scale. (default = TRUE)
 #' @param .facet logical whether plot should be faceted using
@@ -21,9 +21,9 @@
 #' @import ggplot2 SummarizedExperiment
 #' @export
 #' @author Patrick Kimes
-pbmPlotDensity <- function(se, assay_name = "fore", log_scale = TRUE,
-                           .facet = TRUE, .filter = 1) {
-    stopifnot(assay_name %in% assayNames(se))
+pbmPlotDensity <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
+                           log_scale = TRUE, .facet = TRUE, .filter = 1) {
+    stopifnot(assay %in% SummarizedExperiment::assayNames(se))
 
     ## condition must be a unique column for faceting plot
     if (.facet && any(duplicated(colData(se)$condition))) {
@@ -39,7 +39,7 @@ pbmPlotDensity <- function(se, assay_name = "fore", log_scale = TRUE,
     coldat <- tibble::rownames_to_column(coldat, "sample")
 
     ## extract intensities
-    pdat <- assay(se, assay_name)
+    pdat <- SummarizedExperiment::assay(se, assay)
     pdat <- as.data.frame(pdat, optional = TRUE)
     pdat <- tibble::as_tibble(pdat)
     pdat <- tidyr::gather(pdat, sample, value)
@@ -57,7 +57,7 @@ pbmPlotDensity <- function(se, assay_name = "fore", log_scale = TRUE,
     ## handle log-scale plotting if requested
     if (log_scale) {
         ptitle <- "PBM Intensity (log2)"
-        pxaxis <- scale_x_continuous("intensity (log)", breaks = 2^(0:100), trans = "log10")
+        pxaxis <- scale_x_continuous("intensity (log)", breaks = 2^(0:100), trans = "log2")
     } else {
         ptitle <- "PBM Intensity"
         pxaxis <- scale_x_continuous("intensity")

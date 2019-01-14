@@ -7,25 +7,24 @@
 using namespace Rcpp;
 
 // blockmedian
-NumericMatrix blockmedian(NumericMatrix Xr, int w, bool center);
-RcppExport SEXP _PBMExperiment_blockmedian(SEXP XrSEXP, SEXP wSEXP, SEXP centerSEXP) {
+Rcpp::List blockmedian(NumericMatrix Xr, int w);
+RcppExport SEXP _upbm_blockmedian(SEXP XrSEXP, SEXP wSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericMatrix >::type Xr(XrSEXP);
     Rcpp::traits::input_parameter< int >::type w(wSEXP);
-    Rcpp::traits::input_parameter< bool >::type center(centerSEXP);
-    rcpp_result_gen = Rcpp::wrap(blockmedian(Xr, w, center));
+    rcpp_result_gen = Rcpp::wrap(blockmedian(Xr, w));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_PBMExperiment_blockmedian", (DL_FUNC) &_PBMExperiment_blockmedian, 3},
+    {"_upbm_blockmedian", (DL_FUNC) &_upbm_blockmedian, 2},
     {NULL, NULL, 0}
 };
 
-RcppExport void R_init_PBMExperiment(DllInfo *dll) {
+RcppExport void R_init_upbm(DllInfo *dll) {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
 }

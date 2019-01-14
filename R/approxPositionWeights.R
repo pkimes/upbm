@@ -12,8 +12,8 @@
 #' for probes containing the top N K-mers, ranked by median K-mer
 #' affinity.
 #' 
-#' @param se SummarizedExperiment of probe intensities
-#' @param assay_name string name of the assay to use. (default = "fore")
+#' @param se SummarizedExperiment of probe intensities.
+#' @param assay string name of the assay. (default = \code{SummarizedExperiment::assayNames(se)[1]})
 #' @param kmers character vector of k-mers to predict.
 #' @param nk number of top k-mers to use to estimate positional
 #'        trend for each sample. This should be larger for longer
@@ -55,7 +55,8 @@
 #' @importFrom dplyr rename as_tibble top_n group_by ungroup mutate left_join select summarize arrange
 #' @importFrom tidyr gather spread
 #' @author Patrick Kimes
-approxPositionWeights <- function(se, assay_name = "fore", kmers, nk = 100L, smooth = TRUE, withse = TRUE, 
+approxPositionWeights <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
+                                  kmers, nk = 100L, smooth = TRUE, withse = TRUE, 
                                   verbose = FALSE, log_scale = FALSE, offset = 1L, .smooth.span = 1/2,
                                   .filter = 1L, .trim = if (.filter > 0L) { c(1, 36) } else { NULL }) {
     ## check kmers specified
@@ -75,10 +76,10 @@ approxPositionWeights <- function(se, assay_name = "fore", kmers, nk = 100L, smo
     kmmap <- dplyr::rename(kmmap, kmer = seq)
 
     ## compute median k-mer intensities
-    kmsum <- summarizeKmers(se, assay_name = assay_name, kmers = kmers,
+    kmsum <- summarizeKmers(se, assay = assay, kmers = kmers,
                             stat_set = "median", .trim = .trim, .filter = .filter)
     kmsum <- cbind(as.data.frame(rowData(kmsum), optional = TRUE),
-                   as.data.frame(assay(kmsum, "medianIntensity"), optional = TRUE))
+                   as.data.frame(SummarizedExperiment::assay(kmsum, "medianIntensity"), optional = TRUE))
     kmsum <- dplyr::as_tibble(as.data.frame(kmsum, optional = TRUE))
 
     ## determine top nk k-mers for each sample
@@ -88,7 +89,7 @@ approxPositionWeights <- function(se, assay_name = "fore", kmers, nk = 100L, smo
     topkm <- dplyr::ungroup(topkm)
 
     ## extract probe-level intensities
-    sevals <- dplyr::as_tibble(as.data.frame(assay(se, assay_name), optional = TRUE))
+    sevals <- dplyr::as_tibble(as.data.frame(SummarizedExperiment::assay(se, assay), optional = TRUE))
     sevals <- dplyr::mutate(sevals, probe_idx = 1:n())
     sevals <- tidyr::gather(sevals, sample, value, one_of(colnames(se)))
 

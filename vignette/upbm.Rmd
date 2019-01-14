@@ -1,8 +1,8 @@
 ---
-title: "PBMExperiment: Analysis of Protein Binding Microarrays in R"
+title: "upbm: Analysis of Protein Binding Microarrays in R"
 author: Patrick K. Kimes
 date: "`r BiocStyle::doc_date()`"
-package: "`r BiocStyle::pkg_ver('PBMExperiment')`"
+package: "`r BiocStyle::pkg_ver('upbm')`"
 output:
   BiocStyle::html_document:
     highlight: pygments
@@ -10,7 +10,7 @@ output:
     fig_width: 12
     fig_height: 4
 vignette: >
-  %\VignetteIndexEntry{Analysis with PBMExperiment}
+  %\VignetteIndexEntry{Analysis with upbm}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
 editor_options: 
@@ -28,21 +28,21 @@ knitr::opts_chunk$set(tidy = FALSE, cache = TRUE, dev = "png",
 
 This package provides tools for reading, plotting, and analyzing protein binding microarray (PBM) data in *R*. Currently, input data must be available as GenePix Results (GPR) files. A more stable and separate set of tools developed by Berger and Bulyk (Nature Protocols, 2009) for the analysis of PBMs is available for download at the [_Universal PBM Analysis Suite_ site](the_brain.bwh.harvard.edu/PBMAnalysisSuite/indexSep2017.html).
 
-Several functions for loading and preprocessing microarray data are available in *R* through the widely used [*affy*](https://www.bioconductor.org/packages/release/bioc/html/affy.html) and [*limma*](http://bioconductor.org/packages/release/bioc/html/limma.html) packages. Additionally, the *limma* package also includes several functions for gene-level quantification and testing of differential expression with expression arrays. Rather than reinventing the wheel, this package (*PBMExperiment*) includes several easy-to-use wrappers to the pre-processing functions implemented in both *affy* and *limma* (prefixed `rma*` and `limma*`, respectively). Due to the specialized nature of PBMs, the *PBMExperiment* package includes specialized procedures for k-mer-level quantification not implemented in either of the aforementioned packages. 
+Several functions for loading and preprocessing microarray data are available in *R* through the widely used [*affy*](https://www.bioconductor.org/packages/release/bioc/html/affy.html) and [*limma*](http://bioconductor.org/packages/release/bioc/html/limma.html) packages. Additionally, the *limma* package also includes several functions for gene-level quantification and testing of differential expression with expression arrays. Rather than reinventing the wheel, this package (*upbm*) includes several easy-to-use wrappers to the pre-processing functions implemented in both *affy* and *limma* (prefixed `rma*` and `limma*`, respectively). Due to the specialized nature of PBMs, the *upbm* package includes specialized procedures for k-mer-level quantification not implemented in either of the aforementioned packages. 
 
 # Installation
 
 To install the latest version of this package from GitHub, use the following command from the `devtools` package:
 
 ```{r, eval = FALSE}
-devtools::install_github("pkimes/PBMExperiment")
+devtools::install_github("pkimes/upbm")
 ```
 
 If the package is already installed, there is no need to re-install the package except to check for updates.
 After installing, the package still needs to be loaded to make the functions available in R.
 
 ```{r}
-suppressPackageStartupMessages(library("PBMExperiment"))
+suppressPackageStartupMessages(library("upbm"))
 ```
 
 # Quickstart
@@ -255,38 +255,7 @@ pbmPlotComparison(pbmdat_bc[, colData(pbmdat)$lp == 400],
 
 ## Quantifying GPR Data
 
-After applying pre-processing and filtering to probe-level intensities for each GPR file, we proceed to estimating candidate motif-level affinities. The package includes a single function, `predKmers` for predicting affinities for a specified set of K-mer sequences. By default, affinities are estimated for a set of `r length(pbm_8mers)` 8-mers included with the package.
-
-```{r}
-head(pbm_8mers)
-```
-
-The function can be run as follows.
-
-```{r, eval = FALSE}
-system.time({ pbm_predict <- predictKmers(pbmdat400_norm, verbose = TRUE) })
-```
-
-The returned object is again a SummarizedExperiment.
-
-```{r, eval = FALSE}
-pbm_predict
-```
-
-The array entries are the predicted k-mer intensities per-sample.
-
-```{r, eval = FALSE}
-rowData(pbm_predict)[1:5, ]
-assay(pbm_predict, "pred")[1:5, ]
-```
-
-The `colData` includes all of the same sample information as the probe-level objects.
-
-```{r, fig.width = 15, fig.height = 5, eval = FALSE}
-pbmPlotScatter(pbm_predict, assay_name = "pred", log_scale = FALSE)
-pbmPlotScatter(pbm_predict, assay_name = "pred", maplot = TRUE, log_scale = FALSE)
-```
-
+After applying pre-processing and filtering to probe-level intensities for each GPR file, we proceed to estimating candidate motif-level affinities. 
 
 # References
 

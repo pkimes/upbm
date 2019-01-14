@@ -17,7 +17,7 @@
 #'
 #' 
 #' @param cy3se SummarizedExperiment object containing Cy3 scan data.
-#' @param assay_name string name of assay to use. (default = "fore")
+#' @param assay string name of assay to use. (default = \code{SummarizedExperiment::assayNames(cy3se)[1]})
 #' @param offset numeric offset to add to intensities before log2 transforming
 #'        to prevent errors with zero intensities. (default = 1L)
 #' @param register logical whether to scale intensities across samples.
@@ -33,8 +33,8 @@
 #' @importFrom stats mad median sd
 #' @importFrom dplyr group_by mutate ungroup summarize left_join select
 #' @author Patrick Kimes
-generateCy3Ref <- function(cy3se, assay_name = "fore", offset = 1L, register = TRUE,
-                           .filter = 1L) {
+generateCy3Ref <- function(cy3se, assay = SummarizedExperiment::assayNames(cy3se)[1],
+                           offset = 1L, register = TRUE, .filter = 1L) {
 
     ## verify validity of cy3se
     stopifnot(is(cy3se, "SummarizedExperiment"))
@@ -51,12 +51,12 @@ generateCy3Ref <- function(cy3se, assay_name = "fore", offset = 1L, register = T
     }
     
     ## tidy scan data for parsing
-    cy3vals <- PBMExperiment::assay2tidy(cy3se, assay_name, long = TRUE, .filter = .filter)
+    cy3vals <- tidy.SummarizedExperiment(cy3se, assay, long = TRUE, .filter = .filter)
     
     ## scale scans
     if (register) {
         ## common multiplication factor to scale samples
-        col_medians <- colMedians(as.matrix(assay(cy3se, assay_name)), na.rm = TRUE)
+        col_medians <- colMedians(as.matrix(SummarizedExperiment::assay(cy3se, assay)), na.rm = TRUE)
         sfactor <- median(col_medians, na.rm = TRUE)
         
         cy3vals <- dplyr::group_by(cy3vals, id, idx)
@@ -83,14 +83,14 @@ generateCy3Ref <- function(cy3se, assay_name = "fore", offset = 1L, register = T
     rowdat <- as.data.frame(rowData(cy3se), optional = TRUE)
     cy3vals <- dplyr::left_join(dplyr::as_tibble(rowdat), cy3vals, by = c("Column", "Row"))
     rowdat <- DataFrame(dplyr::select(cy3vals, -one_of(sum_cols)))
-    assay <- dplyr::select(cy3vals, one_of(sum_cols))
-    assay <- list(ref = DataFrame(assay))
+    refassay <- dplyr::select(cy3vals, one_of(sum_cols))
+    refassay <- list(ref = DataFrame(refassay))
 
     ## capture call parameters, combine with formal args
     params <- match.call(expand.dots = FALSE)[-1]
     params <- replace(formals(), names(params), params)
 
     ## return results as a SummarizedExperiment object
-    SummarizedExperiment(assays = assay, rowData = rowdat,
+    SummarizedExperiment(assays = refassay, rowData = rowdat,
                          metadata = list(sfactor = sfactor, params = params))
 }
