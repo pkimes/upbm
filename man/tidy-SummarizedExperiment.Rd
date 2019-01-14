@@ -21,6 +21,8 @@ dimension similar to original SummarizedExperiment object.
 (default = FALSE)}
 
 \item{.filter}{integer specifying level of probe filtering. (default = 1L)}
+
+\item{...}{other parameters for \code{tidy} generic function.}
 }
 \value{
 tibble with assay data.

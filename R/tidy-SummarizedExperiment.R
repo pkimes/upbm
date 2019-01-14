@@ -12,7 +12,7 @@
 #'        dimension similar to original SummarizedExperiment object.
 #'        (default = FALSE)
 #' @param .filter integer specifying level of probe filtering. (default = 1L)
-#'
+#' @param ... other parameters for \code{tidy} generic function. 
 #' @return
 #' tibble with assay data.
 #'
