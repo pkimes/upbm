@@ -46,6 +46,14 @@ probeFit <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
     datp <- SummarizedExperiment::assay(se, assay)
     datp <- log2(as.matrix(datp) + offset)
     datp[is.infinite(datp)] <- NA
+    
+    ## check if any probes have no non-NA values, drop from limma testing
+    n <- nrow(datp)
+    p <- ncol(datp)
+    dropProbes <- rowSums(is.finite(datp)) == 0L
+    If (any(dropProbes)) {
+        datp <- datp[!dropProbes, , drop = FALSE]
+    }
 
     ## check stratification params
     groups <- rlang::enquo(groups)
@@ -63,6 +71,15 @@ probeFit <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
                   sd = sweep(fit$stdev.unscaled, 1, fit$s2.post^.5, `*`),
                   df = replicate(ncol(fit$coefficients), fit$df.total))
 
+    ## return to full dimensions
+    if (any(dropProbes)) {
+        alist <- lapply(alist, function(x) {
+            y <- matrix(NA, nrow = n, ncol = p)
+            y[!dropProbes, ] <- x
+            y
+        })
+    }
+    
     SummarizedExperiment(assays = alist, rowData = rowData(se))
 }
 
