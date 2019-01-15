@@ -90,7 +90,7 @@ normalizeReplicates <- function(se, assay = SummarizedExperiment::assayNames(se)
         tab <- dplyr::mutate(tab, sfactor = 1/sfactor)
         tab <- bind_rows(tab, tab2)
         if (onlyref) {
-            tab <- dplyr::filter(tab, grepl("-REF", condition))
+            tab <- dplyr::filter(tab, condition == !!baseline)
         }
     
         ## compute geometric means across conditions - arithmetic mean on log-scale
@@ -127,7 +127,7 @@ normalizeReplicates <- function(se, assay = SummarizedExperiment::assayNames(se)
         tab <- dplyr::select(tab, -data, -vapprox)
 
         if (onlyref) {
-            tab <- dplyr::filter(tab, grepl("-REF", condition))
+            tab <- dplyr::filter(tab, condition == !!baseline)
         }
 
         ## compute geometric means across conditions - arithmetic mean on log-scale
@@ -145,7 +145,7 @@ normalizeReplicates <- function(se, assay = SummarizedExperiment::assayNames(se)
     ## second, shift replicates to put in same range
 
     ## compute REF log2 medians for scaled data
-    seriesMed <- tidy.SummarizedExperiment(se[, grepl("-REF$", colData(se)$condition)],
+    seriesMed <- tidy.SummarizedExperiment(se[, colData(se)$condition == baseline],
                                            "repScaled", long = TRUE)
     seriesMed <- dplyr::rename(seriesMed, upbmGrp__ = I(group))
     seriesMed <- group_by(seriesMed, upbmGrp__)
@@ -153,7 +153,7 @@ normalizeReplicates <- function(se, assay = SummarizedExperiment::assayNames(se)
     seriesMed <- ungroup(seriesMed)
 
     ## compute mean reference medians (pre-stretching)
-    sourceMed <- tidy.SummarizedExperiment(se[, grepl("-REF$", colData(se)$condition)],
+    sourceMed <- tidy.SummarizedExperiment(se[, colData(se)$condition == baseline],
                                            assay, long = TRUE)
     sourceMed <- dplyr::rename(sourceMed, upbmGrp__ = I(group))
     sourceMed <- group_by(sourceMed, upbmGrp__)
