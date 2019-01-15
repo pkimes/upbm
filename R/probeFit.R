@@ -51,7 +51,7 @@ probeFit <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
     n <- nrow(datp)
     p <- ncol(datp)
     dropProbes <- rowSums(is.finite(datp)) == 0L
-    If (any(dropProbes)) {
+    if (any(dropProbes)) {
         datp <- datp[!dropProbes, , drop = FALSE]
     }
 
