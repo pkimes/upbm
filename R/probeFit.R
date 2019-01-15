@@ -48,8 +48,7 @@ probeFit <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
     datp[is.infinite(datp)] <- NA
     
     ## check if any probes have no non-NA values, drop from limma testing
-    n <- nrow(datp)
-    p <- ncol(datp)
+    nProbes <- nrow(datp)
     dropProbes <- rowSums(is.finite(datp)) == 0L
     if (any(dropProbes)) {
         datp <- datp[!dropProbes, , drop = FALSE]
@@ -74,7 +73,8 @@ probeFit <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
     ## return to full dimensions
     if (any(dropProbes)) {
         alist <- lapply(alist, function(x) {
-            y <- matrix(NA, nrow = n, ncol = p)
+            y <- matrix(NA, nrow = nProbes, ncol = ncol(x))
+            colnames(y) <- colnames(x)
             y[!dropProbes, ] <- x
             y
         })

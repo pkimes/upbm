@@ -40,19 +40,20 @@ kmerFit <- function(se, method = c("dl2", "dl"), baseline = NULL) {
     ## only keep necessary columns
     adat <- dplyr::select(adat, condition, seq, beta, sd)
 
+    ## filter out NA probe results
+    adat <- dplyr::filter(adat, !is.na(beta), !is.na(sd))
+    
     ## compute probe set mixed effects model for each k-mer and condition
     adat <- tidyr::nest(adat, -condition, -seq)
     
     if (method == "dl") {
         adat <- dplyr::mutate(adat,
                               res = lapply(data, function(x) {
-                                  x <- dplyr::filter(x, !is.na(beta), !is.na(sd))
                                   dl_estimator(x$beta, x$sd^2, nrow(x))
                               }))
     } else if (method == "dl2") {
         adat <- dplyr::mutate(adat,
                               res = lapply(data, function(x) {
-                                  x <- dplyr::filter(x, !is.na(beta), !is.na(sd))
                                   dl2_estimator(x$beta, x$sd^2, nrow(x))
                               }))
     } else {
@@ -76,19 +77,19 @@ kmerFit <- function(se, method = c("dl2", "dl"), baseline = NULL) {
 
     ## compute empirical covariance and upperbound (assuming indep sampling error)
     ares <- dplyr::mutate(ares,
-                          ecov = mapply(function(x, y) { sum(x$resid * y$resid) / (nrow(x) - 1) },
+                          ecov = mapply(function(x, y) { sum(x$resid * y$resid, na.rm = TRUE) / (nrow(x) - 1) },
                                         x = data, y = bldata))
     ares <- dplyr::mutate(ares, 
                           covmax = mapply(function(x, y) { sqrt(x$tau2[1] * y$tau2[1]) },
                                           x = data, y = bldata))
-    ares <- dplyr::mutate(ares, ecovT = pmin(ecov, covmax))
+    ares <- dplyr::mutate(ares, ecovT = pmin(ecov, covmax, na.rm = TRUE))
 
     ## compute total variance of estimator using error covariance estimate
     ares <- dplyr::mutate(ares, 
                           dvar = mapply(function(d1, d2, e) {
-                              v1 <- 1 / sum(1/d1$totvar)
-                              v2 <- 1 / sum(1/d2$totvar)
-                              ccv <- sum(1 / (d1$totvar * d2$totvar)) * e * v1 * v2
+                              v1 <- 1 / sum(1/d1$totvar, na.rm = TRUE)
+                              v2 <- 1 / sum(1/d2$totvar, na.rm = TRUE)
+                              ccv <- sum(1 / (d1$totvar * d2$totvar), na.rm = TRUE) * e * v1 * v2
                               v1 + v2 - 2 * ccv
                           }, d1 = data, d2 = bldata, e = ecovT))
     ares <- dplyr::select(ares, seq, condition, dvar)
