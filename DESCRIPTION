@@ -30,12 +30,12 @@ Depends: R (>= 3.5),
          quantreg,
          qsmooth,
          NormalGamma,
-         princurve
+         princurve,
+         broom
 Imports: Rcpp,
          methods,
          limma,
-         affy,
-         broom
+         affy
 Suggests: BiocStyle,
           knitr
 License: MIT + file LICENSE
