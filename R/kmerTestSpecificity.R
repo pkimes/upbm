@@ -59,6 +59,7 @@ kmerTestSpecificity <- function(se, span = 0.05, ...) {
     ## tidy results to assays
     assaylist <- list(contrastAverage = upbm:::.tidycol2mat(cdat, "contrastAverage", kmers, colnames(se)),
                       contrastDifference = upbm:::.tidycol2mat(cdat, "contrastDifference", kmers, colnames(se)),
+                      contrastVariance = upbm:::.tidycol2mat(cdat, "contrastVariance", kmers, colnames(se)),
                       contrastFit = upbm:::.tidycol2mat(cdat, "contrastFit", kmers, colnames(se)),
                       contrastResidual = upbm:::.tidycol2mat(cdat, "contrastResidual", kmers, colnames(se)),
                       specificityZ = upbm:::.tidycol2mat(cdat, "specificityZ", kmers, colnames(se)),
