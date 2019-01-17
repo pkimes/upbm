@@ -39,9 +39,6 @@ kmerFit <- function(se, method = c("dl", "dl2"), baseline = NULL) {
 
     ## only keep necessary columns
     adat <- dplyr::select(adat, condition, seq, beta, sd)
-
-    ## filter out NA probe results
-    adat <- dplyr::filter(adat, !is.na(beta), !is.na(sd))
     
     ## compute probe set mixed effects model for each k-mer and condition
     adat <- tidyr::nest(adat, -condition, -seq)
@@ -49,11 +46,15 @@ kmerFit <- function(se, method = c("dl", "dl2"), baseline = NULL) {
     if (method == "dl") {
         adat <- dplyr::mutate(adat,
                               res = lapply(data, function(x) {
+                                  ## filter out NA probe results
+                                  x <- dplyr::filter(x, !is.na(beta), !is.na(sd))
                                   dl_estimator(x$beta, x$sd^2, nrow(x))
                               }))
     } else if (method == "dl2") {
         adat <- dplyr::mutate(adat,
                               res = lapply(data, function(x) {
+                                  ## filter out NA probe results
+                                  x <- dplyr::filter(x, !is.na(beta), !is.na(sd))
                                   dl2_estimator(x$beta, x$sd^2, nrow(x))
                               }))
     } else {
@@ -72,19 +73,22 @@ kmerFit <- function(se, method = c("dl", "dl2"), baseline = NULL) {
     }, d = data, r = res, SIMPLIFY = FALSE))
     ares <- dplyr::select(ares, condition, seq, data)
     ares <- tidyr::spread(ares, condition, data)
-    ares <- dplyr::rename(ares, "bldata" =  !!baseline)
+    ares <- dplyr::rename(ares, "bldata" = !!baseline)
     ares <- tidyr::gather(ares, condition, data, -seq, -bldata)
 
     ## compute empirical covariance and upperbound (assuming indep sampling error)
     ares <- dplyr::mutate(ares,
-                          ecov = mapply(function(x, y) { sum(x$resid * y$resid, na.rm = TRUE) / (nrow(x) - 1) },
-                                        x = data, y = bldata))
+                          ecov = mapply(function(x, y) {
+                              sum(x$resid * y$resid, na.rm = TRUE) /
+                                  (sum(!is.na(x$resid) & !is.na(y$resid)) - 1)
+                          }, x = data, y = bldata))
     ares <- dplyr::mutate(ares, 
-                          covmax = mapply(function(x, y) { sqrt(x$tau2[1] * y$tau2[1]) },
-                                          x = data, y = bldata))
+                          covmax = mapply(function(x, y) {
+                              sqrt(x$tau2[1] * y$tau2[1])
+                          }, x = data, y = bldata))
     ares <- dplyr::mutate(ares, ecovT = pmin(ecov, covmax, na.rm = TRUE))
 
-    ## compute total variance of estimator using error covariance estimate
+    ## compute total variance of difference using error covariance estimate
     ares <- dplyr::mutate(ares, 
                           dvar = mapply(function(d1, d2, e) {
                               v1 <- 1 / sum(1/d1$totvar, na.rm = TRUE)
@@ -97,7 +101,7 @@ kmerFit <- function(se, method = c("dl", "dl2"), baseline = NULL) {
     ## clean up all results
     bdat <- dplyr::select(adat, condition, seq, beta)
     bdat <- tidyr::spread(bdat, condition, beta)
-    bdat <- dplyr::rename(bdat, "blbeta" =  !!baseline)
+    bdat <- dplyr::rename(bdat, "blbeta" = !!baseline)
     bdat <- tidyr::gather(bdat, condition, beta, -seq, -blbeta)
     bdat <- dplyr::mutate(bdat, M = beta - blbeta)
     bdat <- dplyr::mutate(bdat, A = (beta + blbeta) / 2)
