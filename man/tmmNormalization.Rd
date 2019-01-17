@@ -5,7 +5,7 @@
 \title{TMM Normalization}
 \usage{
 tmmNormalization(se, assay = SummarizedExperiment::assayNames(se)[1],
-  q = 0.6, q0 = 0.1, qb = 0, stratify = "condition",
+  q = 0.6, q0 = 0.2, qb = 0, stratify = "condition",
   baseline = NULL, .filter = TRUE, .fits = FALSE)
 }
 \arguments{
