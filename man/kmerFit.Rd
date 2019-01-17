@@ -4,14 +4,14 @@
 \alias{kmerFit}
 \title{Fit k-mer Probe Set Models}
 \usage{
-kmerFit(se, method = c("dl2", "dl"), baseline = NULL)
+kmerFit(se, method = c("dl", "dl2"), baseline = NULL)
 }
 \arguments{
 \item{se}{SummarizedExperiment of k-mer, probe pairs by \code{kmerAggregate}.}
 
 \item{method}{character name of method to use for estimating cross-probe variance
 in each k-mer probe set. Currently, the non-iterative DerSimonian-Laird ("dl")
-and two-step Dersimonian-Laird ("dl2") methods are supported. (default = "dl2")}
+and two-step Dersimonian-Laird ("dl2") methods are supported. (default = "dl")}
 
 \item{baseline}{character name of baseline condition to use for calculating
 contrasts. (default = NULL)}

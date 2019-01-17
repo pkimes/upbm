@@ -7,7 +7,7 @@
 #' @param se SummarizedExperiment of k-mer, probe pairs by \code{kmerAggregate}.
 #' @param method character name of method to use for estimating cross-probe variance
 #'        in each k-mer probe set. Currently, the non-iterative DerSimonian-Laird ("dl")
-#'        and two-step Dersimonian-Laird ("dl2") methods are supported. (default = "dl2")
+#'        and two-step Dersimonian-Laird ("dl2") methods are supported. (default = "dl")
 #' @param baseline character name of baseline condition to use for calculating
 #'        contrasts. (default = NULL)
 #' 
@@ -18,7 +18,7 @@
 #' @importFrom tidyr unnest spread
 #' @export
 #' @author Patrick Kimes
-kmerFit <- function(se, method = c("dl2", "dl"), baseline = NULL) {
+kmerFit <- function(se, method = c("dl", "dl2"), baseline = NULL) {
     stopifnot(is(se, "SummarizedExperiment"))
     method <- match.arg(method)
     
