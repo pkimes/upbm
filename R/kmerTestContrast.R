@@ -36,7 +36,7 @@ kmerTestContrast <- function(se) {
     cdat <- dplyr::ungroup(cdat)
 
     ## tidy results to assays
-    assaylist <- list(contrastAverage = upbm:::.tidycol2mat(cdat, "contrastAverage", kmers, colnames(se)),
+    assaylist <- list(contrastAverage = assay(se, "contrastAverage"),
                       contrastDifference = upbm:::.tidycol2mat(cdat, "contrastDifference", kmers, colnames(se)),
                       contrastVariance = upbm:::.tidycol2mat(cdat, "contrastVariance", kmers, colnames(se)),
                       contrastZ = upbm:::.tidycol2mat(cdat, "contrastZ", kmers, colnames(se)),
