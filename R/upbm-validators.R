@@ -21,8 +21,7 @@ checkKmers <- function(kmers, verb) {
         if (verb) {
             cat("!! Using the default 8-mer set.\n")
         }
-        data(pbm_8mers)
-        return(pbm_8mers)
+        return(uniqueKmers(8L))
     }
     if (!is.vector(kmers, mode = "character")) {
         stop("If specified, 'kmers' must be a vector of nucleotide sequences as character strings.")
@@ -75,7 +74,7 @@ checkProbeSequences <- function(se, verb) {
              "object does not contain probe 'Row' and 'Column' information in the rowData.\n",
              "The unique 'Row' and 'Column' values (and 'Sequence') information must be added to the rowData.")
     }
-    data(pbm_8x60k_v1)
+    data(pbm_8x60k_v1, package = "upbmAux")
     if (nrow(se) != nrow(pbm_8x60k_v1)) {
         stop("The default set of probe sequences could not be used because the specified SummarizedExperiment ",
              "contains ", nrow(se), " rows, and the default probe set includes ", nrow(pbm_8x60k_v1), " rows.\n",

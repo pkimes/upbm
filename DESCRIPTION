@@ -35,7 +35,8 @@ Depends: R (>= 3.5),
 Imports: Rcpp,
          methods,
          limma,
-         affy
+         affy,
+         upbmAux
 Suggests: BiocStyle,
           knitr
 License: MIT + file LICENSE
