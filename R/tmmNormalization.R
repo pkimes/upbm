@@ -109,30 +109,29 @@ tmmNormalization <- function(se, assay = SummarizedExperiment::assayNames(se)[1]
   bdat <- dplyr::rename(bdat, Baseline = !!baseline)
   bdat <- tidyr::gather(bdat, Stratify, value, -Baseline, -Row, -Column)
   
-  bdat <- bdat %>% 
-    dplyr::group_by(Stratify)  %>% dplyr::summarise(median = median(value, na.rm = TRUE))
+  bdat <- dplyr::group_by(bdat, Stratify)
+  bdat <- dplyr::summarise(bdat, median = median(value, na.rm = TRUE))
   
-  bdat <- bdat %>% dplyr::mutate(A_b = (log2(median) + log2(b_ref)) / 2) %>%
-    dplyr::select(-median)
+  bdat <- dplyr::mutate(bdat, A_b = (log2(median) + log2(b_ref)) / 2)
+  bdat <- dplyr::select(bdat, -median)
   
   ## Join bdat with assay_fits
   assay_fits <- dplyr::left_join(assay_fits, bdat, by = "Stratify")
   
   ## TMM method
-  
   assay_fits <- dplyr::mutate(assay_fits,
                               est_shift = 0L,
                               est_scale = mapply(function(x, y) {
-                                z <- dplyr::filter(x, A.value < quantile(A.value, q))
-                                
-                                if (qb == "Auto") z <- dplyr::filter(z, A.value > y)
-                                else z <- dplyr::filter(z, A.value > quantile(A.value, qb))
-                                
-                                z <- dplyr::summarise(z, est_scale = 2^mean(M.value, trim = q0, na.rm = TRUE)) %>%
-                                  as.numeric()
-                                return(z)
+                                  z <- dplyr::filter(x, A.value < quantile(A.value, q))
+                                  
+                                  if (qb == "Auto") z <- dplyr::filter(z, A.value > y)
+                                  else z <- dplyr::filter(z, A.value > quantile(A.value, qb))
+                                  
+                                  z <- dplyr::summarise(z, est_scale = 2^mean(M.value, trim = q0, na.rm = TRUE))
+                                  z <- as.numeric(z)
+                                  return(z)
                               }, data, A_b)
-  )
+                              )
   
   assay_fits <- dplyr::bind_rows(assay_fits, dplyr::mutate(assay_ref, est_shift = 0L, est_scale = 1L))
   assay_fits <- dplyr::select(assay_fits, -data)
