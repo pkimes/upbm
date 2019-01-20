@@ -28,7 +28,6 @@ Depends: R (>= 3.5),
          fitdistrplus,
          truncnorm,
          quantreg,
-         qsmooth,
          NormalGamma,
          princurve,
          broom
