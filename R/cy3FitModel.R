@@ -1,5 +1,6 @@
-#' Compute Cy3 Scaling Factors
+#' @title Compute Cy3 Scaling Factors using OLS
 #'
+#' @description
 #' PBM arrays are scanned twice, once for Cy3-tagged dUTPs to quantify
 #' dsDNA abundance at each probe, and again for the Alexa488-tagged 
 #' protein. The Cy3 scans can be used to first filter out probes which
@@ -10,7 +11,7 @@
 #' original Universal PBM Analysis Suite proposed estimating scaling factors
 #' by looking at the residuals of a linear regression fit using all
 #' tri-nucleotide sequences starting with an adenine. Given a
-#' SummarizedExperiment of Cy3 scans, this function fit the tri-nucleotide
+#' SummarizedExperiment of Cy3 scans, this function fits the tri-nucleotide
 #' linear regression models and returns the expected Cy3 intensities,
 #' the residuals from the fits, and the corresponding observed-expected
 #' ratios for each probe as new assays added to the original Cy3
@@ -39,17 +40,17 @@
 #' flagged as low-quality based on log2(ratio) > 1 or < -1. Cy3 models are stored
 #' in the metadata of the returned object.
 #'
-#' @seealso cy3Normalize
+#' @seealso cy3Normalize cy3FitEmpirical
 #' @importFrom stats lm na.exclude predict
 #' @importFrom dplyr as_tibble select bind_cols group_by do ungroup left_join mutate
 #' @importFrom tidyr gather spread
 #' @importFrom Biostrings DNAStringSet oligonucleotideFrequency
 #' @export
 #' @author Patrick Kimes
-fitCy3Models <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
-                         refit = TRUE, .filter = 1L, 
-                         .trim = if (.filter > 0L) { c(1, 36) } else { NULL }) {
-
+cy3FitModel <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
+                        refit = TRUE, .filter = 1L, 
+                        .trim = if (.filter > 0L) { c(1, 36) } else { NULL }) {
+    
     ## check Sequence info in rowData
     nse <- checkProbeSequences(se, FALSE)
 

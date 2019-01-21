@@ -33,7 +33,7 @@
 #' @importFrom stats mad median sd
 #' @importFrom dplyr group_by mutate ungroup summarize left_join select
 #' @author Patrick Kimes
-generateCy3Ref <- function(cy3se, assay = SummarizedExperiment::assayNames(cy3se)[1],
+cy3GenerateRef <- function(cy3se, assay = SummarizedExperiment::assayNames(cy3se)[1],
                            offset = 1L, register = TRUE, .filter = 1L) {
 
     ## verify validity of cy3se
