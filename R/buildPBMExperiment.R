@@ -29,7 +29,8 @@
 #' probe ID, Name, or Sequence information, this is compared across samples and
 #' an error is thrown if the probe-to-sequence mapping is not common across all
 #' samples. 
-#' 
+#'
+#' @importFrom S4Vectors DataFrame
 #' @import SummarizedExperiment
 #' @importFrom purrr reduce
 #' @importFrom dplyr select left_join
@@ -103,10 +104,10 @@ buildPBMExperiment <- function(tab, useMean = FALSE, filterFlags = TRUE,
     assay_table <- purrr::reduce(assay_table, left_join, by = c("Column", "Row"))
 
     ## convert GPR data to list of DataFrames for SummarizedExperiment assay slot
-    assaydat <- list(fore = DataFrame(dplyr::select(assay_table, -Column, -Row)))
+    assaydat <- list(fore = S4Vectors::DataFrame(dplyr::select(assay_table, -Column, -Row)))
     names(assaydat[["fore"]]) <- paste0("s", 1:ncol(assaydat[["fore"]]))
     if (readBackground & !all(tab_scan == "RawData")) {
-        assaydat[["back"]] <- DataFrame(dplyr::select(assay_btable, -Column, -Row))
+        assaydat[["back"]] <- S4Vectors::DataFrame(dplyr::select(assay_btable, -Column, -Row))
         names(assaydat[["back"]]) <- names(assaydat[["fore"]])
     }
     
@@ -132,7 +133,7 @@ buildPBMExperiment <- function(tab, useMean = FALSE, filterFlags = TRUE,
                  "other raw GPR files.")
         }
         if (is.vector(probes, mode = "character")) {
-            probes <- DataFrame(Sequence = probes)
+            probes <- S4Vectors::DataFrame(Sequence = probes)
         }
         if (!is(probes, "DataFrame") & !is(probes, "data.frame")) {
             warning("Specified 'probes' must be a DataFrame, data.frame, or character vector ",
@@ -170,7 +171,7 @@ buildPBMExperiment <- function(tab, useMean = FALSE, filterFlags = TRUE,
     }
     
     ## column/condition-level metadata
-    coldat <- DataFrame(dplyr::select(tab, -gpr))
+    coldat <- S4Vectors::DataFrame(dplyr::select(tab, -gpr))
     rownames(coldat) <- names(assaydat[["fore"]])
     
     ## SummarizedExperiment
