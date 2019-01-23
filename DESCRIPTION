@@ -1,6 +1,6 @@
 Package: upbm
 Type: Package
-Title: Tools for the analysis of universal Protein Binding Microarrays
+Title: Tools for the analysis of universal protein binding microarrays
 Version: 0.99.0
 Authors@R: c(person("Patrick", "Kimes", email = "patrick.kimes@gmail.com", role = c("aut", "cre")),
              person("Dongyuan", "Song", email = "dsong@hsph.harvard.edu", role = "ctb"))
@@ -35,7 +35,8 @@ Imports: Rcpp,
          methods,
          limma,
          affy,
-         upbmAux
+         upbmAux,
+         upbmData
 Suggests: BiocStyle,
           knitr
 License: MIT + file LICENSE
