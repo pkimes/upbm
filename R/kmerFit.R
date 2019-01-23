@@ -16,8 +16,12 @@
 #' @param method character name of method to use for estimating cross-probe variance
 #'        in each k-mer probe set. Currently, the non-iterative DerSimonian-Laird ("dl")
 #'        and two-step Dersimonian-Laird ("dl2") methods are supported. (default = "dl")
-#' @param baseline character name of baseline condition to use for calculating
-#'        contrasts. (default = NULL)
+#' @param contrasts logical whether to compute contrasts for all conditions against a
+#'        specified \code{baseline} column. (default = TRUE)
+#' @param baseline character name of baseline condition to use to calculate contrasts
+#'        for all other conditions. Should match a column name of SummarizedExperiment object.
+#'        If NULL, the baseline condition is chosen by looking for a column ending in "ref" or "REF".
+#'        If a unique baseline column isn't found, an error is thrown. (default = NULL)
 #' @param .filter integer specifying level of probe filtering to
 #'        perform prior to estimating affinities. See \code{pbmFilterProbes}
 #'        for more details on probe filter levels. (default = 1)
@@ -33,12 +37,29 @@
 #' @importFrom tidyr unnest spread
 #' @export
 #' @author Patrick Kimes
-kmerFit <- function(se, kmers, positionbias = TRUE, method = c("dl", "dl2"), baseline = NULL,
-                    .filter = 1L, .trim = if (.filter > 0L) { c(1, 36) } else { NULL }) {
+kmerFit <- function(se, kmers, positionbias = TRUE, method = c("dl", "dl2"), contrasts = TRUE,
+                    baseline = NULL, .filter = 1L, .trim = if (.filter > 0L) { c(1, 36) } else { NULL }) {
 
     stopifnot(is(se, "SummarizedExperiment"))
     method <- match.arg(method)
 
+    ## check if specificed 'baseline' is valid
+    if (contrasts) {
+        if (is.null(baseline)) {
+            baseline <- grep("ref$", colnames(se), value = TRUE, ignore.case = TRUE)
+            if (length(baseline) > 1) {
+                stop("Too many candidate baseline states in column names: ",
+                     paste0(baseline, collapse = ", "), ".\n",
+                     "Specify correct baseline column name w/ 'baseline ='.")
+            }
+        } else {
+            if (! baseline %in% colnames(se)) {
+                stop(baseline, " is not a column name of the SummarizedExperiment.\n",
+                     "Specify correct baseline column name w/ 'baseline ='.")
+            }
+        }
+    }
+    
     ## check kmers specified
     kmers <- checkKmers(kmers, verb = FALSE)
 
@@ -145,54 +166,60 @@ kmerFit <- function(se, kmers, positionbias = TRUE, method = c("dl", "dl2"), bas
     adat <- dplyr::mutate(adat, beta = vapply(res, `[[`, numeric(1), "betaME"))
     adat <- dplyr::mutate(adat, betaVar = vapply(res, `[[`, numeric(1), "varME"))
 
-    ## rearrange data to compute difference covariances
-    ares <- dplyr::mutate(adat, data = mapply(function(d, r) {
-        d$resid <- d$beta - r$betaME
-        d$tau2 <- r$tau2
-        d$totvar <- d$sd^2 + d$tau2
-        d
-    }, d = data, r = res, SIMPLIFY = FALSE))
-    ares <- dplyr::select(ares, condition, seq, data)
-    ares <- tidyr::spread(ares, condition, data)
-    ares <- dplyr::rename(ares, "bldata" = !!baseline)
-    ares <- tidyr::gather(ares, condition, data, -seq, -bldata)
-
-    ## compute empirical covariance and upperbound (assuming indep sampling error)
-    ares <- dplyr::mutate(ares,
-                          ecov = mapply(function(x, y) {
-                              sum(x$resid * y$resid, na.rm = TRUE) /
-                                  (sum(!is.na(x$resid) & !is.na(y$resid)) - 1)
-                          }, x = data, y = bldata))
-    ares <- dplyr::mutate(ares, 
-                          covmax = mapply(function(x, y) {
-                              sqrt(x$tau2[1] * y$tau2[1])
-                          }, x = data, y = bldata))
-    ares <- dplyr::mutate(ares, ecovT = pmin(ecov, covmax, na.rm = TRUE))
-
-    ## compute total variance of difference using error covariance estimate
-    ares <- dplyr::mutate(ares, 
-                          dvar = mapply(function(d1, d2, e) {
-                              v1 <- 1 / sum(1/d1$totvar, na.rm = TRUE)
-                              v2 <- 1 / sum(1/d2$totvar, na.rm = TRUE)
-                              ccv <- sum(1 / (d1$totvar * d2$totvar), na.rm = TRUE) * e * v1 * v2
-                              v1 + v2 - 2 * ccv
-                          }, d1 = data, d2 = bldata, e = ecovT))
-    ares <- dplyr::select(ares, seq, condition, dvar)
-
     ## clean up all results
     bdat <- dplyr::select(adat, condition, seq, beta)
     bdat <- tidyr::spread(bdat, condition, beta)
     bdat <- dplyr::rename(bdat, "blbeta" = !!baseline)
     bdat <- tidyr::gather(bdat, condition, beta, -seq, -blbeta)
-    bdat <- dplyr::mutate(bdat, M = beta - blbeta)
-    bdat <- dplyr::mutate(bdat, A = (beta + blbeta) / 2)
 
     ## tidy results to assays
     assaylist <- list(affinityEstimate = .tidycol2mat(adat, "beta", kmers, colnames(se)),
-                      affinityVariance = .tidycol2mat(adat, "betaVar", kmers, colnames(se)),
-                      contrastDifference = .tidycol2mat(bdat, "M", kmers, colnames(se)),
-                      contrastAverage = .tidycol2mat(bdat, "A", kmers, colnames(se)),
-                      contrastVariance = .tidycol2mat(ares, "dvar", kmers, colnames(se)))
+                      affinityVariance = .tidycol2mat(adat, "betaVar", kmers, colnames(se)))
+
+
+    ## rearrange data to compute contrast covariances if needed
+    if (contrasts) {
+        ares <- dplyr::mutate(adat, data = mapply(function(d, r) {
+            d$resid <- d$beta - r$betaME
+            d$tau2 <- r$tau2
+            d$totvar <- d$sd^2 + d$tau2
+            d
+        }, d = data, r = res, SIMPLIFY = FALSE))
+        ares <- dplyr::select(ares, condition, seq, data)
+        ares <- tidyr::spread(ares, condition, data)
+        ares <- dplyr::rename(ares, "bldata" = !!baseline)
+        ares <- tidyr::gather(ares, condition, data, -seq, -bldata)
+
+        ## compute empirical covariance and upperbound (assuming indep sampling error)
+        ares <- dplyr::mutate(ares,
+                              ecov = mapply(function(x, y) {
+                                  sum(x$resid * y$resid, na.rm = TRUE) /
+                                      (sum(!is.na(x$resid) & !is.na(y$resid)) - 1)
+                              }, x = data, y = bldata))
+        ares <- dplyr::mutate(ares, 
+                              covmax = mapply(function(x, y) {
+                                  sqrt(x$tau2[1] * y$tau2[1])
+                              }, x = data, y = bldata))
+        ares <- dplyr::mutate(ares, ecovT = pmin(ecov, covmax, na.rm = TRUE))
+
+        ## compute total variance of difference using error covariance estimate
+        ares <- dplyr::mutate(ares, 
+                              dvar = mapply(function(d1, d2, e) {
+                                  v1 <- 1 / sum(1/d1$totvar, na.rm = TRUE)
+                                  v2 <- 1 / sum(1/d2$totvar, na.rm = TRUE)
+                                  ccv <- sum(1 / (d1$totvar * d2$totvar), na.rm = TRUE) * e * v1 * v2
+                                  v1 + v2 - 2 * ccv
+                              }, d1 = data, d2 = bldata, e = ecovT))
+        ares <- dplyr::select(ares, seq, condition, dvar)
+
+        ## clean up and tidy contrasts results
+        bdat <- dplyr::mutate(bdat, M = beta - blbeta)
+        bdat <- dplyr::mutate(bdat, A = (beta + blbeta) / 2)
+        assaylist <- c(assaylist,
+                       list(contrastDifference = .tidycol2mat(bdat, "M", kmers, colnames(se)),
+                            contrastAverage = .tidycol2mat(bdat, "A", kmers, colnames(se)),
+                            contrastVariance = .tidycol2mat(ares, "dvar", kmers, colnames(se))))
+    }
     
     rdat <- dplyr::select(adat, seq)
     rdat <- rdat[match(kmers, rdat$seq), ]
