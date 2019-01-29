@@ -3,6 +3,8 @@ title: "upbm: Analysis of Protein Binding Microarrays in R"
 author: Patrick K. Kimes
 date: "`r BiocStyle::doc_date()`"
 package: "`r BiocStyle::pkg_ver('upbm')`"
+abstract: >
+  "Protein binding microarrays (PBMs) allow for the high-throughput quantification of DNA binding specificities of proteins, e.g. transcription factors, in vitro. While several probe designs have been proposed for PBMs, universal-design PBMs (uPBMs) which cover all 10-mer DNA sequences, have enjoyed the most wide-spread use and success. The *upbm* package provides tools and methods for organizing probe-level PBM data from raw GPR scan files, summarizing PBM data at k-mer resolution, and performing statistical inference when replicate experiments are available. The package was developed for the analysis of uPBMs, but should be appropriate for most other PBM designs as well. upbm package version: `r packageVersion("upbm")`"
 output:
   BiocStyle::html_document:
     highlight: pygments
@@ -10,7 +12,7 @@ output:
     fig_width: 12
     fig_height: 4
 vignette: >
-  %\VignetteIndexEntry{Analysis with upbm}
+  %\VignetteIndexEntry{upbm: introduction}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
 editor_options: 
@@ -22,32 +24,65 @@ knitr::opts_chunk$set(tidy = FALSE, cache = TRUE, dev = "png",
                       message = FALSE, error = FALSE, warning = TRUE)
 ```
 
-**THIS PACKAGE IS STILL UNDER ACTIVE DEVELOPMENT**
-
 # Introduction
 
-This package provides tools for reading, plotting, and analyzing protein binding microarray (PBM) data in *R*. Currently, input data must be available as GenePix Results (GPR) files. A more stable and separate set of tools developed by Berger and Bulyk (Nature Protocols, 2009) for the analysis of PBMs is available for download at the [_Universal PBM Analysis Suite_ site](the_brain.bwh.harvard.edu/PBMAnalysisSuite/indexSep2017.html).
+While a large collection of methods and software packages have been developed for the processing and analysis of traditional DNA microarrays, the development of tools for protein binding microarrays (PBMs) has been limited. Due to the substantial difference of what is being measured by PBMs (protein-DNA binding) and DNA microarrays (nucleic acid hybridization), blindly applying DNA microarray tools to PBM data can lead to unexpected problems. 
 
-Several functions for loading and preprocessing microarray data are available in *R* through the widely used [*affy*](https://www.bioconductor.org/packages/release/bioc/html/affy.html) and [*limma*](http://bioconductor.org/packages/release/bioc/html/limma.html) packages. Additionally, the *limma* package also includes several functions for gene-level quantification and testing of differential expression with expression arrays. Rather than reinventing the wheel, this package (*upbm*) includes several easy-to-use wrappers to the pre-processing functions implemented in both *affy* and *limma* (prefixed `rma*` and `limma*`, respectively). Due to the specialized nature of PBMs, the *upbm* package includes specialized procedures for k-mer-level quantification not implemented in either of the aforementioned packages. 
+This package provides tools and methods for reading, plotting, and analyzing protein binding microarray (PBM) data in *R* using standard [*Bioconductor*](https://www.bioconductor.org/) [data structures](http://bioconductor.org/developers/how-to/commonMethodsAndClasses/). The primary focus is on universal-design PBMs (uPBMs) which provide approximately uniform coverage of all 8-mer DNA sequences across probes on the array [@berger2006].
+
+# Related Work
+
+A separate set of tools developed in Perl for the analysis of universal-design PBMs (uPBMs) is available for download at the [*Universal PBM Analysis Suite* site](the_brain.bwh.harvard.edu/PBMAnalysisSuite/indexSep2017.html) [@berger2009]. The *upbm* package builds on the work of the *Universal PBM Analysis Suite*, and provides alternative summaries of uPBM data not developed as part of the original suite of tools.
+
+A primary purpose of both software packages is the summarization of DNA binding affinities at the level of individual K-mers. To this end, the *Universal PBM Analysis Suite* summarizes K-mer binding affinity for individual PBM samples with two metrics: a non-parametric rank-based enrichment score (E-score), and the cross-probe median intensity (calculated across all probes containing the corresponding K-mer). In contrast, with *upbm*, K-mer binding affinities are estimated using a mixed effects model, with affinities effectively estimated as the weighted average log-transformed probe intensity across all probes containing the corresponding K-mer. This differs from the cross-probe median intensity in serveral important ways. First, the relative contribution of individual probes to the K-mer summary is inversely related to the variance of the probe across samples, downweighting highly variable probes. Second, to estimate probe-level variability, replicate samples are necessary. Third, because the variance structure is explicitly modeled, statistical testing and inference is possible at the level of K-mers.
+
+In addition to the summarization of DNA binding affinities at the level of individual K-mers, the *upbm* package also allows for testing for differential affinity between groups, e.g. to contrast binding affinity across allelic variants of the same transcription factor. Additionally, the package also allows for identifying preferentially bound K-mers for each groups of replicate samples. The *Universal PBM Analysis Suite* provides the ability to construct mononucleotide position weight matrices (PWMs), again, for individual PBM samples. Approaches for testing differential affinity between samples using the output of the *Universal PBM Analysis Suite* have also been previously described [@barrera2016].
+
+Many of the PBM pre-processing steps of the *Universal PBM Analysis Suite* are maintained in the *upbm* package. These steps have been re-implemented, with some modifications, e.g. in the process of Cy3 normalization, to enable and streamline the complete analysis of PBM data in *R*.
 
 # Installation
 
-To install the latest version of this package from GitHub, use the following command from the `devtools` package:
+To install the latest version of *upbm* along with two dependencies, *upbmAux* and *upbmData*, use the following command from the [`BiocManager`](https://CRAN.R-project.org/package=BiocManager) package:
 
 ```{r, eval = FALSE}
-devtools::install_github("pkimes/upbm")
+BiocManager::install("pkimes/upbm")
+BiocManager::install("pkimes/upbmAux")
+BiocManager::install("pkimes/upbmData")
 ```
 
 If the package is already installed, there is no need to re-install the package except to check for updates.
-After installing, the package still needs to be loaded to make the functions available in R.
+After installing, the package still needs to be loaded to make the functions available in *R*.
 
 ```{r}
 suppressPackageStartupMessages(library("upbm"))
 ```
 
+# HOXC9 Data Set
+
+Data from a triplicate series of PBM experiments are used to illustrate the features of the *upbm* package in this vignette. The data set include GenePix Results (GPR) data from Alexa488 scans for wild type human transcription factor (TF) HOXC9 and three allelic variants of the TF (K195R, R193K, R222W). Corresponding Cy3 scans are also included for all arrays. Each array was scanned for Alexa488 fluorescence at multiple PMT gains and Cy3 at a single PMT gain. The series comes from a larger set of experiments studying the effect of allelic variants on human transcription factor binding (manuscript in preparation). Data objects are stored in a separate *upbmData* package for convenience and include a table of sample metadata (`hoxc9table`), a *SummarizedExperiment* of Alexa488 scan data (`hoxc9alexa`), and a *SummarizedExperiment* of Cy3 scan data (`hoxc9cy3`).
+
+```{r}
+data(hoxc9table, package = "upbmData")
+data(hoxc9alexa, package = "upbmData")
+data(hoxc9cy3, package = "upbmData")
+```
+
+Metadata for Alexa488 and Cy3 scans are provided in the sample table.
+
+```{r}
+hoxc9table
+```
+
+Several important metadata variables are recorded in the table - notably, `scan` (scan type), `gpr` (path to the scan GPR file), `lp` (PMT gain of the scan), and `condition` (HOXC9 allele on the scanned array).
+
 # Quickstart
 
-Suppose we have a folder, `gpr_dir`, containing GPR files for a single experiment. We first determine the set of samples in that folder with `buildPBMTable`, and then read in the samples using `buildPBMExperiment`.
+Input data must be available as GenePix Results (GPR) files, with each GPR file corresponding to a single scan of a sample. The GPR files should be organized as a table of scans with each row detailing any important metadata about the scan, e.g. date and scan parameters, and sample, e.g. the name of the transcription factor. The path to the GPR file should be provided in a `gpr` column of the table.
+
+For this vignette, we will use example data included in the *upbmData* package. Details on the experiment are provided in the more complete walkthrough provided below. The GPR scans for this example data set are provided as `hoxc9table`.
+
+
+Notice that several metadata variables are recorded in addition to the necessary `gpr` column. Most notably,
 
 ```{r, eval = FALSE}
 pbmtab <- buildPBMTable(gpr_dir)
@@ -257,11 +292,14 @@ pbmPlotComparison(pbmdat_bc[, colData(pbmdat)$lp == 400],
 
 After applying pre-processing and filtering to probe-level intensities for each GPR file, we proceed to estimating candidate motif-level affinities. 
 
+
+
+
+
+
+# Alternative Inputs
+
+While PBM data are commonly stored as GPR scan files, several similar probe-level summaries files have been generated and made publicly available on platforms include [Uniprobe](http://the_brain.bwh.harvard.edu/uniprobe/) [@hume2014]. In addition to raw GPR data, the *upbm* software can be used to read in alternative sources of extrapolated or processed probe-level intensity data, e.g. from [Masliner](http://arep.med.harvard.edu/masliner/supplement.htm) or the *Universal PBM Analysis Suite*. We recommend using original GPR data files when possible.
+
 # References
 
-- [Berger MF and Bulyk ML (2009). "Universal protein-binding microarrays for the comprehensive characterization of the DNA-binding specificities of transcription factors." Nature Protocols, 4(3):393-411.](http://the_brain.bwh.harvard.edu/pubs/uPBMs_NatProt09.pdf)
-- [Berger MF, Philippakis AA, Qureshi A, He FS, Estep PW III and Bulyk ML (2006). "Compact, universal DNA microarrays to comprehensively determine transcription-factor binding site specificities." Nature Biotechnology, 24(11):1429-1435.](http://the_brain.bwh.harvard.edu/pubs/CompactDNAview.pdf)
-- [Universal PBM Analysis Suite](the_brain.bwh.harvard.edu/PBMAnalysisSuite/indexSep2017.html)
-- [Morgan M, Obenchain V, Hester J and Pagès H (2017). SummarizedExperiment: SummarizedExperiment container. R package version 1.8.1.](https://bioconductor.org/packages/release/bioc/html/SummarizedExperiment.html)
-- [Gautier L, Cope L, Bolstad BM and Irizarry RA (2004). "affy—analysis of Affymetrix GeneChip data at the probe level." Bioinformatics, 20(3):307–315.](https://www.bioconductor.org/packages/release/bioc/html/affy.html)
-- [Ritchie ME, Phipson B, Wu D, Hu Y, Law CW, Shi W and Smyth GK (2015). "limma powers differential expression analyses for RNA-sequencing and microarray studies." Nucleic Acids Research, 43(7):e47.](http://bioconductor.org/packages/release/bioc/html/limma.html)
