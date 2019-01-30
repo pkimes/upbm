@@ -64,7 +64,7 @@ kmerFit <- function(se, method = c("dl2", "dl"), baseline = NULL,
             ## compute quantiles of residuals
             adat <- dplyr::mutate(adat,
                                   probeZq = rank(-abs(probeZ), na.last = TRUE, ties.method = "first"),
-                                  probeZq = (probeZq - .5) / sum(!is.na(probeZ)))
+                                  probeZq = probeZq / sum(!is.na(probeZ)))
             ## prevent more than maxp to be rejected at any cutoff
             adat <- dplyr::mutate(adat, probeZ = ifelse(probeZq > outlier_maxp, 0, probeZ))
             adat <- dplyr::select(adat, -probeZq)
