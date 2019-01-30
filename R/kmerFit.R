@@ -15,7 +15,7 @@
 #'        applied to the absolute value of an approximate robust studentized residual
 #'        computed for each probe in each probe set and can be turned off by
 #'        setting the value to NULL. By default, approximate 0.5% tails are trimmed.
-#'        (default = \code{qnorm(0.005)})
+#'        (default = \code{qnorm(0.995)})
 #' @param outlier_maxp numeric threshold on maximum proportion of probes to filter
 #'        for each k-mer probe set. This is to prevent over-filtering based on the
 #'        approximate residual threshold. (default = 0.2)
@@ -28,7 +28,7 @@
 #' @export
 #' @author Patrick Kimes
 kmerFit <- function(se, method = c("dl2", "dl"), baseline = NULL,
-                    outlier_cutoff = qnorm(0.005), outlier_maxp = 0.2) {
+                    outlier_cutoff = qnorm(0.995), outlier_maxp = 0.2) {
     stopifnot(is(se, "SummarizedExperiment"))
     method <- match.arg(method)
     stopifnot(is.null(outlier_cutoff) ||

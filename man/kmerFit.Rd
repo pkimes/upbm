@@ -5,7 +5,7 @@
 \title{Fit k-mer Probe Set Models}
 \usage{
 kmerFit(se, method = c("dl2", "dl"), baseline = NULL,
-  outlier_cutoff = qnorm(0.005), outlier_maxp = 0.2)
+  outlier_cutoff = qnorm(0.995), outlier_maxp = 0.2)
 }
 \arguments{
 \item{se}{SummarizedExperiment of k-mer, probe pairs by \code{kmerAggregate}.}
@@ -22,7 +22,7 @@ probe sets before fitting each k-mer level model. The threshold is
 applied to the absolute value of an approximate robust studentized residual
 computed for each probe in each probe set and can be turned off by
 setting the value to NULL. By default, approximate 0.5% tails are trimmed.
-(default = \code{qnorm(0.005)})}
+(default = \code{qnorm(0.995)})}
 
 \item{outlier_maxp}{numeric threshold on maximum proportion of probes to filter
 for each k-mer probe set. This is to prevent over-filtering based on the
