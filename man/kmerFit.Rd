@@ -4,7 +4,8 @@
 \alias{kmerFit}
 \title{Fit k-mer Probe Set Models}
 \usage{
-kmerFit(se, method = c("dl2", "dl"), baseline = NULL)
+kmerFit(se, method = c("dl2", "dl"), baseline = NULL,
+  outlier_cutoff = qnorm(0.005), outlier_maxp = 0.2)
 }
 \arguments{
 \item{se}{SummarizedExperiment of k-mer, probe pairs by \code{kmerAggregate}.}
@@ -15,6 +16,17 @@ and two-step Dersimonian-Laird ("dl2") methods are supported. (default = "dl2")}
 
 \item{baseline}{character name of baseline condition to use for calculating
 contrasts. (default = NULL)}
+
+\item{outlier_cutoff}{numeric threshold for filtering probes from k-mer
+probe sets before fitting each k-mer level model. The threshold is
+applied to the absolute value of an approximate robust studentized residual
+computed for each probe in each probe set and can be turned off by
+setting the value to NULL. By default, approximate 0.5% tails are trimmed.
+(default = \code{qnorm(0.005)})}
+
+\item{outlier_maxp}{numeric threshold on maximum proportion of probes to filter
+for each k-mer probe set. This is to prevent over-filtering based on the
+approximate residual threshold. (default = 0.2)}
 }
 \value{
 SummarizedExperiment of estimated k-mer affinities and differences.
