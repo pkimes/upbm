@@ -4,8 +4,10 @@
 \alias{kmerFit}
 \title{Fit k-mer Probe Set Models}
 \usage{
-kmerFit(se, kmers, positionbias = TRUE, method = c("dl", "dl2"),
-  contrasts = TRUE, baseline = NULL, .filter = 1L, .trim = if
+kmerFit(se, kmers, positionbias = TRUE, method = c("dl2", "dl"),
+  contrasts = TRUE, baseline = NULL,
+  outlier_cutoff = qnorm(0.995), outlier_maxp = 0.2,
+  .filter = 1L, .trim = if
   (.filter > 0L) {     c(1, 36) } else {     NULL })
 }
 \arguments{
@@ -19,7 +21,7 @@ of k-mer along probe sequence. (default = TRUE)}
 
 \item{method}{character name of method to use for estimating cross-probe variance
 in each k-mer probe set. Currently, the non-iterative DerSimonian-Laird ("dl")
-and two-step Dersimonian-Laird ("dl2") methods are supported. (default = "dl")}
+and two-step Dersimonian-Laird ("dl2") methods are supported. (default = "dl2")}
 
 \item{contrasts}{logical whether to compute contrasts for all conditions against a
 specified \code{baseline} column. (default = TRUE)}
@@ -28,6 +30,17 @@ specified \code{baseline} column. (default = TRUE)}
 for all other conditions. Should match a column name of SummarizedExperiment object.
 If NULL, the baseline condition is chosen by looking for a column ending in "ref" or "REF".
 If a unique baseline column isn't found, an error is thrown. (default = NULL)}
+
+\item{outlier_cutoff}{numeric threshold for filtering probes from k-mer
+probe sets before fitting each k-mer level model. The threshold is
+applied to the absolute value of an approximate robust studentized residual
+computed for each probe in each probe set and can be turned off by
+setting the value to NULL. By default, approximate 0.5% tails are trimmed.
+(default = \code{qnorm(0.995)})}
+
+\item{outlier_maxp}{numeric threshold on maximum proportion of probes to filter
+for each k-mer probe set. This is to prevent over-filtering based on the
+approximate residual threshold. (default = 0.2)}
 
 \item{.filter}{integer specifying level of probe filtering to
 perform prior to estimating affinities. See \code{pbmFilterProbes}

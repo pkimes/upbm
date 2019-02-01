@@ -15,7 +15,16 @@
 #'        of k-mer along probe sequence. (default = TRUE)
 #' @param method character name of method to use for estimating cross-probe variance
 #'        in each k-mer probe set. Currently, the non-iterative DerSimonian-Laird ("dl")
-#'        and two-step Dersimonian-Laird ("dl2") methods are supported. (default = "dl")
+#'        and two-step Dersimonian-Laird ("dl2") methods are supported. (default = "dl2")
+#' @param outlier_cutoff numeric threshold for filtering probes from k-mer
+#'        probe sets before fitting each k-mer level model. The threshold is
+#'        applied to the absolute value of an approximate robust studentized residual
+#'        computed for each probe in each probe set and can be turned off by
+#'        setting the value to NULL. By default, approximate 0.5% tails are trimmed.
+#'        (default = \code{qnorm(0.995)})
+#' @param outlier_maxp numeric threshold on maximum proportion of probes to filter
+#'        for each k-mer probe set. This is to prevent over-filtering based on the
+#'        approximate residual threshold. (default = 0.2)
 #' @param contrasts logical whether to compute contrasts for all conditions against a
 #'        specified \code{baseline} column. (default = TRUE)
 #' @param baseline character name of baseline condition to use to calculate contrasts
@@ -37,11 +46,18 @@
 #' @importFrom tidyr unnest spread
 #' @export
 #' @author Patrick Kimes
-kmerFit <- function(se, kmers, positionbias = TRUE, method = c("dl", "dl2"), contrasts = TRUE,
-                    baseline = NULL, .filter = 1L, .trim = if (.filter > 0L) { c(1, 36) } else { NULL }) {
+kmerFit <- function(se, kmers, positionbias = TRUE, method = c("dl2", "dl"),
+                    contrasts = TRUE, baseline = NULL,
+                    outlier_cutoff = qnorm(0.995), outlier_maxp = 0.2,
+                    .filter = 1L,
+                    .trim = if (.filter > 0L) { c(1, 36) } else { NULL }) {
 
     stopifnot(is(se, "SummarizedExperiment"))
     method <- match.arg(method)
+
+    stopifnot(is.null(outlier_cutoff) ||
+              (is.numeric(outlier_cutoff) & outlier_cutoff > 0))
+    stopifnot(is.numeric(outlier_maxp) && outlier_maxp >= 0 && outlier_maxp <= 1)
 
     ## check if specificed 'baseline' is valid
     if (contrasts) {
@@ -142,9 +158,31 @@ kmerFit <- function(se, kmers, positionbias = TRUE, method = c("dl", "dl2"), con
     ## only keep necessary columns
     adat <- dplyr::select(bdat, condition, seq, beta, sd)
     
+    if (!is.null(outlier_cutoff)) {
+        ## compute quick studentized residuals
+        ## -- cross-probe var estimate as MAD
+        ## -- cross-probe point estimate as median
+        adat <- dplyr::group_by(adat, condition, seq)
+        adat <- dplyr::mutate(adat, probeZ = (beta - median(beta, na.rm = TRUE)) /
+                                        sqrt(mad(beta, na.rm = TRUE)^2 + sd^2))
+        if (outlier_maxp < 1) {
+            ## compute quantiles of residuals
+            adat <- dplyr::mutate(adat,
+                                  probeZq = rank(-abs(probeZ), na.last = TRUE, ties.method = "first"),
+                                  probeZq = probeZq / sum(!is.na(probeZ)))
+            ## prevent more than maxp to be rejected at any cutoff
+            adat <- dplyr::mutate(adat, probeZ = ifelse(probeZq > outlier_maxp, 0, probeZ))
+            adat <- dplyr::select(adat, -probeZq)
+        }
+        adat <- dplyr::ungroup(adat)
+
+        ## filter out probes
+        adat <- dplyr::mutate(adat, beta = ifelse(abs(probeZ) > outlier_cutoff, NA, beta))
+        adat <- dplyr::select(adat, -probeZ)
+    }
+
     ## compute probe set mixed effects model for each k-mer and condition
     adat <- tidyr::nest(adat, -condition, -seq)
-
     if (method == "dl") {
         adat <- dplyr::mutate(adat,
                               res = lapply(data, function(x) {
