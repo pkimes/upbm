@@ -48,7 +48,7 @@ setValidity("PBMExperiment",
                     }
                 }
                 ## check probeTrim specification
-                if (length(probeTrim) != 0L || length(probeTrim) != 2L) {
+                if (length(object@probeTrim) != 0L && length(object@probeTrim) != 2L) {
                     stop("PBMExperiment 'probeTrim' is too long. \n",
                          "If specified, 'probeTrim' must be a vector of length 2 corresponding ",
                          "to the start and end of the probe sequence to keep for analysis.")
@@ -57,3 +57,55 @@ setValidity("PBMExperiment",
             })
 
 
+#' PBMDesign class
+#'
+#' @description
+#' Simple class to store array design information for universal protein binding
+#' microarray (uPBM) data for use with functions in the \pkg{upbm} package.
+#' Array information is comprised of three elements.
+#'
+#' \enumerate{
+#' \item \code{design}: data.frame with each row corresponding to a probe on the array.
+#' Must include 'Sequence' and (unique) 'probeID' columns, along with any other metadata
+#' for probes, e.g. array 'Row' or 'Column' spatial coordinates. 
+#' \item \code{probeFilter}: optional named list of probe filters to be used to subset
+#' probes during data analysis steps. List names must correspond to columns in 'design'.
+#' List entries must be single-parameter functions to be called on the corresponding column
+#' to return a logical vector of probes to keep (TRUE) and drop (FALSE) during analysis.
+#' \item \code{probeTrim}: optional integer vector of length 2 specifying start and end
+#' positions in probe 'Sequence' to use in analysis steps.
+#' }
+#' 
+#' @aliases PBMDesign-class
+#' @export
+#' @exportClass PBMDesign
+#' @name PBMDesign-class
+#' @author Patrick Kimes
+setClass("PBMDesign",
+         slots = c(design = "data.frame", probeFilter = "list", probeTrim = "numeric"))
+
+setValidity("PBMDesign",
+            function(object) {
+                ## check necessary columns are specified
+                cn <- colnames(object@design)
+                if (!all(c("Sequence", "probeID") %in% cn)) {
+                    stop("PBMDesign 'design' data.frame must contain 'Sequence' and 'probeID' columns.")
+                }
+                ## check probeFilter specification
+                if (length(object@probeFilter) > 1) {
+                    if (is.null(names(object@probeFilter)) | any(names(object@probeFilter) == "")) {
+                        stop("PBMDesign 'probeFilter' must be a named list.")
+                    }
+                    if (!all(names(object@probeFilter) %in% colnames(rd))) {
+                        stop("PBMDesign 'probeFilter' must be a named list matching ",
+                             "'design' data.frame columns.")
+                    }
+                }
+                ## check probeTrim specification
+                if (length(object@probeTrim) != 0L && length(object@probeTrim) != 2L) {
+                    stop("PBMDesign 'probeTrim' is too long. \n",
+                         "If specified, 'probeTrim' must be a vector of length 2 corresponding ",
+                         "to the start and end of the probe sequence to keep for analysis.")
+                }
+                TRUE
+            })
