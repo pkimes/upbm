@@ -32,8 +32,8 @@
 #' \item DerSimonian, R., & Laird, N. (1986). Meta-analysis in clinical trials. Controlled Clinical Trials, 7(3), 177-188.
 #' \item Viechtbauer, W. (2010). Conducting meta-analyses in R with the metafor package. Journal of Statistical Software, 36(3), 1-48. URL: http://www.jstatsoft.org/v36/i03/
 #' }
-#' 
-#' @export 
+#'
+#' @keywords internal
 #' @author Patrick Kimes
 dl_estimator <- function(Y, vi, k) {
     X     <- rep(1, k)
@@ -92,8 +92,8 @@ dl_estimator <- function(Y, vi, k) {
 #' \itemize{
 #' \item DerSimonian, R., & Kacker, R. (2007). Random-effects model for meta-analysis of clinical trials: an update. Contemporary Clinical Trials, 28(2), 105-114.
 #' }
-#' 
-#' @export 
+#'
+#' @keywords internal
 #' @author Patrick Kimes
 dl2_estimator <- function(Y, vi, k) {
     X   <- rep(1, k)

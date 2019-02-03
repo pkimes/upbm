@@ -36,3 +36,4 @@ DerSimonian and Laird estimator in the context of meta analysis.
 \author{
 Patrick Kimes
 }
+\keyword{internal}

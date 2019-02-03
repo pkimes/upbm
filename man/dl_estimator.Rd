@@ -38,3 +38,4 @@ the cross-probe variance for each k-mer probe set.
 \author{
 Patrick Kimes
 }
+\keyword{internal}

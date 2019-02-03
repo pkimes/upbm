@@ -42,6 +42,20 @@
 #' @return
 #' SummarizedExperiment of estimated k-mer affinities and differences.
 #'
+#' @references
+#' If using \code{method = "dl2"} cross-probe variance estimator:
+#' \itemize{
+#' \item DerSimonian, R., & Kacker, R. (2007). Random-effects model for meta-analysis of clinical trials: an update. Contemporary Clinical Trials, 28(2), 105-114.
+#' }
+#' If using \code{method = "dl"} cross-probe variance estimator:
+#' \itemize{
+#' \item DerSimonian, R., & Laird, N. (1986). Meta-analysis in clinical trials. Controlled Clinical Trials, 7(3), 177-188.
+#' }
+#' Cross-probe variance estimation code adapted from:
+#' \itemize{
+#' \item Viechtbauer, W. (2010). Conducting meta-analyses in R with the metafor package. Journal of Statistical Software, 36(3), 1-48. URL: http://www.jstatsoft.org/v36/i03/
+#' }
+#'
 #' @importFrom dplyr select_ group_by left_join ungroup do mutate
 #' @importFrom tidyr unnest spread
 #' @export
