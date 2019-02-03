@@ -1,44 +1,50 @@
-#' Read PBMExperiment Data
+#' @title Create a new PBMExperiment object
 #'
+#' @description
 #' Read PBM data from a table containing paths to GPR files. 
 #' 
-#' @param tab table of samples with at least a single `gpr` column
+#' @param x table of scans with at least a single `gpr' column
 #'        corresponding to GPR file paths.
 #' @param useMean logical whether to use mean fluorescent intensity
 #'        for each probe rather than median fluorescent intensity.
 #'        (default = FALSE)
 #' @param filterFlags logical whether to replace intensity values at probes
 #'        flagged manually or automatically as being low quality
-#'         ('Bad': -100, 'Absent': -75, 'Not Found': -50) with NA. (default = TRUE)
+#'         (`Bad': -100, `Absent': -75, `Not Found': -50) with NA. (default = TRUE)
 #' @param readBackground logical whether to also read in probe background
 #'        intensities. (default = TRUE)
-#' @param probes data.frame containing probe sequences in a column, 'Sequence',
+#' @param probes data.frame containing probe sequences in a column, `Sequence',
 #'        or a character vector specifying the probe sequences. If specified,
 #'        these values will be added to the rowData of the returned
 #'        SummarizedExperiment object. (default = NULL)
 #'
 #' @return
-#' SummarizedExperiment object with assays containing intensities for the
-#' samples specified in the input 'tab'. The object currently includes the 
-#' following assays:
-#' * 'fore' - foreground probe intensities,
-#' * 'back' - background probe intensities (unless `readBackground = FALSE`).
+#' \code{\link[PBMExperiment-class]{PBMExperiment}} object with assays containing
+#' intensities for the scans specified in the table of scans. The object
+#' includes the following assays:
+#' * \code{fore} - foreground probe intensities,
+#' * \code{back} - background probe intensities (unless \code{readBackground = FALSE}).
 #'
+#' Scan metadata included in the table of scans is stored as column data.
+#' Probe design information, if specified, is included as row data.
+#' 
 #' @details
 #' If raw data files (cleaned GPR data files, e.g. uploaded to UniPROBE) include
 #' probe ID, Name, or Sequence information, this is compared across samples and
 #' an error is thrown if the probe-to-sequence mapping is not common across all
 #' samples. 
 #'
+#' @seealso \code{\link{PBMExperiment-class}}
 #' @importFrom S4Vectors DataFrame
 #' @import SummarizedExperiment
 #' @importFrom purrr reduce
 #' @importFrom dplyr select left_join
 #' @importFrom tibble as_tibble
+#' @name PBMExperiment
 #' @export
 #' @author Patrick Kimes
-buildPBMExperiment <- function(tab, useMean = FALSE, filterFlags = TRUE,
-                               readBackground = TRUE, probes = NULL) {
+PBMExperiment <- function(x, useMean = FALSE, filterFlags = TRUE,
+                          readBackground = TRUE, probes = NULL) {
     ## check validity of inputs
     stopifnot(is.data.frame(tab))
     stopifnot("gpr" %in% names(tab))
@@ -174,12 +180,12 @@ buildPBMExperiment <- function(tab, useMean = FALSE, filterFlags = TRUE,
     coldat <- S4Vectors::DataFrame(dplyr::select(tab, -gpr))
     rownames(coldat) <- names(assaydat[["fore"]])
     
-    ## SummarizedExperiment
-    SummarizedExperiment(assays = assaydat, rowData = rowdat, colData = coldat,
-                         metadata = list(steps = list(),
-                                         spatialAdjustment = NULL,
-                                         backgroundCorrection = NULL,
-                                         betweenArrayNormalization = NULL))
+    new("PBMExperiment", assays = assaydat,
+        rowData = rowdat, colData = coldat,
+        metadata = list(steps = list(),
+                        spatialAdjustment = NULL,
+                        backgroundCorrection = NULL,
+                        betweenArrayNormalization = NULL))
 }
 
 
