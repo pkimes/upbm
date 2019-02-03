@@ -5,6 +5,16 @@
 #' universal protein binding microarray (uPBM) data for use with functions
 #' in the \pkg{upbm} package. 
 #'
+#' @slot probeFilter an optional named list of probe filters to be used to subset
+#'       probes during data analysis steps. List names must correspond to columns in
+#'       RowData. List entries must be single-parameter functions to be called on the
+#'       corresponding column to return a logical vector of probes to keep (TRUE) and
+#'       drop (FALSE) during analysis.
+#' @slot probeTrim an optional integer vector of length 2 specifying start and end
+#'       positions in probe `Sequence' to use in analysis steps.
+#' @slot probeCols an optional character vector of rowData column names corresponding
+#'       to probe design information. 
+#' 
 #' @aliases PBMExperiment-class
 #' @import SummarizedExperiment
 #' @export
@@ -12,7 +22,8 @@
 #' @name PBMExperiment-class
 #' @author Patrick Kimes
 setClass("PBMExperiment", contains = "SummarizedExperiment",
-         slots = c(probeFilter = "list", probeTrim = "numeric"))
+         slots = c(probeFilter = "list", probeTrim = "numeric",
+                   probeCols = "character"))
 
 setValidity("PBMExperiment",
             function(object) {
@@ -64,17 +75,16 @@ setValidity("PBMExperiment",
 #' microarray (uPBM) data for use with functions in the \pkg{upbm} package.
 #' Array information is comprised of three elements.
 #'
-#' \enumerate{
-#' \item \code{design}: data.frame with each row corresponding to a probe on the array.
-#' Must include 'Sequence' and (unique) 'probeID' columns, along with any other metadata
-#' for probes, e.g. array 'Row' or 'Column' spatial coordinates. 
-#' \item \code{probeFilter}: optional named list of probe filters to be used to subset
-#' probes during data analysis steps. List names must correspond to columns in 'design'.
-#' List entries must be single-parameter functions to be called on the corresponding column
-#' to return a logical vector of probes to keep (TRUE) and drop (FALSE) during analysis.
-#' \item \code{probeTrim}: optional integer vector of length 2 specifying start and end
-#' positions in probe 'Sequence' to use in analysis steps.
-#' }
+#' @slot design a data.frame with each row corresponding to a probe on the array.
+#'       Must include `Sequence' and (unique) `probeID' columns, along with any
+#'       other metadata for probes, e.g. array `Row' or `Column' spatial coordinates. 
+#' @slot probeFilter an optional named list of probe filters to be used to subset
+#'       probes during data analysis steps. List names must correspond to columns in `design'.
+#'       List entries must be single-parameter functions to be called on the
+#'       corresponding column to return a logical vector of probes to keep (TRUE) and
+#'       drop (FALSE) during analysis.
+#' @slot probeTrim an optional integer vector of length 2 specifying start and end
+#'       positions in probe `Sequence' to use in analysis steps.
 #' 
 #' @aliases PBMDesign-class
 #' @export

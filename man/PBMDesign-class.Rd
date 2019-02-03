@@ -8,19 +8,24 @@
 Simple class to store array design information for universal protein binding
 microarray (uPBM) data for use with functions in the \pkg{upbm} package.
 Array information is comprised of three elements.
+}
+\section{Slots}{
 
-\enumerate{
-\item \code{design}: data.frame with each row corresponding to a probe on the array.
-Must include 'Sequence' and (unique) 'probeID' columns, along with any other metadata
-for probes, e.g. array 'Row' or 'Column' spatial coordinates. 
-\item \code{probeFilter}: optional named list of probe filters to be used to subset
-probes during data analysis steps. List names must correspond to columns in 'design'.
-List entries must be single-parameter functions to be called on the corresponding column
-to return a logical vector of probes to keep (TRUE) and drop (FALSE) during analysis.
-\item \code{probeTrim}: optional integer vector of length 2 specifying start and end
-positions in probe 'Sequence' to use in analysis steps.
-}
-}
+\describe{
+\item{\code{design}}{a data.frame with each row corresponding to a probe on the array.
+Must include `Sequence' and (unique) `probeID' columns, along with any
+other metadata for probes, e.g. array `Row' or `Column' spatial coordinates.}
+
+\item{\code{probeFilter}}{an optional named list of probe filters to be used to subset
+probes during data analysis steps. List names must correspond to columns in `design'.
+List entries must be single-parameter functions to be called on the
+corresponding column to return a logical vector of probes to keep (TRUE) and
+drop (FALSE) during analysis.}
+
+\item{\code{probeTrim}}{an optional integer vector of length 2 specifying start and end
+positions in probe `Sequence' to use in analysis steps.}
+}}
+
 \author{
 Patrick Kimes
 }

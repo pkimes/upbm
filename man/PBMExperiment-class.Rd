@@ -9,6 +9,22 @@ Extension of the \code{\link{SummarizedExperiment}} class to store
 universal protein binding microarray (uPBM) data for use with functions
 in the \pkg{upbm} package.
 }
+\section{Slots}{
+
+\describe{
+\item{\code{probeFilter}}{an optional named list of probe filters to be used to subset
+probes during data analysis steps. List names must correspond to columns in
+RowData. List entries must be single-parameter functions to be called on the
+corresponding column to return a logical vector of probes to keep (TRUE) and
+drop (FALSE) during analysis.}
+
+\item{\code{probeTrim}}{an optional integer vector of length 2 specifying start and end
+positions in probe `Sequence' to use in analysis steps.}
+
+\item{\code{probeCols}}{an optional character vector of rowData column names corresponding
+to probe design information.}
+}}
+
 \author{
 Patrick Kimes
 }
