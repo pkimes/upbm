@@ -4,7 +4,7 @@
 \alias{readGPR}
 \title{Read GPR File}
 \usage{
-readGPR(gpr_path, gpr_type, useMean = FALSE, filterFlags = TRUE,
+readGPR(gpr_path, gpr_type, useMedian = TRUE, filterFlags = TRUE,
   readBackground = TRUE)
 }
 \arguments{
@@ -12,9 +12,9 @@ readGPR(gpr_path, gpr_type, useMean = FALSE, filterFlags = TRUE,
 
 \item{gpr_type}{scan type; one of "Alexa", "Cy3", "Masliner".}
 
-\item{useMean}{logical whether to use mean fluorescent intensity
-for each probe rather than median fluorescent intensity.
-(default = FALSE)}
+\item{useMedian}{logical whether to use median fluorescent intensity
+for each probe rather than mean fluorescent intensity.
+(default = TRUE)}
 
 \item{filterFlags}{logical whether to replace intensity values at probes
 flagged manually or automatically as being low quality.
@@ -40,3 +40,4 @@ the function may fail to read the foreground and background intensities.
 \author{
 Patrick Kimes
 }
+\keyword{internal}

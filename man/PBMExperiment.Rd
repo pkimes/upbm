@@ -2,47 +2,59 @@
 % Please edit documentation in R/PBMExperiment-constructor.R
 \name{PBMExperiment}
 \alias{PBMExperiment}
-\title{Create a new PBMExperiment object}
+\title{Load raw PBM scan data as PBMExperiment}
 \usage{
-PBMExperiment(x, useMean = FALSE, filterFlags = TRUE,
-  readBackground = TRUE, probes = NULL)
+PBMExperiment(x, useMedian = TRUE, filterFlags = TRUE,
+  readBackground = TRUE, probes = NULL, ...)
 }
 \arguments{
-\item{x}{table of scans with at least a single `gpr' column
+\item{x}{a data.frame of scans with at least a single `gpr' column
 corresponding to GPR file paths.}
 
-\item{useMean}{logical whether to use mean fluorescent intensity
-for each probe rather than median fluorescent intensity.
-(default = FALSE)}
+\item{useMedian}{a logical value whether to use median fluorescent intensity
+for each probe rather than mean fluorescent intensity.
+(default = TRUE)}
 
-\item{filterFlags}{logical whether to replace intensity values at probes
+\item{filterFlags}{a logical value whether to replace intensity values at probes
 flagged manually or automatically as being low quality
  (`Bad': -100, `Absent': -75, `Not Found': -50) with NA. (default = TRUE)}
 
-\item{readBackground}{logical whether to also read in probe background
+\item{readBackground}{a logical value whether to also read in probe background
 intensities. (default = TRUE)}
 
-\item{probes}{data.frame containing probe sequences in a column, `Sequence',
-or a character vector specifying the probe sequences. If specified,
-these values will be added to the rowData of the returned
-SummarizedExperiment object. (default = NULL)}
+\item{probes}{a \code{\link[PBMDesign-class]{PBMDesign}} object containing
+the probe design used for the data. (default = NULL)}
+
+\item{...}{optionally, probe design information can be directly specified using
+\code{design=}, \code{probeFilter=}, \code{probeTrim=} parameters. These
+will be ignored if \code{probes=} is specified.}
 }
 \value{
 \code{\link[PBMExperiment-class]{PBMExperiment}} object with assays containing
-intensities for the scans specified in the table of scans. The object
+intensities from the GPR files specified in the table of scans. The object
 includes the following assays:
 * \code{fore} - foreground probe intensities,
 * \code{back} - background probe intensities (unless \code{readBackground = FALSE}).
 
-Scan metadata included in the table of scans is stored as column data.
+Scan metadata included in the data.frame are stored as column data.
 Probe design information, if specified, is included as row data.
 }
 \description{
-Read PBM data from a table containing paths to GPR files.
+Read PBM scan data from GenePix Results (GPR) files and combine into
+a single \code{\link[PBMExperiment-class]{PBMExperiment}} object.
+Paths to GPR file must be specified as part of a larger
 }
 \details{
-If raw data files (cleaned GPR data files, e.g. uploaded to UniPROBE) include
-probe ID, Name, or Sequence information, this is compared across samples and
+GPR files are parsed differently depending on the file type which can take values
+of ``Alexa", ``Cy3", or ``Masliner". Both ``Alexa" and ``Cy3" scans
+are treated as untouched GenePix Results (GPR) files, while ``Masliner" files are
+treated as Masliner-processed GPR files.
+
+If a `scan' column is not provided in the input table, GPR files are assumed to
+be Alexa488 scans unless the file name in the `gpr' column contains "Masliner".
+
+If ``raw data" files (processed GPR data files, e.g. uploaded to UniPROBE)
+include probe ID, Name, or Sequence information, this is compared across samples and
 an error is thrown if the probe-to-sequence mapping is not common across all
 samples.
 }
