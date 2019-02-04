@@ -13,7 +13,7 @@
 #' @param probeTrim an optional integer vector of length 2 specifying start and end
 #'        positions in probe `Sequence' to use in analysis steps. (default = \code{numeric()})
 #' @param probeCols an optional character vector of rowData column names corresponding
-#'        to probe design information. (default = \code{character()})
+#'        to probe design information. (default = \code{c("Sequence", "probeID")})
 #' @param ... an optional SummarizedExperiment containing PBM probe intensity data and
 #'        corresponding annotations or parameters to be passed to the SummarizedExperiment
 #'        constructor.
@@ -26,10 +26,18 @@
 #' @author Patrick Kimes
 PBMExperiment <- function(probeFilter = list(),
                           probeTrim = numeric(),
-                          probeCols = character(),
+                          probeCols = c("Sequence", "probeID"),
                           ...) {
     se <- SummarizedExperiment(...)
-    .PBMExperiment(se, probeFilter = probeFilter,
+    rd <- rowData(se)
+    if (! "Sequence" %in% colnames(rd)) {
+        rowData(se)$Sequence <- character()
+    }
+    if (! "probeID" %in% colnames(rd)) {
+        rowData(se)$probeID <- character()
+    }
+    .PBMExperiment(se,
+                   probeFilter = probeFilter,
                    probeTrim = probeTrim,
                    probeCols = probeCols)
 }

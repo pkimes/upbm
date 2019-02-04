@@ -42,10 +42,10 @@ setValidity2("PBMExperiment",
                      stop("PBMExperiment probe sequences must be character strings.\n",
                           "Please check 'Sequence' rowData values.")
                  }
-                 if (any(duplicated(rd$probeID))) {
-                     stop("PBMExperiment probe IDs must be unique.\n",
-                          "Please check 'probeID' rowData values.")
-                 }
+                 ## if (any(duplicated(rd$probeID))) {
+                 ##     stop("PBMExperiment probe IDs must be unique.\n",
+                 ##          "Please check 'probeID' rowData values.")
+                 ## }
                  ## check probeFilter specification
                  if (length(object@probeFilter) > 1) {
                      if (is.null(names(object@probeFilter)) | any(names(object@probeFilter) == "")) {
@@ -58,7 +58,7 @@ setValidity2("PBMExperiment",
                  }
                  ## check probeTrim specification
                  if (length(object@probeTrim) != 0L && length(object@probeTrim) != 2L) {
-                     stop("PBMExperiment 'probeTrim' is too long. \n",
+                     stop("PBMExperiment 'probeTrim' specification is invalid. \n",
                           "If specified, 'probeTrim' must be a vector of length 2 corresponding ",
                           "to the start and end of the probe sequence to keep for analysis.")
                  }
@@ -124,7 +124,7 @@ setValidity2("PBMDesign",
                  }
                  ## check probeTrim specification
                  if (length(object@probeTrim) != 0L && length(object@probeTrim) != 2L) {
-                     stop("PBMDesign 'probeTrim' is too long. \n",
+                     stop("PBMDesign 'probeTrim' specification is invalid. \n",
                           "If specified, 'probeTrim' must be a vector of length 2 corresponding ",
                           "to the start and end of the probe sequence to keep for analysis.")
                  }
