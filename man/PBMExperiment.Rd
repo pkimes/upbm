@@ -2,64 +2,38 @@
 % Please edit documentation in R/PBMExperiment-constructor.R
 \name{PBMExperiment}
 \alias{PBMExperiment}
-\title{Load raw PBM scan data as PBMExperiment}
+\title{Create a new PBMExperiment object}
 \usage{
-PBMExperiment(x, useMedian = TRUE, filterFlags = TRUE,
-  readBackground = TRUE, probes = NULL, ...)
+PBMExperiment(probeFilter = list(), probeTrim = numeric(),
+  probeCols = character(), ...)
 }
 \arguments{
-\item{x}{a data.frame of scans with at least a single `gpr' column
-corresponding to GPR file paths.}
+\item{probeFilter}{an optional named list of probe filters to be used to subset
+probes during data analysis steps. List names must correspond to columns in
+rowData. List entries must be single-parameter functions to be called on the
+corresponding column to return a logical vector of probes to keep (TRUE) or
+drop (FALSE) during analysis. (default = \code{list()})}
 
-\item{useMedian}{a logical value whether to use median fluorescent intensity
-for each probe rather than mean fluorescent intensity.
-(default = TRUE)}
+\item{probeTrim}{an optional integer vector of length 2 specifying start and end
+positions in probe `Sequence' to use in analysis steps. (default = \code{numeric()})}
 
-\item{filterFlags}{a logical value whether to replace intensity values at probes
-flagged manually or automatically as being low quality
- (`Bad': -100, `Absent': -75, `Not Found': -50) with NA. (default = TRUE)}
+\item{probeCols}{an optional character vector of rowData column names corresponding
+to probe design information. (default = \code{character()})}
 
-\item{readBackground}{a logical value whether to also read in probe background
-intensities. (default = TRUE)}
-
-\item{probes}{a \code{\link[PBMDesign-class]{PBMDesign}} object containing
-the probe design used for the data. (default = NULL)}
-
-\item{...}{optionally, probe design information can be directly specified using
-\code{design=}, \code{probeFilter=}, \code{probeTrim=} parameters. These
-will be ignored if \code{probes=} is specified.}
+\item{...}{an optional SummarizedExperiment containing PBM probe intensity data and
+corresponding annotations or parameters to be passed to the SummarizedExperiment
+constructor.}
 }
 \value{
-\code{\link[PBMExperiment-class]{PBMExperiment}} object with assays containing
-intensities from the GPR files specified in the table of scans. The object
-includes the following assays:
-* \code{fore} - foreground probe intensities,
-* \code{back} - background probe intensities (unless \code{readBackground = FALSE}).
-
-Scan metadata included in the data.frame are stored as column data.
-Probe design information, if specified, is included as row data.
+\code{\link[=PBMExperiment-class]{PBMExperiment}} object.
 }
 \description{
-Read PBM scan data from GenePix Results (GPR) files and combine into
-a single \code{\link[PBMExperiment-class]{PBMExperiment}} object.
-Paths to GPR file must be specified as part of a larger
-}
-\details{
-GPR files are parsed differently depending on the file type which can take values
-of ``Alexa", ``Cy3", or ``Masliner". Both ``Alexa" and ``Cy3" scans
-are treated as untouched GenePix Results (GPR) files, while ``Masliner" files are
-treated as Masliner-processed GPR files.
-
-If a `scan' column is not provided in the input table, GPR files are assumed to
-be Alexa488 scans unless the file name in the `gpr' column contains "Masliner".
-
-If ``raw data" files (processed GPR data files, e.g. uploaded to UniPROBE)
-include probe ID, Name, or Sequence information, this is compared across samples and
-an error is thrown if the probe-to-sequence mapping is not common across all
-samples.
+Create a PBMExperiment object by directly specifying optional probe annotation
+information (\code{probeFilter}, \code{probeTrim}, \code{probeCols}), along with
+a based SummarizedExperiment object containing probe intensity data.
 }
 \seealso{
-\code{\link{PBMExperiment-class}}
+\code{\link{PBMExperiment-class}}, \code{\link[SummarizedExperiment:RangedSummarizedExperiment-class]{SummarizedExperiment-class}}, \code{\link{gpr2PBMExperiment}}
 }
 \author{
 Patrick Kimes

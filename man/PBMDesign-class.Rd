@@ -3,6 +3,7 @@
 \docType{class}
 \name{PBMDesign-class}
 \alias{PBMDesign-class}
+\alias{.PBMDesign}
 \title{PBMDesign class}
 \description{
 Simple class to store array design information for universal protein binding

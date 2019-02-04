@@ -3,6 +3,7 @@
 \docType{class}
 \name{PBMExperiment-class}
 \alias{PBMExperiment-class}
+\alias{.PBMExperiment}
 \title{PBMExperiment class}
 \description{
 Extension of the \code{\link{SummarizedExperiment}} class to store

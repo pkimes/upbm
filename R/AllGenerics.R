@@ -1,7 +1,17 @@
 #' @rdname PBMDesign
 #' @export
 setGeneric("PBMDesign", valueClass = "PBMDesign",
-           function(x, ...) standardGeneric("PBMDesign"))
+           function(x, ...) standardGeneric("PBMDesign"),
+           useAsDefault = function(x, ...) {
+               if (missing(x)) {
+                   warning("PBMDesign should be constructed by specifying table of probes with 'x ='.")
+               } else {
+                   warning("PBMDesign should be constructed by specifying table of probes with 'x ='.\n",
+                           "Ignoring specified 'x='.")
+               }
+               .PBMDesign(design = data.frame(Sequence = character(),
+                                              probeID = character()), ...)
+           })
 
 #' Set design in PBMExperiment object
 #'

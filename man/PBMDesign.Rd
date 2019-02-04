@@ -17,11 +17,11 @@ PBMDesign(x, ...)
 \item{x}{data.frame with each row corresponding to a probe on the array.
 Must include `Sequence' and (unique) `probeID' columns, along with any
 other metadata for probes, e.g. array `Row' or `Column' spatial coordinates.
-Alternatively, a \code{\link[PBMExperiment-class]{PBMExperiment}} object to
+Alternatively, a \code{\link[=PBMExperiment-class]{PBMExperiment}} object to
 return the associated \code{PBMDesign} object.}
 
 \item{...}{optional probe design parameters to be defined as part of the \code{PBMDesign}
-object. See the \code{\link[PBMDesign-class]{PBMDesign}} class definition for
+object. See the \code{\link[=PBMDesign-class]{PBMDesign}} class definition for
 a list of probe design parameters. Important parameters are as described in
 the Details section below.}
 }
