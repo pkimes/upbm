@@ -16,56 +16,66 @@
 #'       to probe design information. 
 #' 
 #' @aliases PBMExperiment-class
-#' @import SummarizedExperiment
+#' @import methods
+#' @importClassesFrom SummarizedExperiment SummarizedExperiment
 #' @export
 #' @exportClass PBMExperiment
 #' @name PBMExperiment-class
 #' @author Patrick Kimes
-setClass("PBMExperiment", contains = "SummarizedExperiment",
-         slots = c(probeFilter = "list", probeTrim = "numeric",
-                   probeCols = "character"))
+.PBMExperiment <- setClass("PBMExperiment", contains = "SummarizedExperiment",
+                           slots = c(probeFilter = "list", probeTrim = "numeric",
+                                     probeCols = "character"))
 
-setValidity("PBMExperiment",
-            function(object) {
-                rd <- rowData(object)
-                if (!all(c("Sequence", "ID") %in% colnames(rd))) {
-                    stop("PBMExperiment must include probe sequence information ",
-                         "as rowData columns: 'Sequence' and 'ID'.")
-                }
-                if (!is.vector(rd$ID, mode = "character")) {
-                    stop("PBMExperiment probe IDs must be character strings.\n",
-                         "Please check 'ID' rowData values.")
-                }
-                if (!is.vector(rd$Sequence, mode = "character")) {
-                    stop("PBMExperiment probe sequences must be character strings.\n",
-                         "Please check 'Sequence' rowData values.")
-                }
-                ## if (any(nchar(rd$Sequence) != nchar(rd$Sequence[1]))) {
-                ##     stop("PBMExperiment probe sequences must all be same length.\n",
-                ##          "Please check 'Sequence' rowData values.")
-                ## }
-                if (any(duplicated(rd$ID))) {
-                    stop("PBMExperiment probe IDs must be unique.\n",
-                         "Please check 'ID' rowData values.")
-                }
-                ## check probeFilter specification
-                if (length(object@probeFilter) > 1) {
-                    if (is.null(names(object@probeFilter)) | any(names(object@probeFilter) == "")) {
-                        stop("PBMExperiment 'probeFilter' must be a named list.")
-                    }
-                    if (!all(names(object@probeFilter) %in% colnames(rd))) {
-                        stop("PBMExperiment 'probeFilter' must be a named list matching ",
-                             "rowData columns.")
-                    }
-                }
-                ## check probeTrim specification
-                if (length(object@probeTrim) != 0L && length(object@probeTrim) != 2L) {
-                    stop("PBMExperiment 'probeTrim' is too long. \n",
-                         "If specified, 'probeTrim' must be a vector of length 2 corresponding ",
-                         "to the start and end of the probe sequence to keep for analysis.")
-                }
-                TRUE
-            })
+setValidity2("PBMExperiment",
+             function(object) {
+                 ## check rowData necessary columns (Sequence, probeID)
+                 rd <- rowData(object)
+                 if (!all(c("Sequence", "probeID") %in% colnames(rd))) {
+                     stop("PBMExperiment must include probe sequence information ",
+                          "as rowData columns: 'Sequence' and 'probeID'.")
+                 }
+                 if (!is.vector(rd$probeID, mode = "character")) {
+                     stop("PBMExperiment probe IDs must be character strings.\n",
+                          "Please check 'probeID' rowData values.")
+                 }
+                 if (!is.vector(rd$Sequence, mode = "character")) {
+                     stop("PBMExperiment probe sequences must be character strings.\n",
+                          "Please check 'Sequence' rowData values.")
+                 }
+                 if (any(duplicated(rd$probeID))) {
+                     stop("PBMExperiment probe IDs must be unique.\n",
+                          "Please check 'probeID' rowData values.")
+                 }
+                 ## check probeFilter specification
+                 if (length(object@probeFilter) > 1) {
+                     if (is.null(names(object@probeFilter)) | any(names(object@probeFilter) == "")) {
+                         stop("PBMExperiment 'probeFilter' must be a named list.")
+                     }
+                     if (!all(names(object@probeFilter) %in% colnames(rd))) {
+                         stop("PBMExperiment 'probeFilter' must be a named list matching ",
+                              "rowData columns.")
+                     }
+                 }
+                 ## check probeTrim specification
+                 if (length(object@probeTrim) != 0L && length(object@probeTrim) != 2L) {
+                     stop("PBMExperiment 'probeTrim' is too long. \n",
+                          "If specified, 'probeTrim' must be a vector of length 2 corresponding ",
+                          "to the start and end of the probe sequence to keep for analysis.")
+                 }
+                 ## check probeCols specification
+                 if (!all(c("Sequence", "probeID") %in% object@probeCols)) {
+                     stop("PBMExperiment 'probeCols' must include names of columns in rowData ",
+                          "corresponding to probe design information.\n",
+                          "At a minimum, this should include: 'Sequence' and 'probeID'.")
+                 }
+                 if (!all(object@probeCols %in% colnames(rd))) {
+                     stop("PBMExperiment 'probeCols' should only include names of columns in rowData ",
+                          "corresponding to probe design information.\n",
+                          "The following columns listed in 'probeCols' are not found in rowData: \n",
+                          paste0(setdiff(object@probeCols, colnames(rd)), collapse = ", "), ".")
+                 }
+                 TRUE
+             })
 
 
 #' PBMDesign class
@@ -91,31 +101,32 @@ setValidity("PBMExperiment",
 #' @exportClass PBMDesign
 #' @name PBMDesign-class
 #' @author Patrick Kimes
-setClass("PBMDesign",
-         slots = c(design = "data.frame", probeFilter = "list", probeTrim = "numeric"))
+.PBMDesign <- setClass("PBMDesign",
+                       slots = c(design = "data.frame", probeFilter = "list",
+                                 probeTrim = "numeric"))
 
-setValidity("PBMDesign",
-            function(object) {
-                ## check necessary columns are specified
-                cn <- colnames(object@design)
-                if (!all(c("Sequence", "probeID") %in% cn)) {
-                    stop("PBMDesign 'design' data.frame must contain 'Sequence' and 'probeID' columns.")
-                }
-                ## check probeFilter specification
-                if (length(object@probeFilter) > 1) {
-                    if (is.null(names(object@probeFilter)) | any(names(object@probeFilter) == "")) {
-                        stop("PBMDesign 'probeFilter' must be a named list.")
-                    }
-                    if (!all(names(object@probeFilter) %in% colnames(rd))) {
-                        stop("PBMDesign 'probeFilter' must be a named list matching ",
-                             "'design' data.frame columns.")
-                    }
-                }
-                ## check probeTrim specification
-                if (length(object@probeTrim) != 0L && length(object@probeTrim) != 2L) {
-                    stop("PBMDesign 'probeTrim' is too long. \n",
-                         "If specified, 'probeTrim' must be a vector of length 2 corresponding ",
-                         "to the start and end of the probe sequence to keep for analysis.")
-                }
-                TRUE
-            })
+setValidity2("PBMDesign",
+             function(object) {
+                 ## check necessary columns are specified
+                 cn <- colnames(object@design)
+                 if (!all(c("Sequence", "probeID") %in% cn)) {
+                     stop("PBMDesign 'design' data.frame must contain 'Sequence' and 'probeID' columns.")
+                 }
+                 ## check probeFilter specification
+                 if (length(object@probeFilter) > 1) {
+                     if (is.null(names(object@probeFilter)) | any(names(object@probeFilter) == "")) {
+                         stop("PBMDesign 'probeFilter' must be a named list.")
+                     }
+                     if (!all(names(object@probeFilter) %in% colnames(rd))) {
+                         stop("PBMDesign 'probeFilter' must be a named list matching ",
+                              "'design' data.frame columns.")
+                     }
+                 }
+                 ## check probeTrim specification
+                 if (length(object@probeTrim) != 0L && length(object@probeTrim) != 2L) {
+                     stop("PBMDesign 'probeTrim' is too long. \n",
+                          "If specified, 'probeTrim' must be a vector of length 2 corresponding ",
+                          "to the start and end of the probe sequence to keep for analysis.")
+                 }
+                 TRUE
+             })
