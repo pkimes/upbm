@@ -5,7 +5,7 @@
 #' a single \code{\link[=PBMExperiment-class]{PBMExperiment}} object.
 #' Paths to GPR file must be specified as part of a larger 
 #' 
-#' @param x a data.frame of scans with at least a single `gpr' column
+#' @param scans a data.frame of scans with at least a single `gpr' column
 #'        corresponding to GPR file paths.
 #' @param useMedian a logical value whether to use median fluorescent intensity
 #'        for each probe rather than mean fluorescent intensity.
@@ -54,27 +54,27 @@
 #' @name gpr2PBMExperiment
 #' @export
 #' @author Patrick Kimes
-gpr2PBMExperiment <- function(x, useMedian = TRUE,
+gpr2PBMExperiment <- function(scans, useMedian = TRUE,
                               filterFlags = TRUE, readBackground = TRUE,
                               probes = NULL, ...) {
 
     ## check validity of inputs
-    stopifnot(is.data.frame(x))
-    stopifnot("gpr" %in% names(x))
+    stopifnot(is.data.frame(scans))
+    stopifnot("gpr" %in% names(scans))
     stopifnot(is.logical(useMedian))
     stopifnot(is.logical(filterFlags))
 
     ## guess scan type if not specified - only care if Masliner or not
-    if ("scan" %in% names(x)) {
-        tab_scan <- x$scan
+    if ("scan" %in% names(scans)) {
+        tab_scan <- scans$scan
         if (!all(tab_scan %in% c("Alexa", "Cy3", "Masliner"))) {
             stop("\"scan\" column entries can only take the following values: \n",
                  "\"Alexa\", \"Cy3\", \"Masliner\".")
         }
     } else {
-        ## don't add to 'x' since don't want in colData of output
-        tab_scan <- rep("Alexa", nrow(x))
-        tab_scan[grep("MaslinerOutput", x$gpr,
+        ## don't add to 'scans' since don't want in colData of output
+        tab_scan <- rep("Alexa", nrow(scans))
+        tab_scan[grep("MaslinerOutput", scans$gpr,
                       ignore.case = TRUE)] <- "Masliner"
     }
     
@@ -88,7 +88,7 @@ gpr2PBMExperiment <- function(x, useMedian = TRUE,
     }
     
     ## read in all data files
-    assay_table <- mapply(readGPR, gpr_path = x$gpr, gpr_type = tab_scan,
+    assay_table <- mapply(readGPR, gpr_path = scans$gpr, gpr_type = tab_scan,
                           useMedian = useMedian, filterFlags = filterFlags,
                           readBackground = readBackground, SIMPLIFY = FALSE)
 
@@ -143,18 +143,18 @@ gpr2PBMExperiment <- function(x, useMedian = TRUE,
     }
 
     ## column/condition-level metadata
-    coldat <- S4Vectors::DataFrame(dplyr::select(x, -gpr))
+    coldat <- S4Vectors::DataFrame(dplyr::select(scans, -gpr))
     rownames(coldat) <- names(assaydat[["fore"]])
     
-    new("PBMExperiment", assays = assaydat,
-        rowData = rowdat, colData = coldat,
-        metadata = list(steps = list(),
-                        spatialAdjustment = NULL,
-                        backgroundCorrection = NULL,
-                        betweenArrayNormalization = NULL),
-        probeFilter = ifelse(is.null(probes), list(), probes@probeFilter),
-        probeTrim = ifelse(is.null(probes), numeric(), probes@probeTrim),
-        probeCols = ifelse(is.null(probes), character(), names(probes@design)))
+    PBMExperiment(assays = assaydat,
+                  rowData = rowdat, colData = coldat,
+                  metadata = list(steps = list(),
+                                  spatialAdjustment = NULL,
+                                  backgroundCorrection = NULL,
+                                  betweenArrayNormalization = NULL),
+                  probeFilter = if (is.null(probes)) { list() } else { probes@probeFilter },
+                  probeTrim = if (is.null(probes)) { numeric() } else { probes@probeTrim },
+                  probeCols = if (is.null(probes)) { character() } else { names(probes@design) })
 }
 
 
