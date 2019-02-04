@@ -35,15 +35,9 @@
 #' GPR files are parsed differently depending on the file type which can take values
 #' of ``Alexa", ``Cy3", or ``Masliner". Both ``Alexa" and ``Cy3" scans
 #' are treated as untouched GenePix Results (GPR) files, while ``Masliner" files are
-#' treated as Masliner-processed GPR files.
-#' 
-#' If a `scan' column is not provided in the input table, GPR files are assumed to
-#' be Alexa488 scans unless the file name in the `gpr' column contains "Masliner".
-#' 
-#' If ``raw data" files (processed GPR data files, e.g. uploaded to UniPROBE)
-#' include probe ID, Name, or Sequence information, this is compared across samples and
-#' an error is thrown if the probe-to-sequence mapping is not common across all
-#' samples.
+#' treated as Masliner-processed GPR files. If a `scan' column is not provided in the
+#' input table, GPR files are assumed to be Alexa488 scans unless the file name in
+#' the `gpr' column contains "Masliner".
 #'
 #' @seealso \code{\link{PBMExperiment-class}}, \code{\link{PBMExperiment}}
 #' @importFrom S4Vectors DataFrame

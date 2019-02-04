@@ -5,7 +5,7 @@
 \title{Create a new PBMExperiment object}
 \usage{
 PBMExperiment(probeFilter = list(), probeTrim = numeric(),
-  probeCols = character(), ...)
+  probeCols = c("Sequence", "probeID"), ...)
 }
 \arguments{
 \item{probeFilter}{an optional named list of probe filters to be used to subset
@@ -18,7 +18,7 @@ drop (FALSE) during analysis. (default = \code{list()})}
 positions in probe `Sequence' to use in analysis steps. (default = \code{numeric()})}
 
 \item{probeCols}{an optional character vector of rowData column names corresponding
-to probe design information. (default = \code{character()})}
+to probe design information. (default = \code{c("Sequence", "probeID")})}
 
 \item{...}{an optional SummarizedExperiment containing PBM probe intensity data and
 corresponding annotations or parameters to be passed to the SummarizedExperiment
