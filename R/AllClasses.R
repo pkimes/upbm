@@ -51,9 +51,9 @@ setValidity2("PBMExperiment",
                      if (is.null(names(object@probeFilter)) | any(names(object@probeFilter) == "")) {
                          stop("PBMExperiment 'probeFilter' must be a named list.")
                      }
-                     if (!all(names(object@probeFilter) %in% colnames(rd))) {
+                     if (!all(names(object@probeFilter) %in% intersect(colnames(rd), object@probeCols))) {
                          stop("PBMExperiment 'probeFilter' must be a named list matching ",
-                              "rowData columns.")
+                              "rowData columns also in 'probeCols'.")
                      }
                  }
                  ## check probeTrim specification
