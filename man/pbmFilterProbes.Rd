@@ -2,36 +2,21 @@
 % Please edit documentation in R/pbmFilterProbes.R
 \name{pbmFilterProbes}
 \alias{pbmFilterProbes}
-\title{Filter PBM Probes}
+\title{Filter PBMExperiment and PBMDesign objects}
 \usage{
-pbmFilterProbes(se, level = 0L)
+pbmFilterProbes(x)
 }
 \arguments{
-\item{se}{SummarizedExperiment object containing GPR
-intensity information or DataFrame/data.frame object
-containing the probe design.}
-
-\item{level}{integer specifying level of probe filtering to
-perform prior to plotting. (default = 0)}
+\item{x}{a PBMExperiment or PBMDesign object}
 }
 \value{
-SummarizedExperiment object.
+Filtered object of same class as input \code{se}.
 }
 \description{
 Not all probes in a PBM experiment should be used for analysis.
-Given a SummarizedExperiment containing PBM intensities,
-this functions provides multiple levels of filtering to remove
-uninformative and low quality probes based on quality control
-metrics.
-}
-\details{
-The function supports the following levels of filtering.
-All filtering is progressive, i.e. setting level = 2 will
-also include filtering at level = 1.
-\itemize{
-\item \strong{0}: no filtering.
-\item \strong{1}: filter on de Bruijn probes.
-}
+Given a PBMExperiment or a PBMDesign object with defined probe
+filters, this function returns the subset of probes passing all
+filtering criteria.
 }
 \author{
 Patrick Kimes
