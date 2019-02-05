@@ -5,7 +5,7 @@
 #' Alternatively, the function can be called on a PBMExperiment to extract the
 #' probe design information associated with experimental data.
 #'
-#' @param x data.frame with each row corresponding to a probe on the array.
+#' @param x a data.frame with each row corresponding to a probe on the array.
 #'        Must include `Sequence' and (unique) `probeID' columns, along with any
 #'        other metadata for probes, e.g. array `Row' or `Column' spatial coordinates.
 #'        Alternatively, a \code{\link[=PBMExperiment-class]{PBMExperiment}} object to
@@ -42,7 +42,7 @@ NULL
 }
 
 .PBMDesign.PBMExperiment <- function(x) {
-    new("PBMDesign", design = rowData(x)[, x@probeCols],
+    new("PBMDesign", design = as.data.frame(rowData(x)[, x@probeCols, drop = FALSE], optional = TRUE),
         probeFilter = x@probeFilter, probeTrim = x@probeTrim)
 }
 
