@@ -4,30 +4,33 @@
 \alias{cy3Normalize}
 \title{Perform Cy3 Normalization}
 \usage{
-cy3Normalize(se, cy3se, assay = SummarizedExperiment::assayNames(se)[1],
-  match_by = condition, filter = TRUE, scale = FALSE)
+cy3Normalize(pe, cy3pe, assay = SummarizedExperiment::assayNames(pe)[1],
+  match_by, filter = TRUE, scale = FALSE, verbose = FALSE)
 }
 \arguments{
-\item{se}{SummarizedExperiment object containing GPR intensity information.}
+\item{pe}{a PBMExperiment object containing Alexa488 intensity data.}
 
-\item{cy3se}{SummarizedExperiment object containing Cy3 GPR model output from
-\code{fitCy3Models}.}
+\item{cy3pe}{a PBMExperiment object containing Cy3 deviation values from
+using \code{cy3FitEmpirical} or \code{cy3FitModel}.}
 
-\item{assay}{string name of the assay to normalize. (default = \code{SummarizedExperiment::assayNames(se)[1]})}
+\item{assay}{a numeric index or string name specifying the assay to use.
+(default = \code{SummarizedExperiment::assayNames(pe)[1]})}
 
-\item{match_by}{unquoted name of column in colData of SummarizedExperiments
-to use for matching samples across the two experiments; values of
-column must be unique for each sample in each experiment.
-(default = condition)}
+\item{match_by}{a string column name in colData of \code{pe} and \code{cy3pe}
+to use for matching scans across the two objects; values of
+column must be unique for each scan in each object.}
 
 \item{filter}{logical whether to filter "low quality" flagged probes by setting to NA.
 (default = TRUE)}
 
 \item{scale}{logical whether to perform scaling by ratio of observed vs. expected
 Cy3 intensity at each probe. (default = FALSE)}
+
+\item{verbose}{a logical value whether to print verbose output during
+analysis. (default = FALSE)}
 }
 \value{
-SummarizedExperiment object.
+PBMExperiment object.
 }
 \description{
 Uses Cy3 intensities to quantify relative dsDNA material at each probe based
