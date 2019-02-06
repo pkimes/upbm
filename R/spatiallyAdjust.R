@@ -12,67 +12,75 @@
 #' The size of the local region can be specified by the user, with a default
 #' size of 15 x 15 (as used in the aforementioned publication). 
 #' 
-#' @param se SummarizedExperiment object containing PBM intensity data
-#' @param assay string name of the assay to adjust. (default = \code{SummarizedExperiment::assayNames(se)[1]})
-#' @param k odd integer specifying size of region to use to for computing
-#'        local bias (default = 15)
-#' @param returnBias logical whether to include the spatial bias as an
+#' @param pe a PBMExperiment object containing PBM intensity data.
+#' @param assay a string name of the assay to adjust. (default = \code{SummarizedExperiment::assayNames(pe)[1]})
+#' @param k an odd integer specifying size of region to use to for computing
+#'        local bias. (default = 15)
+#' @param returnBias a logical whether to include the spatial bias as an
 #'        additional 'assay' (called 'spatialbias') in the returned
 #'        SummarizedExperiment object. (default = TRUE)
-#' @param .force logical whether to run adjustment even if data
-#'        has already been spatially adjusted. (default = FALSE)
-#' @param .filter integer specifying level of probe filtering to do before
-#'        estimating spatial adjustment. (default = 1L)
+#' @param verbose a logical value whether to print verbose output during
+#'        analysis. (default = FALSE)
 #' 
 #' @return
-#' SummarizedExperiment object with spatially adjusted intensities.
-#' Row and column metadata are copied from the original SummarizedExperiment
-#' object. A new column is additionally added to the column metadata,
-#' 'spatialMedian' containing the reference median intensity used to compute
-#' the spatial bias for each sample.
+#' Original PBMExperiment object with additional assay corresponding to
+#' spatially adjusted intensities and a new column added to the colData,
+#' `spatialMedian', containing the global median intensity of the original
+#' probe-level data used to compute spatial bias for each sample.
 #'
 #' @import SummarizedExperiment
 #' @importFrom tibble as_tibble
 #' @importFrom tidyr gather spread unnest
 #' @importFrom dplyr select mutate select_ do group_by left_join
+#' @importFrom S4Vectors SimpleList
 #' @export
 #' @author Patrick Kimes
-spatiallyAdjust <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
-                            k = 15, returnBias = TRUE, .force = FALSE, .filter = 1L) {
+spatiallyAdjust <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
+                            k = 15, returnBias = TRUE, verbose = FALSE) {
+    stopifnot(is(pe, "PBMExperiment")) 
 
     ## don't show progress when running `do` here
     base_showprogress <- getOption("dplyr.show_progress")
     options(dplyr.show_progress = FALSE)
     on.exit(options(dplyr.show_progress = base_showprogress))
-
-    ## check if already adjusted
-    if (!.force) {
-        stopifnot(is.null(metadata(se)$spatialAdjustment))
-    }
-
+    
     if (k %% 2 == 0) {
         stop("Local window size, k, must be an odd value.")
     }
-    stopifnot(is(se, "SummarizedExperiment")) 
-    if (! all(c("Row", "Column") %in% names(rowData(se)))) {
+    if (! all(c("Row", "Column") %in% names(rowData(pe)))) {
         stop("Specified SummarizedExperiment does not have necessary ",
              "'Row' and 'Column' information in rowData to perform ",
              "spatial adjustment")
     }
-    stopifnot(assay %in% SummarizedExperiment::assayNames(se))
+    stopifnot(assay %in% SummarizedExperiment::assayNames(pe))
 
-    ## specify whether non-deBruijn probes should be used
-    se <- pbmFilterProbes(se, level = .filter)
+    if (verbose) {
+        cat("|| upbm::spatiallyAdjust ||\n")
+        cat("   | Starting spatial adjustment for", ncol(pe), "PBM scans.\n")
+    }
+
+    if (verbose) {
+        cat("   | Filtering probes according to", length(pe@probeFilter),
+            "probeFilter rule(s).\n")
+        ntotal <- nrow(pe)
+    }
+
+    ## filter using rules
+    pe <- pbmFilterProbes(pe)
+
+    if (verbose) {
+        cat("   | Data filtered from", ntotal, "probes to", nrow(pe), "probes.\n")
+    }
     
     ## extract intensities for easier manipulation
-    raw_intensity <- SummarizedExperiment::assay(se, assay)
+    raw_intensity <- SummarizedExperiment::assay(pe, assay)
     raw_intensity <- as.data.frame(raw_intensity, optional = TRUE)
     raw_intensity <- tibble::as_tibble(raw_intensity)
 
     ## add row/column indices
     raw_intensity <- dplyr::mutate(raw_intensity,
-                                   Row = rowData(se)[, "Row"],
-                                   Column = rowData(se)[, "Column"])
+                                   Row = rowData(pe)[, "Row"],
+                                   Column = rowData(pe)[, "Column"])
 
     ## compute spatial adjustment 
     raw_intensity <- tidyr::gather(raw_intensity, sample, value, -Row, -Column)
@@ -104,39 +112,30 @@ spatiallyAdjust <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
     sub_intensity <- tidyr::spread(sub_intensity, sample, value)
 
     ## join to original rowData to get proper row orders 
-    med_intensity <- dplyr::left_join(as.data.frame(rowData(se)), med_intensity, by = c("Row", "Column"))
-    sub_intensity <- dplyr::left_join(as.data.frame(rowData(se)), sub_intensity, by = c("Row", "Column"))
+    med_intensity <- dplyr::left_join(as.data.frame(rowData(pe)), med_intensity, by = c("Row", "Column"))
+    sub_intensity <- dplyr::left_join(as.data.frame(rowData(pe)), sub_intensity, by = c("Row", "Column"))
 
     ## only keep data columns
-    med_intensity <- dplyr::select_(med_intensity, .dots = paste0("-", names(rowData(se))))
-    sub_intensity <- dplyr::select_(sub_intensity, .dots = paste0("-", names(rowData(se))))
+    med_intensity <- dplyr::select_(med_intensity, .dots = paste0("-", names(rowData(pe))))
+    sub_intensity <- dplyr::select_(sub_intensity, .dots = paste0("-", names(rowData(pe))))
 
     ## reorder columns to match original SummarizedExperiment
     med_intensity <- DataFrame(med_intensity, check.names = FALSE)
-    med_intensity <- med_intensity[, rownames(colData(se)), drop = FALSE]
+    med_intensity <- med_intensity[, rownames(colData(pe)), drop = FALSE]
     sub_intensity <- DataFrame(sub_intensity, check.names = FALSE)
-    sub_intensity <- sub_intensity[, rownames(colData(se)), drop = FALSE]
+    sub_intensity <- sub_intensity[, rownames(colData(pe)), drop = FALSE]
 
-    ## modify input SummarizedExperiment
-    SummarizedExperiment::assay(se, assay) <- sub_intensity
+    ## add to input PBMExperiment
+    SummarizedExperiment::assays(pe) <- c(S4Vectors::SimpleList(spatiallyadjusted = sub_intensity),
+                                          SummarizedExperiment::assays(pe))
     if (returnBias) {
-        SummarizedExperiment::assay(se, "spatialbias") <- med_intensity
+        SummarizedExperiment::assay(pe, "spatialbias") <- med_intensity
     }
 
-    ## add median intensities for raw data used for spatial scaling, match colnames order
-    colData(se)$spatialMedian <- raw_medians$spatialMedian[match(colnames(se), raw_medians$sample)]
-    
-    ## add step to metadata
-    method_str <- paste("BlockMedianDetrend ->", assay)
-    metadata(se)$steps <- c(metadata(se)$steps, method_str)
-    if (.force) {
-        metadata(se)$spatialAdjustment <-
-                       c(metadata(se)$spatialAdjustment, method_str)
-    } else {
-        metadata(se)$spatialAdjustment <- method_str
+    if (verbose) {
+        cat("   | Finished spatial adjustment.\n")
     }
-    
-    return(se) 
+    return(pe) 
 }
 
 ## Helper function which takes a data.frame with 'value', 'Column', 'Row'

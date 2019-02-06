@@ -4,33 +4,29 @@
 \alias{spatiallyAdjust}
 \title{Spatial Adjustment of Samples}
 \usage{
-spatiallyAdjust(se, assay = SummarizedExperiment::assayNames(se)[1],
-  k = 15, returnBias = TRUE, .force = FALSE, .filter = 1L)
+spatiallyAdjust(pe, assay = SummarizedExperiment::assayNames(pe)[1],
+  k = 15, returnBias = TRUE, verbose = FALSE)
 }
 \arguments{
-\item{se}{SummarizedExperiment object containing PBM intensity data}
+\item{pe}{a PBMExperiment object containing PBM intensity data.}
 
-\item{assay}{string name of the assay to adjust. (default = \code{SummarizedExperiment::assayNames(se)[1]})}
+\item{assay}{a string name of the assay to adjust. (default = \code{SummarizedExperiment::assayNames(pe)[1]})}
 
-\item{k}{odd integer specifying size of region to use to for computing
-local bias (default = 15)}
+\item{k}{an odd integer specifying size of region to use to for computing
+local bias. (default = 15)}
 
-\item{returnBias}{logical whether to include the spatial bias as an
+\item{returnBias}{a logical whether to include the spatial bias as an
 additional 'assay' (called 'spatialbias') in the returned
 SummarizedExperiment object. (default = TRUE)}
 
-\item{.force}{logical whether to run adjustment even if data
-has already been spatially adjusted. (default = FALSE)}
-
-\item{.filter}{integer specifying level of probe filtering to do before
-estimating spatial adjustment. (default = 1L)}
+\item{verbose}{a logical value whether to print verbose output during
+analysis. (default = FALSE)}
 }
 \value{
-SummarizedExperiment object with spatially adjusted intensities.
-Row and column metadata are copied from the original SummarizedExperiment
-object. A new column is additionally added to the column metadata,
-'spatialMedian' containing the reference median intensity used to compute
-the spatial bias for each sample.
+Original PBMExperiment object with additional assay corresponding to
+spatially adjusted intensities and a new column added to the colData,
+`spatialMedian', containing the global median intensity of the original
+probe-level data used to compute spatial bias for each sample.
 }
 \description{
 Given PBM intensities stored as a SummarizedExperiment, this function
