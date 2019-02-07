@@ -55,12 +55,12 @@ spatiallyAdjust <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
     stopifnot(assay %in% SummarizedExperiment::assayNames(pe))
 
     if (verbose) {
-        cat("|| upbm::spatiallyAdjust ||\n")
-        cat("   | Starting spatial adjustment for", ncol(pe), "PBM scans.\n")
+        cat("|| upbm::spatiallyAdjust \n")
+        cat("|| - Starting spatial adjustment for", ncol(pe), "PBM scans.\n")
     }
 
     if (verbose) {
-        cat("   | Filtering probes according to", length(pe@probeFilter),
+        cat("|| - Filtering probes according to", length(pe@probeFilter),
             "probeFilter rule(s).\n")
         ntotal <- nrow(pe)
     }
@@ -69,7 +69,7 @@ spatiallyAdjust <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
     pe <- pbmFilterProbes(pe)
 
     if (verbose) {
-        cat("   | Data filtered from", ntotal, "probes to", nrow(pe), "probes.\n")
+        cat("|| - Data filtered from", ntotal, "probes to", nrow(pe), "probes.\n")
     }
     
     ## extract intensities for easier manipulation
@@ -102,8 +102,10 @@ spatiallyAdjust <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
                                       by = c("Row", "Column", "sample"),
                                       suffix = c(".raw", ".med"))
 
-    ## only replace NA w/ 1 in median intensities - if NA in raw (i.e. non-dBr probe) want NA in output
-    sub_intensity <- dplyr::mutate(sub_intensity, value.med = ifelse(is.na(value.med), 1, value.med))
+    ## only replace NA w/ 1 in median intensities
+    ## - if NA in raw want NA in output
+    sub_intensity <- dplyr::mutate(sub_intensity,
+                                   value.med = ifelse(is.na(value.med), 1, value.med))
     sub_intensity <- dplyr::mutate(sub_intensity, value = value.raw / value.med)
     sub_intensity <- dplyr::select(sub_intensity, Row, Column, sample, value)
 
@@ -112,8 +114,10 @@ spatiallyAdjust <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
     sub_intensity <- tidyr::spread(sub_intensity, sample, value)
 
     ## join to original rowData to get proper row orders 
-    med_intensity <- dplyr::left_join(as.data.frame(rowData(pe)), med_intensity, by = c("Row", "Column"))
-    sub_intensity <- dplyr::left_join(as.data.frame(rowData(pe)), sub_intensity, by = c("Row", "Column"))
+    med_intensity <- dplyr::left_join(as.data.frame(rowData(pe)), med_intensity,
+                                      by = c("Row", "Column"))
+    sub_intensity <- dplyr::left_join(as.data.frame(rowData(pe)), sub_intensity,
+                                      by = c("Row", "Column"))
 
     ## only keep data columns
     med_intensity <- dplyr::select_(med_intensity, .dots = paste0("-", names(rowData(pe))))
@@ -133,7 +137,7 @@ spatiallyAdjust <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
     }
 
     if (verbose) {
-        cat("   | Finished spatial adjustment.\n")
+        cat("|| - Finished spatial adjustment.\n")
     }
     return(pe) 
 }
