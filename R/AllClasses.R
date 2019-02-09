@@ -62,7 +62,8 @@ setValidity2("PBMExperiment",
                           "If specified, 'probeTrim' must be a vector of length 2 corresponding ",
                           "to the start and end of the probe sequence to keep for analysis.")
                  }
-                 if (length(object@probeTrim) == 2L && (.trim[1] > .trim[2] || .trim[1] < 0)) {
+                 if (length(object@probeTrim) == 2L &&
+                     (object@probeTrim[1] > object@probeTrim[2] || object@probeTrim[1] < 0)) {
                      stop("PBMExperiment 'probeTrim' specification is invalid. \n",
                           "If specified, 'probeTrim' must be a vector of length 2 with ",
                           "0 <= probeTrim[1] <= probeTrim[2].")
@@ -133,7 +134,8 @@ setValidity2("PBMDesign",
                           "If specified, 'probeTrim' must be a vector of length 2 corresponding ",
                           "to the start and end of the probe sequence to keep for analysis.")
                  }
-                 if (length(object@probeTrim) == 2L && (.trim[1] > .trim[2] || .trim[1] < 0)) {
+                 if (length(object@probeTrim) == 2L &&
+                     (object@probeTrim[1] > object@probeTrim[2] || object@probeTrim[1] < 0)) {
                      stop("PBMExperiment 'probeTrim' specification is invalid. \n",
                           "If specified, 'probeTrim' must be a vector of length 2 with ",
                           "0 <= probeTrim[1] <= probeTrim[2].")
