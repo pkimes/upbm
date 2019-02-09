@@ -91,96 +91,32 @@ checkProbeSequences <- function(se, verb) {
 }
 
 
-#' Trim Probe Sequences 
+#' Trim probe sequences 
 #'
 #' Simple helper function to trim probe sequences in the rowData of
-#' a SummarizedExperiment object, or alternatively, a DataFrame/data.frame
-#' object. The sequences should be in a column named 'Sequence'.
+#' a PBMExperiment or PBMDesign object.
 #' 
-#' @param se SummarizedExperiment object containing PBM intensity data and
-#'        probe sequence information in rowData, or simply the DataFrame/data.frame
-#'        corresponding to the rowData.
-#' @param .trim interger vector of length two specifying start and end
-#'        of probe sequence \strong{to be used}. Default is based on the universal
-#'        PBM probe design where only leading 36nt should be used. 
-#'        Ignored if \code{NULL}. (default = \code{c(1, 36)})
+#' @param pe a PBMExperiment object or PBMDesign object.
 #'
 #' @return
-#' Original \code{se} object with trimmed Sequence column.
+#' Original PBMExperiment or PBMDesign object with trimmed sequences.
 #'
-#' @importFrom Biostrings subseq
+#' @importFrom stringr str_sub
 #' @export
 #' @author Patrick Kimes
-trimProbeSequences <- function(se, .trim = c(1, 36)) {
-    if (is.null(.trim)) {
-        return(se)
-    }
-
-    if (is(se, "SummarizedExperiment")) {
-        pd <- rowData(se)
-    } else if (is(se, "DataFrame") | is(se, "data.frame")) {
-        pd <- se
-    } else {
-        stop("se must be a SummarizedExperiment or DataFrame/data.frame")
-    }
-
-    if (! "Sequence" %in% names(pd)) {
-        stop(paste0("Must have 'Sequence' column ",
-                    ifelse(is(se, "SummarizedExperiment"), "in rowData ", ""),
-                    "to perform trimming."))
-    }
+trimProbeSequences <- function(pe) {
+    stopifnot(is(pe, "PBMExperiment") || is(pe, "PBMDesign"))
     
-    if (length(.trim) != 2 || !is.numeric(.trim)) {
-        stop("If probe sequences should be trimmed, set '.trim' to a vector of length ",
-             "2 corresponding to start and end of regions to be kept.")
-    }
-    if (.trim[1] > .trim[2] || .trim[1] < 1) {
-        stop("Invalid choice of '.trim'.")
-    }
-    plens <- nchar(pd$Sequence)
-    if (any(plens < .trim[2])) {
-        stop("Choice of '.trim' is longer than at least one sequence.")
+    if (length(pe@probeTrim) == 0L) {
+        return(pe)
     }
 
-    ## if made it here, trim
-    if (is(se, "SummarizedExperiment")) {
-        rowData(se)$Sequence <- Biostrings::subseq(pd$Sequence, .trim[1], .trim[2])
+    if (is(pe, "PBMExperiment")) {
+        pd <- rowData(pe)
     } else {
-        se$Sequence <- Biostrings::subseq(pd$Sequence, .trim[1], .trim[2])
+        pd <- pe@design
     }
+    pd$Sequence <- stringr::str_sub(pd$Sequence, pe@probeTrim[1], pe@probeTrim[2])
 
-    return(se)
-}
-
-
-#' Simple wrapper function to process PBM probe sequences
-#'
-#' @param se SummarizedExperiment object containing PBM intensity data and
-#'        probe sequence information in rowData, or simply the DataFrame/data.frame
-#'        corresponding to the rowData.
-#' @param verbose logical whether to print extra messages. (default = FALSE)
-#' @param .filter integer specifying level of probe filtering to perform. See
-#'        \code{pbmFilterProbes} for more details about levels of probe filtering.
-#'        (default = 1L)
-#' @param .trim interger vector of length two specifying start and end
-#'        of probe sequence \strong{to be used}. Default is based on the universal
-#'        PBM probe design where only leading 36nt should be used. 
-#'        Ignored if \code{NULL}. (default = \code{c(1, 36)})
-#'
-#' @return 
-#' Original \code{se} object with only probes passing filter, with trimmed Sequence columns.
-#' If the probe sequences are not valid, an error is thrown. 
-#'
-#' @seealso trimProbeSequences pbmFilterProbes checkProbeSequences
-#' @export
-#' @author Patrick Kimes
-pbmProcessProbes <- function(se, verbose = FALSE, .filter = 1L, .trim = c(1, 36)) {
-    ## check Sequence info in rowData
-    se <- checkProbeSequences(se, verbose)
-    
-    ## filter probes
-    se <- pbmFilterProbes(se, .filter) 
-
-    ## trim probe sequences
-    trimProbeSequences(se, .trim)
+    return(pe)
 }

@@ -2,27 +2,19 @@
 % Please edit documentation in R/upbm-validators.R
 \name{trimProbeSequences}
 \alias{trimProbeSequences}
-\title{Trim Probe Sequences}
+\title{Trim probe sequences}
 \usage{
-trimProbeSequences(se, .trim = c(1, 36))
+trimProbeSequences(pe)
 }
 \arguments{
-\item{se}{SummarizedExperiment object containing PBM intensity data and
-probe sequence information in rowData, or simply the DataFrame/data.frame
-corresponding to the rowData.}
-
-\item{.trim}{interger vector of length two specifying start and end
-of probe sequence \strong{to be used}. Default is based on the universal
-PBM probe design where only leading 36nt should be used. 
-Ignored if \code{NULL}. (default = \code{c(1, 36)})}
+\item{pe}{a PBMExperiment object or PBMDesign object.}
 }
 \value{
-Original \code{se} object with trimmed Sequence column.
+Original PBMExperiment or PBMDesign object with trimmed sequences.
 }
 \description{
 Simple helper function to trim probe sequences in the rowData of
-a SummarizedExperiment object, or alternatively, a DataFrame/data.frame
-object. The sequences should be in a column named 'Sequence'.
+a PBMExperiment or PBMDesign object.
 }
 \author{
 Patrick Kimes

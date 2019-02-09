@@ -62,6 +62,11 @@ setValidity2("PBMExperiment",
                           "If specified, 'probeTrim' must be a vector of length 2 corresponding ",
                           "to the start and end of the probe sequence to keep for analysis.")
                  }
+                 if (length(object@probeTrim) == 2L && (.trim[1] > .trim[2] || .trim[1] < 0)) {
+                     stop("PBMExperiment 'probeTrim' specification is invalid. \n",
+                          "If specified, 'probeTrim' must be a vector of length 2 with ",
+                          "0 <= probeTrim[1] <= probeTrim[2].")
+                 }
                  ## check probeCols specification
                  if (!all(c("Sequence", "probeID") %in% object@probeCols)) {
                      stop("PBMExperiment 'probeCols' must include names of columns in rowData ",
@@ -127,6 +132,11 @@ setValidity2("PBMDesign",
                      stop("PBMDesign 'probeTrim' specification is invalid. \n",
                           "If specified, 'probeTrim' must be a vector of length 2 corresponding ",
                           "to the start and end of the probe sequence to keep for analysis.")
+                 }
+                 if (length(object@probeTrim) == 2L && (.trim[1] > .trim[2] || .trim[1] < 0)) {
+                     stop("PBMExperiment 'probeTrim' specification is invalid. \n",
+                          "If specified, 'probeTrim' must be a vector of length 2 with ",
+                          "0 <= probeTrim[1] <= probeTrim[2].")
                  }
                  TRUE
              })
