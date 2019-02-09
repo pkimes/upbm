@@ -2,10 +2,10 @@
 % Please edit documentation in R/cy3Normalize.R
 \name{cy3Normalize}
 \alias{cy3Normalize}
-\title{Perform Cy3 Normalization}
+\title{Perform Cy3 normalization}
 \usage{
 cy3Normalize(pe, cy3pe, assay = SummarizedExperiment::assayNames(pe)[1],
-  match_by, filter = TRUE, scale = FALSE, verbose = FALSE)
+  match_by, filter = TRUE, scale = TRUE, verbose = FALSE)
 }
 \arguments{
 \item{pe}{a PBMExperiment object containing Alexa488 intensity data.}
@@ -24,20 +24,21 @@ column must be unique for each scan in each object.}
 (default = TRUE)}
 
 \item{scale}{logical whether to perform scaling by ratio of observed vs. expected
-Cy3 intensity at each probe. (default = FALSE)}
+Cy3 intensity at each probe. (default = TRUE)}
 
 \item{verbose}{a logical value whether to print verbose output during
 analysis. (default = FALSE)}
 }
 \value{
-PBMExperiment object.
+Original PBMExperiment object with additional assay corresponding to
+Cy3 filtered and/or scaled intensities (`normalized`).
 }
 \description{
 Uses Cy3 intensities to quantify relative dsDNA material at each probe based
 on observed vs. expected intensity ratios.
 }
 \seealso{
-fitCy3Models
+cy3FitEmpirical
 }
 \author{
 Patrick Kimes
