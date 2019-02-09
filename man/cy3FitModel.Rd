@@ -2,35 +2,28 @@
 % Please edit documentation in R/cy3FitModel.R
 \name{cy3FitModel}
 \alias{cy3FitModel}
-\title{Compute Cy3 Scaling Factors using OLS}
+\title{Compute Cy3 scaling factors using regression}
 \usage{
-cy3FitModel(se, assay = SummarizedExperiment::assayNames(se)[1],
-  refit = TRUE, .filter = 1L, .trim = if (.filter > 0L) {     c(1,
-  36) } else {     NULL })
+cy3FitModel(pe, assay = SummarizedExperiment::assayNames(pe)[1],
+  refit = TRUE, threshold = 1L, verbose = FALSE)
 }
 \arguments{
-\item{se}{SummarizedExperiment object containing PBM Cy3 intensity data.}
+\item{pe}{a PBMExperiment object containing Cy3 intensity data.}
 
 \item{assay}{string name of the assay to use.
-(default = \code{SummarizedExperiment::assayNames(se)[1]})}
+(default = \code{SummarizedExperiment::assayNames(pe)[1]})}
 
 \item{refit}{logical whether to filter outliers and refit trinucleotide
 linear regression model. (default = TRUE)}
 
-\item{.filter}{integer specifying level of probe filtering to
-perform prior to estimating affinities. See \code{pbmFilterProbes}
-for more details on probe filter levels. (default = 1)}
-
-\item{.trim}{interger vector of length two specifying start and end
-of probe sequence to be used. Default is based on the universal
-PBM probe design where only leading 36nt should be used. 
-Ignored if NULL. (default = c(1, 36))}
+\item{threshold}{a numeric threshold on absolute value of log2 ratio between
+observed and expected Cy3 intensities. (default = 1L)}
 }
 \value{
-original SummarizedExperiment object with additional assays corresponding
-to the ratio of observed vs. expected probe intensities, and whether probes were
-flagged as low-quality based on log2(ratio) > 1 or < -1. Cy3 models are stored
-in the metadata of the returned object.
+Original Cy3 PBMExperiment object with additional assays corresponding
+to ratio of observed to expected probe intensities, and whether probes were
+flagged as low-quality based on \code{abs(log2(ratio)) > threshold}.
+Cy3 models are stored in the metadata of the returned object.
 }
 \description{
 PBM arrays are scanned twice, once for Cy3-tagged dUTPs to quantify
@@ -38,18 +31,28 @@ dsDNA abundance at each probe, and again for the Alexa488-tagged
 protein. The Cy3 scans can be used to first filter out probes which
 appear to have poor dsDNA enrichment, and second, to scale Alexa488
 intensities to account for differences in dsDNA abundance between
-probes. Since probe intensities in the Cy3 scans are roughly
-proportional to the number of adenines in the probe sequence, the
-original Universal PBM Analysis Suite proposed estimating scaling factors
-by looking at the residuals of a linear regression fit using all
-tri-nucleotide sequences starting with an adenine. Given a
-SummarizedExperiment of Cy3 scans, this function fits the tri-nucleotide
-linear regression models and returns the expected Cy3 intensities,
-the residuals from the fits, and the corresponding observed-expected
-ratios for each probe as new assays added to the original Cy3
-SummarizedExperiment object.
+probes.
 
-The returned SummarizedExperiment object can be passed to \code{cy3Normalize}
+\emph{Both this function and the \code{cy3FitEmpirical} function can
+be used to estimate scaling factors for filtering and scaling
+Alexa488 probe intensities using Cy3 information. The \code{cy3FitEmpirical}
+approach is recommended when an appropriate reference set of Cy3 scans
+are available.}
+
+Since probe intensities in the Cy3 scans are roughly
+proportional to the number of adenines in the probe sequence, the
+original Universal PBM Analysis Suite proposed modeling the observed Cy3
+intensities with linear regression using the counts of all tri-nucleotide sequences
+starting with an adenine as covariates. The observed-to-expected intensity ratios
+are then used as the scaling factors.
+
+Given a PBMExperiment of Cy3 scans, this function fits the tri-nucleotide
+regression models and returns the expected Cy3 intensities,
+the residuals from the fits, and the corresponding observed-to-expected
+ratios for each probe as new assays added to the original Cy3
+PBMExperiment object.
+
+The returned PBMExperiment object can be passed to \code{cy3Normalize}
 to filter low quality probes and/or normalize Alexa488 intensities by the
 computed ratios.
 }

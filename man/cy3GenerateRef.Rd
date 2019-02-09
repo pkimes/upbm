@@ -2,45 +2,50 @@
 % Please edit documentation in R/cy3GenerateRef.R
 \name{cy3GenerateRef}
 \alias{cy3GenerateRef}
-\title{Generate Cy3 Empirical Reference}
+\title{Generate Cy3 empirical reference}
 \usage{
-cy3GenerateRef(cy3se, assay = SummarizedExperiment::assayNames(cy3se)[1],
-  offset = 1L, register = TRUE, .filter = 1L)
+cy3GenerateRef(cy3pe, assay = SummarizedExperiment::assayNames(cy3pe)[1],
+  offset = 1L, register = TRUE)
 }
 \arguments{
-\item{cy3se}{SummarizedExperiment object containing Cy3 scan data.}
+\item{cy3pe}{a PBMExperiment object containing Cy3 intensity data.}
 
-\item{assay}{string name of assay to use. (default = \code{SummarizedExperiment::assayNames(cy3se)[1]})}
+\item{assay}{a numeric index or string name specifying the assay to use.
+(default = \code{SummarizedExperiment::assayNames(cy3pe)[1]})}
 
-\item{offset}{numeric offset to add to intensities before log2 transforming
-to prevent errors with zero intensities. (default = 1L)}
+\item{offset}{a numeric offset to add to intensities before log2 transforming
+to prevent NAs with zero intensities. (default = 1L)}
 
 \item{register}{logical whether to scale intensities across samples.
 (default = TRUE)}
-
-\item{.filter}{integer specifying level of probe filtering to
-perform prior to estimating affinities. See \code{pbmFilterProbes}
-for more details on probe filter levels. (default = 1)}
 }
 \value{
 SummarizedExperiment object with Cy3 probe-level reference metrics.
 }
 \description{
-Cy3 normalization is performed using an empirically-derived
-reference distribution computed using a large collection of
-samples. By default, samples are first scaled to have a common
+Given a collection of Cy3 scans, this function estimates an empirical
+reference distribution of expected Cy3 intensities per probe. Scans
+must all be for the same array design. For each probe, the mean,
+median, MAD and standard deviation across scans is computed across all
+Cy3 scans.
+
+The estimated reference distributions can be passed to \code{cy3FitEmpirical}
+with Cy3 scan data to determine probe-level outliers and scaling factors
+for the individual Cy3 scans relative to the reference.
+}
+\details{
+By default, samples are first scaled to have a common
 median intensity, and the reference probe-level intensities are
 computed on the log2 scale. The reference is calculated on the
 log2 scale rather than the raw scale because the Cy3 scans will be
 used for filtering and scaling, actions which require examining
 fold changes and ratios rather than raw intensity differences.
-}
-\details{
-Scaling is performed by multiplying the raw intensities of each
-sample by a scaling factor such that the median intensity of each
+
+Scaling is performed such that the median intensity of each
 sample is equal to the median sample-median intensity of the original
 intensities. This multiplicative scaling is equivalent to an additive
-shift on the log2 scale.
+shift on the log2 scale. This behavior can be turned off by specifying
+\code{register = FALSE}.
 }
 \author{
 Patrick Kimes
