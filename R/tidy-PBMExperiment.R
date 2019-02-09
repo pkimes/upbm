@@ -1,22 +1,22 @@
-#' Tidy SummarizedExperiment Object
+#' Tidy PBMExperiment object
 #'
 #' @description
-#' Simple helper function to convert assay format data in SummarizedExperiment
-#' object into a tidy tibble for interactive analysis.
+#' Simple helper function to convert assay format data in PBMExperiment
+#' object into a tidy tibble.
 #' 
-#' @param x SummarizedExperiment object.
-#' @param assay string name of the assay to use.
-#'        (default = \code{assayNames(x)[1]})
-#' @param long logical whether to transform data to long format and
+#' @param x a PBMExperiment object.
+#' @param assay a numeric index or string name specifying the assay to use.
+#'        (default = \code{SummarizedExperiment::assayNames(x)[1]})
+#' @param long a logical whether to transform data to long format and
 #'        include colData in output rather than default wide format with
-#'        dimension similar to original SummarizedExperiment object.
+#'        dimension similar to original PBMExperiment object.
 #'        (default = FALSE)
-#' @param .filter integer specifying level of probe filtering. (default = 1L)
 #' @param ... other parameters for \code{tidy} generic function. 
+#'
 #' @return
 #' tibble with assay data.
 #'
-#' @name tidy-SummarizedExperiment
+#' @name tidy-PBMExperiment
 #' @importFrom dplyr as_tibble bind_cols left_join
 #' @importFrom tibble rownames_to_column
 #' @importFrom tidyr gather
@@ -24,10 +24,10 @@
 #' @importFrom broom tidy
 #' @export 
 #' @author Patrick Kimes
-tidy.SummarizedExperiment <- function(x, assay = SummarizedExperiment::assayNames(x)[1],
-                                      long = FALSE, .filter = 1L, ...) {
+tidy.PBMExperiment <- function(x, assay = SummarizedExperiment::assayNames(x)[1],
+                                      long = FALSE, ...) {
     ## filter probes
-    x <- pbmFilterProbes(x, .filter) 
+    x <- pbmFilterProbes(x)
 
     ## extract row data
     rowdat <- as.data.frame(rowData(x), optional = TRUE)
