@@ -4,34 +4,36 @@
 \alias{fitProbeDistribution}
 \title{Fit Probe-Level Convolution Distributions}
 \usage{
-fitProbeDistribution(se, assay = SummarizedExperiment::assayNames(se)[1],
-  model = c("NormGam", "NormExp"), method = "mle", .filter = 1L)
+fitProbeDistribution(pe, assay = SummarizedExperiment::assayNames(pe)[1],
+  model = c("NormGam", "NormExp"), method = "mle")
 }
 \arguments{
-\item{se}{SummarizedExperiment object containing GPR intensity information.}
+\item{pe}{a PBMExperiment object containing GPR intensity information.}
 
-\item{assay}{string name of the assay. (default = \code{SummarizedExperiment::assayNames(se)[1]})}
+\item{assay}{string name of the assay. (default = \code{SummarizedExperiment::assayNames(pe)[1]})}
 
 \item{model}{character string specifying model for fitting intensityies. 
 Must be one of "NormGam", "NormExp". (default = "NormGam")}
 
 \item{method}{method used to estimate the parameters for normal+exponential model. See more details from 
 \code{limma::normexp.fit}. (default = "mle")}
-
-\item{.filter}{integer specifying level of probe filtering to
-perform prior to normalization. See \code{pbmFilterProbes}
-for more details on probe filter levels. (default = 1)}
 }
 \value{
-A dataframe with rows as condition and cols as parameter
+A data.frame with scans as rows and parameters in columns.
 }
 \description{
-This is a collection of several models to fit a normal+exponential or
-normal+gamma convolution model to the probe-level intensities of a PBM experiment.
+This function fits either a normal+exponential or normal+gamma convolution model to
+the probe-level intensities of a PBMExperiment.
 The normal+exponential convolution model is fit using \code{limma::normexp.fit} and 
 the normal+gamma convolution model is fit using \code{NormalGamma::normgam.fit}.
 This function returns the model parameter estimates for each sample in a dataframe.
 }
+\references{
+\itemize{
+\item Ritchie, M. E., Phipson, B., Wu, D., Hu, Y., Law, C. W., Shi, W., & Smyth, G. K. (2015). limma powers differential expression analyses for RNA-sequencing and microarray studies. Nucleic Acids Research, 43(7), e47.
+\item Plancade, S., Rozenholc, Y., & Lund, E. (2012). Generalization of the normal-exponential model: exploration of a more accurate parametrisation for the signal distribution on Illumina BeadArrays. BMC Bioinformatics, 13(1), 329.
+}
+}
 \author{
-Dongyuan Song, Patrick Kimes
+Dongyuan Song
 }
