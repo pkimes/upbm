@@ -18,6 +18,10 @@ pbmFilterProbes <- function(pe) {
         stop("Probe filtering can only be performed with 'PBMExperiment' and 'PBMDesign' objects.")
     
     filters <- pe@probeFilter
+    if (length(filters) == 0L) {
+        return(pe)
+    }
+
     if (is(pe, "PBMExperiment")) {
         pddata <- rowData(pe)[, pe@probeCols, drop = FALSE]
     } else {

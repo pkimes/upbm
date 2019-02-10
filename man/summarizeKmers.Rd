@@ -4,53 +4,35 @@
 \alias{summarizeKmers}
 \title{Compute K-mer summary metrics from probe intensities}
 \usage{
-summarizeKmers(se, assay = SummarizedExperiment::assayNames(se)[1],
-  kmers = uniqueKmers(8L), stat_set = c("median", "mean", "mad", "sd",
+summarizeKmers(pe, assay = SummarizedExperiment::assayNames(pe)[1],
+  kmers = uniqueKmers(8L), metrics = c("median", "mean", "mad", "sd",
   "log2mean", "log2mad", "log2sd", "na", "quantile"), offset = 1,
-  weights = NULL, q = 0.25, verbose = FALSE, .filter = 1L,
-  .trim = if (.filter > 0L) {     c(1, 36) } else {     NULL })
+  q = 0.25)
 }
 \arguments{
-\item{se}{SummarizedExperiment object containing PBM intensity data.}
+\item{pe}{a PBMExperiment object containing PBM intensity data.}
 
-\item{assay}{string name of the assay to use. (default = \code{SummarizedExperiment::assayNames(se)[1]})}
+\item{assay}{a string name of the assay to adjust. (default = \code{SummarizedExperiment::assayNames(pe)[1]})}
 
 \item{kmers}{a character vector of k-mers to predict. (default = \code{uniqueKmers(8L)})}
 
-\item{stat_set}{character vector of statistics to calculate for each sample.
+\item{metrics}{a character vector of statistics to calculate for each scan.
 The set of supported statistics are listed in the details. By default,
-all possible statistics are computed. Details on available statistics are
-given in details. (default = \code{c("median", "mean", "mad", "sd", "log2mean", "log2mad", "log2sd", "na", "quantile")})}
+all possible statistics are computed, but this is not recommended as
+it can be computational expensive. (default = \code{c("median", "mean", "mad", "sd", "log2mean", "log2mad", "log2sd", "na", "quantile")})}
 
-\item{offset}{integer offset to add to intensities before log2 scaling to
+\item{offset}{an integer offset to add to intensities before log2 scaling to
 prevent errors with zero intensities. If set to 0, probes with
 zero intensities are dropped/ignored for log-scaled metrics. (default = 1)}
 
-\item{weights}{tibble of sequence position weights (log2) to use when computing
-metrics. Can be calculated using \code{approxPositionWeights}. Ignored
-if NULL. (default = NULL)}
-
-\item{q}{probability values or vector of values which should be used for computing
-quantiles if "quantile" is specified as part of \code{stat_set}.
-(default = 0.25)}
-
-\item{verbose}{logical whether to print extra messages during model fitting
-procedure. (default = FALSE)}
-
-\item{.filter}{integer specifying level of probe filtering to
-perform prior to estimating affinities. See \code{pbmFilterProbes}
-for more details on probe filter levels. (default = 1)}
-
-\item{.trim}{interger vector of length two specifying start and end
-of probe sequence to be used. Default is based on the universal
-PBM probe design where only leading 36nt should be used.
-Ignored if NULL. (default = c(1, 36))}
+\item{q}{a vector of quantiles which should be used if \code{"quantile"} is specified as part
+of \code{metrics}. (default = 0.25)}
 }
 \value{
 SummarizedExperiment object with intensity information summarized for
-k-mers given in separate assays, with each row corresponding to a separate
-k-mer. k-mer sequences and number of corresponding probes are given
-in the rowdata of the SummarizedBenchmark.
+k-mers. Each metric is returned as a separate assay, with each rows corresponding
+to k-mers. k-mer sequences and the number of corresponding probes are given
+in the rowdata of the object.
 }
 \description{
 This function calculates k-mer intensity information from
@@ -58,17 +40,15 @@ PBM data.
 }
 \details{
 The following statistics are currently supported.
-\itemize{
-\item \code{"median"}: median probe intensity
-\item \code{"mean"}: mean probe intensity
-\item \code{"mad"}: MAD probe intensity (scaled by 1.4826)
-\item \code{"sd"}: SD probe intensity
-\item \code{"log2mean"}: mean probe log2(intensity + offset)
-\item \code{"log2mad"}: MAD probe log2(intensity + offset)
-\item \code{"log2sd"}: SD probe log(intensity + offset)
-\item \code{"na"}: number of NA probes
-\item \code{"quantile"}: q-quantile probe intensity
-}
+* \code{"median"}: median probe intensity
+* \code{"mean"}: mean probe intensity
+* \code{"mad"}: MAD probe intensity (scaled by 1.4826)
+* \code{"sd"}: SD probe intensity
+* \code{"log2mean"}: mean probe log2(intensity + offset)
+* \code{"log2mad"}: MAD probe log2(intensity + offset)
+* \code{"log2sd"}: SD probe log(intensity + offset)
+* \code{"na"}: number of NA probes
+* \code{"quantile"}: q-quantile probe intensity
 }
 \author{
 Patrick Kimes

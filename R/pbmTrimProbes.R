@@ -16,7 +16,7 @@
 #' @author Patrick Kimes
 pbmTrimProbes <- function(pe) {
     stopifnot(is(pe, "PBMExperiment") || is(pe, "PBMDesign"))
-    
+
     if (length(pe@probeTrim) == 0L) {
         return(pe)
     }

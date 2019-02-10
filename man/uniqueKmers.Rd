@@ -7,28 +7,27 @@
 uniqueKmers(k = 8L, .largek = FALSE)
 }
 \arguments{
-\item{k}{integer length of oligonucleotide sequences to be
-returned. (default = 8)}
+\item{k}{an integer length of oligonucleotide sequences to be
+returned. (default = 8L)}
 
-\item{.largek}{logical whether to allow specifying a large k,
-i.e. k > 10L. (default = FALSE)}
+\item{.largek}{a logical value whether to allow specifying a large \code{k},
+i.e. \code{k > 10L}. (default = FALSE)}
 }
 \value{
-vector of unique k-mer strings.
+Vector of unique k-mer strings.
 }
 \description{
 This simple function returns a vector of all unique k-mers of
 a specified length, filtered to remove reverse complement redundancy
 such that, e.g. only one of "AA" and "TT" is kept. When deciding
-between a k-mer and the reverse complement, the "smaller" sequence
-is kept, where simple alphabetical ordering is used. In the example
-above, "AA" will be kept because "AA" <= "TT". For \code{k = 8}, 
-this will return the same set of 8-mers as is used in the Universal
-PBM Analysis Suite software.
-}
-\details{
-Note, this function is not meant to be used for k > 10, and will return
-an error if k > 10 is specified unless, \code{largek = TRUE}.
+between a k-mer and the reverse complement, the alphabetically earlier
+sequence is kept. In the example above, "AA" will be kept because "AA"
+occurs before "TT".
+
+Note, this function is not meant to be used for \code{k > 10} as the
+computational cost of the approach can quickly grow to be too much.
+By default, an error willbe thrown if k > 10 is specified. This 
+can be overriden by setting \code{largek = TRUE}.
 }
 \author{
 Patrick Kimes

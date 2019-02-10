@@ -4,31 +4,18 @@
 #' This function calculates k-mer intensity information from
 #' PBM data. 
 #' 
-#' @param se SummarizedExperiment object containing PBM intensity data.
-#' @param assay string name of the assay to use. (default = \code{SummarizedExperiment::assayNames(se)[1]})
+#' @param pe a PBMExperiment object containing PBM intensity data.
+#' @param assay a string name of the assay to adjust. (default = \code{SummarizedExperiment::assayNames(pe)[1]})
 #' @param kmers a character vector of k-mers to predict. (default = \code{uniqueKmers(8L)})
-#' @param stat_set character vector of statistics to calculate for each sample.
+#' @param metrics a character vector of statistics to calculate for each scan.
 #'        The set of supported statistics are listed in the details. By default,
-#'        all possible statistics are computed. Details on available statistics are
-#'        given in details. (default = \code{c("median", "mean", "mad", "sd", "log2mean", "log2mad", "log2sd", "na", "quantile")})
-#' @param weights tibble of sequence position weights (log2) to use when computing
-#'        metrics. Can be calculated using \code{approxPositionWeights}. Ignored
-#'        if NULL. (default = NULL)
-#' @param offset integer offset to add to intensities before log2 scaling to
+#'        all possible statistics are computed, but this is not recommended as
+#'        it can be computational expensive. (default = \code{c("median", "mean", "mad", "sd", "log2mean", "log2mad", "log2sd", "na", "quantile")})
+#' @param offset an integer offset to add to intensities before log2 scaling to
 #'        prevent errors with zero intensities. If set to 0, probes with
 #'        zero intensities are dropped/ignored for log-scaled metrics. (default = 1)
-#' @param q probability values or vector of values which should be used for computing
-#'        quantiles if "quantile" is specified as part of \code{stat_set}.
-#'        (default = 0.25)
-#' @param verbose logical whether to print extra messages during model fitting
-#'        procedure. (default = FALSE)
-#' @param .filter integer specifying level of probe filtering to
-#'        perform prior to estimating affinities. See \code{pbmFilterProbes}
-#'        for more details on probe filter levels. (default = 1)
-#' @param .trim interger vector of length two specifying start and end
-#'        of probe sequence to be used. Default is based on the universal
-#'        PBM probe design where only leading 36nt should be used. 
-#'        Ignored if NULL. (default = c(1, 36))
+#' @param q a vector of quantiles which should be used if \code{"quantile"} is specified as part
+#'        of \code{metrics}. (default = 0.25)
 #'
 #' @details
 #' The following statistics are currently supported.
@@ -44,27 +31,26 @@
 #' 
 #' @return
 #' SummarizedExperiment object with intensity information summarized for
-#' k-mers given in separate assays, with each row corresponding to a separate
-#' k-mer. k-mer sequences and number of corresponding probes are given
-#' in the rowdata of the SummarizedBenchmark.
+#' k-mers. Each metric is returned as a separate assay, with each rows corresponding
+#' to k-mers. k-mer sequences and the number of corresponding probes are given
+#' in the rowdata of the object.
 #' 
-#' @md
 #' @importFrom stats mad median
 #' @importFrom dplyr as_tibble mutate left_join select
 #' @importFrom tidyr nest
 #' @importFrom matrixStats colMedians colMeans2 colSds colMads colQuantiles
 #' @export
 #' @author Patrick Kimes
-summarizeKmers <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
+summarizeKmers <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
                            kmers = uniqueKmers(8L), 
-                           stat_set = c("median", "mean", "mad", "sd", "log2mean",
-                                        "log2mad", "log2sd", "na", "quantile"),
-                           offset = 1, weights = NULL, q = 0.25, verbose = FALSE, .filter = 1L,
-                           .trim = if (.filter > 0L) { c(1, 36) } else { NULL }) {
+                           metrics = c("median", "mean", "mad", "sd", "log2mean",
+                                       "log2mad", "log2sd", "na", "quantile"),
+                           offset = 1, q = 0.25) {
+    stopifnot(is(pe, "PBMExperiment")) 
 
     ## check stat statistics are valid
-    stat_set <- match.arg(stat_set, several.ok = TRUE)
-    if (length(stat_set) == 0) {
+    metrics <- match.arg(metrics, several.ok = TRUE)
+    if (length(metrics) == 0) {
         stop("Please specify at least one valid statistic.")
     }
 
@@ -77,63 +63,33 @@ summarizeKmers <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
     }
     
     ## filter probes
-    se <- pbmFilterProbes(se)
+    pe <- pbmFilterProbes(pe)
 
     ## trim probe sequences
-    se <- pbmTrimProbes(se)
+    pe <- pbmTrimProbes(pe)
+
+    ## filtered/trimmed PBMDesign
+    pdes <- PBMDesign(pe)
+
+    pdest <- as.data.frame(pdes@design, optional = TRUE)
+    pdest <- dplyr::as_tibble(pdest)
 
     ## find mapping between kmers and probes
-    ovnames <- intersect(names(rowData(se)), c("Row", "Column", "ID", "Sequence"))
-    kmermap <- mapKmers(rowData(se)[, ovnames, drop = FALSE], kmers)
+    kmermap <- mapKmers(pdes, kmers)
 
-    ## use ordering from input 'kmers'
+    ## use ordering from input 'kmers' --- pkk check
     kmermap$seq <- factor(kmermap$seq, levels = kmers)
     
     ## extract intensities
-    pdat <- SummarizedExperiment::assay(se, assay)
+    pdat <- SummarizedExperiment::assay(pe, assay)
     pdat <- as.data.frame(pdat, optional = TRUE)
     pdat <- dplyr::as_tibble(pdat)
 
     ## check whether row/column indices were available
-
-    if (all(c("Row", "Column") %in% names(kmermap))) {
-        pdat <- dplyr::mutate(pdat,
-                              Row = rowData(se)[, "Row"],
-                              Column = rowData(se)[, "Column"])
-        
-        if (is.null(weights)) {
-            pdat <- dplyr::left_join(pdat, dplyr::select(kmermap, "Row", "Column", "seq"),
-                                     by = c("Row", "Column"))
-        } else {
-            pdat <- dplyr::left_join(pdat, dplyr::select(kmermap, "Row", "Column", "seq", "pos"),
-                                     by = c("Row", "Column"))
-            pdat <- dplyr::left_join(tidyr::gather(pdat, sample, value, -seq, -pos, -Row, -Column),
-                                     tidyr::gather(weights, sample, l2r, -pos),
-                                     by = c("sample", "pos"))
-            pdat <- dplyr::mutate(pdat, value = value / 2^(l2r))
-            pdat <- dplyr::select(pdat, -l2r)
-            pdat <- tidyr::spread(pdat, sample, value)
-            pdat <- dplyr::select(pdat, -pos)
-        }
-        pdat <- dplyr::select(pdat, -Row, -Column)
-    } else {
-        pdat <- dplyr::mutate(pdat, probe_idx = 1:n())
-        if (is.null(weights)) {
-            pdat <- dplyr::left_join(pdat, dplyr::select(kmermap, "probe_idx", "seq"),
-                                     by = "probe_idx")
-        } else {
-            pdat <- dplyr::left_join(pdat, dplyr::select(kmermap, "probe_idx", "seq", "pos"),
-                                     by = "probe_idx")
-            pdat <- dplyr::left_join(tidyr::gather(pdat, sample, value, -seq, -pos, -probe_idx),
-                                     tidyr::gather(weights, sample, l2r, -pos),
-                                     by = c("sample", "pos"))
-            pdat <- dplyr::mutate(pdat, value = value / 2^(l2r))
-            pdat <- dplyr::select(pdat, -l2r)
-            pdat <- tidyr::spread(pdat, sample, value)
-            pdat <- dplyr::select(pdat, -pos)
-        }
-        pdat <- dplyr::select(pdat, -probe_idx)
-    }
+    pdat <- cbind(pdat, pdest)
+    pdat <- dplyr::left_join(pdat, dplyr::select_at(kmermap, c(pe@probeCols, "seq")),
+                             by = pe@probeCols)
+    pdat <- dplyr::select(pdat, -(!! pe@probeCols))
     
     ## group by k-mer sequence
     pdat_sets <- tidyr::nest(pdat, -seq)
@@ -150,47 +106,47 @@ summarizeKmers <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
     assay_list <- list()
     
     ## calculate median intensities
-    if ("median" %in% stat_set) {
+    if ("median" %in% metrics) {
         pdatm <- dplyr::mutate(pdat_sets, m = lapply(data, matrixStats::colMedians, na.rm = TRUE))
         median_vals <- DataFrame(do.call(rbind, pdatm$m))
         names(median_vals) <- pdat_samples
-        median_vals <- median_vals[colnames(se)]
+        median_vals <- median_vals[colnames(pe)]
         stopifnot(pdat_seqs == pdatm$seq)
         assay_list$medianIntensity <- median_vals
     }
     
     ## calculate mean intensities
-    if ("mean" %in% stat_set) {
+    if ("mean" %in% metrics) {
         pdatm <- dplyr::mutate(pdat_sets, m = lapply(data, matrixStats::colMeans2, na.rm = TRUE))
         mean_vals <- DataFrame(do.call(rbind, pdatm$m))
         names(mean_vals) <- pdat_samples
-        mean_vals <- mean_vals[colnames(se)]
+        mean_vals <- mean_vals[colnames(pe)]
         stopifnot(pdat_seqs == pdatm$seq)
         assay_list$meanIntensity <- mean_vals
     }
     
     ## calculate mad intensities
-    if ("mad" %in% stat_set) {
+    if ("mad" %in% metrics) {
         pdatm <- dplyr::mutate(pdat_sets, m = lapply(data, matrixStats::colMads, na.rm = TRUE))
         mad_vals <- DataFrame(do.call(rbind, pdatm$m))
         names(mad_vals) <- pdat_samples
-        mad_vals <- mad_vals[colnames(se)]
+        mad_vals <- mad_vals[colnames(pe)]
         stopifnot(pdat_seqs == pdatm$seq)
         assay_list$madIntensity <- mad_vals
     }
 
     ## calculate SD intensities
-    if ("sd" %in% stat_set) {
+    if ("sd" %in% metrics) {
         pdatm <- dplyr::mutate(pdat_sets, m = lapply(data, matrixStats::colSds, na.rm = TRUE))
         sd_vals <- DataFrame(do.call(rbind, pdatm$m))
         names(sd_vals) <- pdat_samples
-        sd_vals <- sd_vals[colnames(se)]
+        sd_vals <- sd_vals[colnames(pe)]
         stopifnot(pdat_seqs == pdatm$seq)
         assay_list$sdIntensity <- sd_vals
     }
     
     ## calculate log2 mean intensities
-    if ("log2mean" %in% stat_set) {
+    if ("log2mean" %in% metrics) {
         if (offset <= 0) {  
             pdatm <- dplyr::mutate(pdat_sets,
                                    m = lapply(data, function(x) {
@@ -205,13 +161,13 @@ summarizeKmers <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
         }
         log2mean_vals <- DataFrame(do.call(rbind, pdatm$m))
         names(log2mean_vals) <- pdat_samples
-        log2mean_vals <- log2mean_vals[colnames(se)]
+        log2mean_vals <- log2mean_vals[colnames(pe)]
         stopifnot(pdat_seqs == pdatm$seq)
         assay_list$log2meanIntensity <- log2mean_vals
     }
 
     ## calculate log2 mad intensities
-    if ("log2mad" %in% stat_set) {
+    if ("log2mad" %in% metrics) {
         if (offset <= 0) {
             pdatm <- dplyr::mutate(pdat_sets,
                                    m = lapply(data, function(x) {
@@ -226,13 +182,13 @@ summarizeKmers <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
         }
         log2mad_vals <- DataFrame(do.call(rbind, pdatm$m))
         names(log2mad_vals) <- pdat_samples
-        log2mad_vals <- log2mad_vals[colnames(se)]
+        log2mad_vals <- log2mad_vals[colnames(pe)]
         stopifnot(pdat_seqs == pdatm$seq)
         assay_list$log2madIntensity <- log2mad_vals
     }
     
     ## calculate log2 SD intensities
-    if ("log2sd" %in% stat_set) {
+    if ("log2sd" %in% metrics) {
         if (offset <= 0) {
             pdatm <- dplyr::mutate(pdat_sets,
                                    m = lapply(data, function(x) {
@@ -246,23 +202,23 @@ summarizeKmers <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
         }
         log2sd_vals <- DataFrame(do.call(rbind, pdatm$m))
         names(log2sd_vals) <- pdat_samples
-        log2sd_vals <- log2sd_vals[colnames(se)]
+        log2sd_vals <- log2sd_vals[colnames(pe)]
         stopifnot(pdat_seqs == pdatm$seq)
         assay_list$log2sdIntensity <- log2sd_vals
     }
         
     ## calculate number of NAs
-    if ("na" %in% stat_set) {
+    if ("na" %in% metrics) {
         pdatm <- dplyr::mutate(pdat_sets, m = lapply(data, function(x) { colSums(is.na(x)) }))
         na_vals <- DataFrame(do.call(rbind, pdatm$m))
         names(na_vals) <- pdat_samples
-        na_vals <- na_vals[colnames(se)]
+        na_vals <- na_vals[colnames(pe)]
         stopifnot(pdat_seqs == pdatm$seq)
         assay_list$naProbes <- na_vals
     }
 
     ## calculate quantile intensities
-    if ("quantile" %in% stat_set) {
+    if ("quantile" %in% metrics) {
         pdatm <- dplyr::mutate(pdat_sets, m = lapply(data, matrixStats::colQuantiles,
                                                      probs = q, drop = FALSE, na.rm = TRUE))
         qtiles <- colnames(pdatm$m[[1]])
@@ -271,7 +227,7 @@ summarizeKmers <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
             qt_vals <- lapply(pdatm$m, function(x) { x[, i] })
             qt_vals <- DataFrame(do.call(rbind, qt_vals))
             names(qt_vals) <- pdat_samples
-            qt_vals <- qt_vals[colnames(se)]
+            qt_vals <- qt_vals[colnames(pe)]
             stopifnot(pdat_seqs == pdatm$seq)
             assay_list[[qtiles[[i]]]] <- qt_vals
         }
@@ -283,6 +239,7 @@ summarizeKmers <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
     
     ## create new SummarizedExperiment
     SummarizedExperiment(assays = assay_list,
-                         rowData = rowdat, colData = colData(se))
+                         rowData = rowdat,
+                         colData = colData(pe))
 }
 

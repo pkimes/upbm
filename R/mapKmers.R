@@ -1,25 +1,23 @@
-#' Map K-mer Motifs to PBM Probe Sequences
+#' @title Map K-mer Motifs to PBM Probe Sequences
 #'
-#' This helper function takes a standardized PBM sequence design file,
-#' e.g. "8x60k_v1_sequences.txt", and k-mer sequences of interest,
-#' and identifies the subset of probes containing each k-mer sequence.
-#' The output table can be used to compute k-mer-level affinities from
-#' the probe-level intensity values.
+#' @description
+#' This helper function takes a PBMDesign object and set of k-mer
+#' sequences of interest, and returns a mapping between probes and 
+#' k-mer sequences.
+#' Since no probe filtering or trimming is performed as part of this
+#' function, \code{pbmTrimProbes} and \code{pbmFilterProbes} should
+#' be called before passing the PBMDesign object to this function.
 #'
-#' @param probes table containing sequence information for probes,
-#'        e.g. read in from "8x60k_v1_sequences.txt". At a minimum,
-#'        must have a column called "Sequence" with the array probe
-#'        sequences.
+#' @param pd a PBMDesign object containing probe sequence information.
 #' @param kmers character vector of K-mers (of equal length) to which
 #'        probes should be mapped.
 #'
 #' @return
-#' a table with 8mer sequences (seq), and probes, where each row
-#' corresponds to a unique occurrence of the sequence on a probe and on
-#' the array. The table inclues all columns of the input \code{probes}
-#' table except for the \code{Sequences} column, as well as columns
-#' indicating the orientation (orient) and position (pos) of the k-mer
-#' in the probe. 
+#' A table of k-mer sequences and probes, with each row
+#' corresponding to an occurrence of a k-mer sequence on a probe.
+#' The table inclues all columns of the input \code{pd} design
+#' as well as columns indicating the orientation (\code{orient}) and
+#' position (\code{pos}) of the k-mer in the probe. 
 #'
 #' @importFrom tibble tibble rownames_to_column
 #' @importFrom tidyr unnest
@@ -27,43 +25,29 @@
 #' @importFrom Biostrings DNAStringSet reverseComplement
 #' @export
 #' @author Patrick Kimes
-mapKmers <- function(probes, kmers) {
-    ## check validity of inputs
-    if (is(probes, "DataFrame")) {
-        probes <- as.data.frame(probes)
-    } else if (!is(probes, "data.frame")) {
-        stop("Specified 'probes' must be a DataFrame or data.frame ",
-             "of probe sequences.")
-    }
-    stopifnot("Sequence" %in% names(probes))
+mapKmers <- function(pd, kmers) {
+    stopifnot(is(pd, "PBMDesign"))
     stopifnot(is.vector(kmers, mode = "character"))
-
+    stopifnot("probeID" %in% names(pd@design))
+    
+    pdd <- pd@design
+    
     ## check if kmers/motfs are of uniform length
     k <- unique(nchar(kmers))
     if (length(k) > 1) {
         stop("Specified 'kmers' includes motifs of varying length.\n",
              "Method currently only supports kmers of uniform length.")
     }
-
-    if (! "probe_idx" %in% colnames(probes)) {
-        probes <- dplyr::mutate(probes, probe_idx = 1:n())
-    }  else {
-        if (any(duplicated(probes$probe_idx))) {
-            stop("Probe DataFrame has 'probe_idx' column with non-unique entries.\n",
-                 "If 'probe_idx' is specified, entries must be unique, ",
-                 "or column should be removed.")
-        }
-    }
     
     ## check if sequences are of uniform length
-    seql <- unique(nchar(probes$Sequence))
+    seql <- unique(nchar(pdd$Sequence))
     if (length(seql) > 1) {
         stop("Probe sequences should all be of equal length.") 
     }
     
     ## count up occurrences of kmers - note: will do ALL kmers
-    rolls <- lapply(probes$Sequence, substring, 1:(seql - k + 1), k:seql)
-    rolls <- tibble::tibble(probe_idx = probes$probe_idx, fwd_seq = rolls)
+    rolls <- lapply(pdd$Sequence, substring, 1:(seql - k + 1), k:seql)
+    rolls <- tibble::tibble(probeID = pdd$probeID, fwd_seq = rolls)
 
     ## add start position (1-indexed)
     rolls <- dplyr::mutate(rolls, pos = list(1:(seql - k + 1)))
@@ -79,11 +63,11 @@ mapKmers <- function(probes, kmers) {
     rolls_rev <- dplyr::mutate(rolls_rev, seq = rev_seq, orient = 'rev') 
     
     rolls <- dplyr::bind_rows(rolls_fwd, rolls_rev)
-    rolls <- dplyr::select(rolls, probe_idx, seq, pos, orient)
+    rolls <- dplyr::select(rolls, probeID, seq, pos, orient)
     
     ## add all probe identifiers except for sequence
-    if (length(probes) > 1) {
-        rolls <- dplyr::left_join(rolls, dplyr::select(probes, -Sequence), by = "probe_idx")
+    if (length(pdd) > 1) {
+        rolls <- dplyr::left_join(rolls, pdd, by = "probeID")
     }
     
     return(rolls)

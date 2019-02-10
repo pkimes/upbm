@@ -4,31 +4,28 @@
 \alias{mapKmers}
 \title{Map K-mer Motifs to PBM Probe Sequences}
 \usage{
-mapKmers(probes, kmers)
+mapKmers(pd, kmers)
 }
 \arguments{
-\item{probes}{table containing sequence information for probes,
-e.g. read in from "8x60k_v1_sequences.txt". At a minimum,
-must have a column called "Sequence" with the array probe
-sequences.}
+\item{pd}{a PBMDesign object containing probe sequence information.}
 
 \item{kmers}{character vector of K-mers (of equal length) to which
 probes should be mapped.}
 }
 \value{
-a table with 8mer sequences (seq), and probes, where each row
-corresponds to a unique occurrence of the sequence on a probe and on
-the array. The table inclues all columns of the input \code{probes}
-table except for the \code{Sequences} column, as well as columns
-indicating the orientation (orient) and position (pos) of the k-mer
-in the probe.
+A table of k-mer sequences and probes, with each row
+corresponding to an occurrence of a k-mer sequence on a probe.
+The table inclues all columns of the input \code{pd} design
+as well as columns indicating the orientation (\code{orient}) and
+position (\code{pos}) of the k-mer in the probe.
 }
 \description{
-This helper function takes a standardized PBM sequence design file,
-e.g. "8x60k_v1_sequences.txt", and k-mer sequences of interest,
-and identifies the subset of probes containing each k-mer sequence.
-The output table can be used to compute k-mer-level affinities from
-the probe-level intensity values.
+This helper function takes a PBMDesign object and set of k-mer
+sequences of interest, and returns a mapping between probes and 
+k-mer sequences.
+Since no probe filtering or trimming is performed as part of this
+function, \code{pbmTrimProbes} and \code{pbmFilterProbes} should
+be called before passing the PBMDesign object to this function.
 }
 \author{
 Patrick Kimes
