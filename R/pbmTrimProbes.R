@@ -14,7 +14,7 @@
 #' @importFrom stringr str_sub
 #' @export
 #' @author Patrick Kimes
-trimProbeSequences <- function(pe) {
+pbmTrimProbes <- function(pe) {
     stopifnot(is(pe, "PBMExperiment") || is(pe, "PBMDesign"))
     
     if (length(pe@probeTrim) == 0L) {

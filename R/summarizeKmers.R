@@ -77,10 +77,10 @@ summarizeKmers <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
     }
     
     ## filter probes
-    se <- pbmFilterProbes(se, .filter)
+    se <- pbmFilterProbes(se)
 
     ## trim probe sequences
-    se <- trimProbeSequences(se, .trim)
+    se <- pbmTrimProbes(se)
 
     ## find mapping between kmers and probes
     ovnames <- intersect(names(rowData(se)), c("Row", "Column", "ID", "Sequence"))

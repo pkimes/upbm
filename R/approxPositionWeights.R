@@ -71,7 +71,7 @@ approxPositionWeights <- function(se, assay = SummarizedExperiment::assayNames(s
     se <- pbmFilterProbes(se, .filter)
 
     ## trim probe sequences
-    se <- trimProbeSequences(se, .trim)
+    se <- pbmTrimProbes(se, .trim)
 
     ## create mapping between kmers and probes
     kmmap <- mapKmers(rowData(se), kmers)

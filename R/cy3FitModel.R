@@ -67,7 +67,7 @@ cy3FitModel <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
     npe <- pbmFilterProbes(npe)
 
     ## trim probe sequences
-    npe <- trimProbeSequences(npe)
+    npe <- pbmTrimProbes(npe)
 
     if (verbose) {
         cat("|| upbm::cy3FitModel \n")
