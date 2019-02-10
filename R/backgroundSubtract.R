@@ -1,5 +1,6 @@
-#' Background subtract intensities
+#' @title Background subtract intensities
 #'
+#' @description
 #' Given a PBMExperiment with foreground and background intensities,
 #' this function performs simple background subtraction and returns the same
 #' PBMExperiment object with the background intensities subtracted from the
@@ -65,7 +66,7 @@ backgroundSubtract <- function(pe, assay = SummarizedExperiment::assayNames(pe)[
         if (verbose) {
             cat("|| - Dropping background assay (keepb = FALSE).\n")
         }
-        assay(pe, assayb) <- NULL
+        SummarizedExperiment::assay(pe, assayb) <- NULL
     } else if (verbose) {
         cat("|| - Keeping background assay (keepb = TRUE).\n")
     }
