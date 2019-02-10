@@ -20,22 +20,31 @@ using \code{cy3FitEmpirical} or \code{cy3FitModel}.}
 to use for matching scans across the two objects; values of
 column must be unique for each scan in each object.}
 
-\item{filter}{logical whether to filter "low quality" flagged probes by setting to NA.
+\item{filter}{a logical value whether to filter "low quality" flagged probes by setting to NA.
 (default = TRUE)}
 
-\item{scale}{logical whether to perform scaling by ratio of observed vs. expected
+\item{scale}{a logical value whether to perform scaling by ratio of observed vs. expected
 Cy3 intensity at each probe. (default = TRUE)}
 
 \item{verbose}{a logical value whether to print verbose output during
 analysis. (default = FALSE)}
 }
 \value{
-Original PBMExperiment object with additional assay corresponding to
-Cy3 filtered and/or scaled intensities (`normalized`).
+Original PBMExperiment object with assay containing Cy3 filtered and/or scaled intensities
+(\code{"normalized"}). If an assay with the same name is already included in the object, it will
+be overwritten.
 }
 \description{
-Uses Cy3 intensities to quantify relative dsDNA material at each probe based
-on observed vs. expected intensity ratios.
+Given a PBMExperiment containing Alexa488 probe intensity data and a second
+PBMExperiment containing Cy3 observed-to-expected ratios, this function
+performs probe filtering and/or scaling of the Alexa488 data according to the
+over/under abundance of dsDNA at each probe as quantified from the Cy3 data.
+
+Both the Alexa488 and Cy3 PBMExperiment objects must have a common column in the
+colData (specified by \code{match_by=}) that can be used to match scans across the
+two objects. While the values of the \code{match_by} column may be repeated across
+Alexa488 scans (e.g. if an array was reused or scanned multiple times), the
+values must be unique across the Cy3 PBMExperiment object.
 }
 \seealso{
 cy3FitEmpirical

@@ -10,14 +10,17 @@ cy3FitModel(pe, assay = SummarizedExperiment::assayNames(pe)[1],
 \arguments{
 \item{pe}{a PBMExperiment object containing Cy3 intensity data.}
 
-\item{assay}{string name of the assay to use.
+\item{assay}{a numeric index or string name specifying the assay to use.
 (default = \code{SummarizedExperiment::assayNames(pe)[1]})}
 
-\item{refit}{logical whether to filter outliers and refit trinucleotide
+\item{refit}{a logical value whether to filter outliers and refit trinucleotide
 linear regression model. (default = TRUE)}
 
 \item{threshold}{a numeric threshold on absolute value of log2 ratio between
 observed and expected Cy3 intensities. (default = 1L)}
+
+\item{verbose}{a logical value whether to print verbose output during
+analysis. (default = FALSE)}
 }
 \value{
 Original Cy3 PBMExperiment object with additional assays corresponding
@@ -55,6 +58,11 @@ PBMExperiment object.
 The returned PBMExperiment object can be passed to \code{cy3Normalize}
 to filter low quality probes and/or normalize Alexa488 intensities by the
 computed ratios.
+}
+\references{
+\itemize{
+\item Berger, M. F., & Bulyk, M. L. (2009). Universal protein-binding microarrays for the comprehensive characterization of the DNA-binding specificities of transcription factors. Nature Protocols, 4(3), 393-411.
+}
 }
 \seealso{
 cy3Normalize cy3FitEmpirical

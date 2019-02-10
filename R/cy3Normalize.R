@@ -1,8 +1,16 @@
 #' @title Perform Cy3 normalization
 #'
 #' @description
-#' Uses Cy3 intensities to quantify relative dsDNA material at each probe based
-#' on observed vs. expected intensity ratios.
+#' Given a PBMExperiment containing Alexa488 probe intensity data and a second
+#' PBMExperiment containing Cy3 observed-to-expected ratios, this function
+#' performs probe filtering and/or scaling of the Alexa488 data according to the
+#' over/under abundance of dsDNA at each probe as quantified from the Cy3 data.
+#'
+#' Both the Alexa488 and Cy3 PBMExperiment objects must have a common column in the
+#' colData (specified by \code{match_by=}) that can be used to match scans across the
+#' two objects. While the values of the \code{match_by} column may be repeated across
+#' Alexa488 scans (e.g. if an array was reused or scanned multiple times), the
+#' values must be unique across the Cy3 PBMExperiment object.
 #' 
 #' @param pe a PBMExperiment object containing Alexa488 intensity data.
 #' @param cy3pe a PBMExperiment object containing Cy3 deviation values from
@@ -12,16 +20,17 @@
 #' @param match_by a string column name in colData of \code{pe} and \code{cy3pe}
 #'        to use for matching scans across the two objects; values of
 #'        column must be unique for each scan in each object.
-#' @param filter logical whether to filter "low quality" flagged probes by setting to NA.
+#' @param filter a logical value whether to filter "low quality" flagged probes by setting to NA.
 #'        (default = TRUE)
-#' @param scale logical whether to perform scaling by ratio of observed vs. expected
+#' @param scale a logical value whether to perform scaling by ratio of observed vs. expected
 #'        Cy3 intensity at each probe. (default = TRUE)
 #' @param verbose a logical value whether to print verbose output during
 #'        analysis. (default = FALSE)
 #'
 #' @return
-#' Original PBMExperiment object with additional assay corresponding to
-#' Cy3 filtered and/or scaled intensities (`normalized`).
+#' Original PBMExperiment object with assay containing Cy3 filtered and/or scaled intensities
+#' (\code{"normalized"}). If an assay with the same name is already included in the object, it will
+#' be overwritten.
 #'
 #' @seealso cy3FitEmpirical
 #' @importFrom dplyr as_tibble mutate select left_join
@@ -158,7 +167,14 @@ cy3Normalize <- function(pe, cy3pe, assay = SummarizedExperiment::assayNames(pe)
     stopifnot(colnames(new_assay) %in% colnames(pe))
     new_assay <- new_assay[, colnames(pe)]
 
-    ## add to input PBMExperiment
+    ## clear any existing "normalized" assay and overwite with new normalized data
+    if ("normalized" %in% assayNames(pe)) {
+        SummarizedExperiment::assay(pe, "normalized") <- NULL
+        if (verbose) {
+            cat("|| - Original PBMExperiment object contains \"normalized\" assay.\n")
+            cat("|| - Existing \"normalized\" assay will be overwritten.\n")
+        }
+    }
     SummarizedExperiment::assays(pe) <- c(S4Vectors::SimpleList(normalized = DataFrame(new_assay, check.names = FALSE)),
                                           SummarizedExperiment::assays(pe))
     

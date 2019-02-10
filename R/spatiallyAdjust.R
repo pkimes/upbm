@@ -1,42 +1,52 @@
-#' Spatial Adjustment of Samples
+#' @title Perform spatial adjustment
 #'
-#' Given PBM intensities stored as a SummarizedExperiment, this function
+#' @description
+#' Given a PBMExperiment containing probe intensity data with array coordinates
+#' specified in rowData as \code{"Column"} and \code{"Row"}, this function
 #' computes the local intensity bias for each probe, and returns the
-#' same SummarizedExperiment object with each probe corrected (scaled) by the bias.
-#' Optionally, the per-probe bias can also be returned as an additional array
-#' in the bias corrected SummarizedExperiment object. The spatial bias at each
-#' probe is defined as the ratio between the median intensity in a `k` by `k`
-#' square region surrounding the probe, and the median intensity of all probes
-#' across the array. This approach is taken directly from the original PBM
-#' analysis pipeline described in Berger and Bulyk (Nature Protocols, 2008).
-#' The size of the local region can be specified by the user, with a default
-#' size of 15 x 15 (as used in the aforementioned publication). 
+#' same PBMExperiment object with an additional array containing spatially
+#' corrected (scaled) probe intensities. Optionally, the per-probe bias is also
+#' returned as an array in the bias corrected PBMExperiment object.
+#'
+#' The spatial bias at each probe is computed as the ratio between the median
+#' intensity in a \code{k} by \code{k}
+#' region surrounding the probe and the median intensity of all probes
+#' across the array. This approach is taken directly from the Universal PBM
+#' Analysis Suite described in Berger and Bulyk (Nature Protocols, 2008).
 #' 
 #' @param pe a PBMExperiment object containing PBM intensity data.
 #' @param assay a string name of the assay to adjust. (default = \code{SummarizedExperiment::assayNames(pe)[1]})
-#' @param k an odd integer specifying size of region to use to for computing
-#'        local bias. (default = 15)
+#' @param k an integer specifying the size of the region to use to for computing
+#'        local bias. Must be odd. (default = 15L)
 #' @param returnBias a logical whether to include the spatial bias as an
 #'        additional 'assay' (called 'spatialbias') in the returned
-#'        SummarizedExperiment object. (default = TRUE)
-#' @param verbose a logical value whether to print verbose output during
-#'        analysis. (default = FALSE)
+#'        PBMExperiment object. (default = TRUE)
+#' @param verbose a logical value whether to print verbose output
+#'        during analysis. (default = FALSE)
 #' 
 #' @return
-#' Original PBMExperiment object with additional assay corresponding to
-#' spatially adjusted intensities and a new column added to the colData,
-#' `spatialMedian', containing the global median intensity of the original
+#' Original PBMExperiment object with assay containing spatially adjusted intensities
+#' (\code{"normalized"}) and a new column added to the colData,
+#' \code{"spatialMedian"}, containing the global median intensity of the original
 #' probe-level data used to compute spatial bias for each sample.
+#' If specified, the estimated spatial bias will also be included in an additional
+#' assay (\code{"spatialbias"}). If assays with the same name are already included
+#' in the object, they will be overwritten.
+#' 
+#' @references
+#' \itemize{
+#' \item Berger, M. F., & Bulyk, M. L. (2009). Universal protein-binding microarrays for the comprehensive characterization of the DNA-binding specificities of transcription factors. Nature Protocols, 4(3), 393-411.
+#' }
 #'
 #' @import SummarizedExperiment
 #' @importFrom tibble as_tibble
 #' @importFrom tidyr gather spread unnest
-#' @importFrom dplyr select mutate select_ do group_by left_join
+#' @importFrom dplyr select mutate select_ do group_by left_join row_number
 #' @importFrom S4Vectors SimpleList
 #' @export
 #' @author Patrick Kimes
 spatiallyAdjust <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
-                            k = 15, returnBias = TRUE, verbose = FALSE) {
+                            k = 15L, returnBias = TRUE, verbose = FALSE) {
     stopifnot(is(pe, "PBMExperiment")) 
 
     ## don't show progress when running `do` here
@@ -130,7 +140,14 @@ spatiallyAdjust <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
     sub_intensity <- sub_intensity[, rownames(colData(pe)), drop = FALSE]
 
     ## add to input PBMExperiment
-    SummarizedExperiment::assays(pe) <- c(S4Vectors::SimpleList(spatiallyadjusted = sub_intensity),
+    if ("normalized" %in% assayNames(pe)) {
+        SummarizedExperiment::assay(pe, "normalized") <- NULL
+        if (verbose) {
+            cat("|| - Original PBMExperiment object contains \"normalized\" assay.\n")
+            cat("|| - Existing \"normalized\" assay will be overwritten.\n")
+        }
+    }
+    SummarizedExperiment::assays(pe) <- c(S4Vectors::SimpleList(normalized = sub_intensity),
                                           SummarizedExperiment::assays(pe))
     if (returnBias) {
         SummarizedExperiment::assay(pe, "spatialbias") <- med_intensity
@@ -163,7 +180,7 @@ spatiallyAdjust <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
     yg <- y$global
     y <- y$local / y$global
     y <- tibble::as_tibble(y)
-    y <- dplyr::mutate(y, Row = row_number())
+    y <- dplyr::mutate(y, Row = dplyr::row_number())
     y <- tidyr::gather(y, Column, value, -Row)
     y <- dplyr::mutate(y, Column = as.integer(gsub("V", "", Column)))
     return(list(y, yg))
