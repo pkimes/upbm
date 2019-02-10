@@ -26,7 +26,9 @@ This function fits either a normal+exponential or normal+gamma convolution model
 the probe-level intensities of a PBMExperiment.
 The normal+exponential convolution model is fit using \code{limma::normexp.fit} and 
 the normal+gamma convolution model is fit using \code{NormalGamma::normgam.fit}.
-This function returns the model parameter estimates for each sample in a dataframe.
+This function returns the model parameter estimates for each sample in a data.frame.
+
+For more details on the estimated parameters, see the underlying functions.
 }
 \references{
 \itemize{
