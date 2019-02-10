@@ -1,10 +1,12 @@
 #' @title Trim probe sequences 
 #'
 #' @description
-#' Simple helper function to trim probe sequences in the rowData of
-#' a PBMExperiment or PBMDesign object.
+#' Not all nucleotides in the probe sequences should be used for analysis.
+#' Given a PBMExperiment or a PBMDesign object, this function returns a
+#' modified object with probe sequences trimmed according to the
+#' associated \code{probeTrim} slot value.
 #' 
-#' @param pe a PBMExperiment object or PBMDesign object.
+#' @param pe a PBMExperiment or PBMDesign object.
 #'
 #' @return
 #' Original PBMExperiment or PBMDesign object with trimmed sequences.

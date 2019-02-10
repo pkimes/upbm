@@ -4,10 +4,10 @@
 \alias{pbmFilterProbes}
 \title{Filter PBMExperiment and PBMDesign objects}
 \usage{
-pbmFilterProbes(x)
+pbmFilterProbes(pe)
 }
 \arguments{
-\item{x}{a PBMExperiment or PBMDesign object}
+\item{pe}{a PBMExperiment or PBMDesign object.}
 }
 \value{
 Filtered object of same class as input \code{se}.
