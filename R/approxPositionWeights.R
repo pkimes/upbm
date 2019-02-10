@@ -14,7 +14,7 @@
 #' 
 #' @param se SummarizedExperiment of probe intensities.
 #' @param assay string name of the assay. (default = \code{SummarizedExperiment::assayNames(se)[1]})
-#' @param kmers character vector of k-mers to predict.
+#' @param kmers a character vector of k-mers to predict. (default = \code{uniqueKmers(8L)})
 #' @param nk number of top k-mers to use to estimate positional
 #'        trend for each sample. This should be larger for longer
 #'        k-mers and smaller for shorter k-mers as the number of probes
@@ -56,14 +56,16 @@
 #' @importFrom tidyr gather spread
 #' @author Patrick Kimes
 approxPositionWeights <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
-                                  kmers, nk = 100L, smooth = TRUE, withse = TRUE, 
+                                  kmers = uniqueKmers(8L), nk = 100L, smooth = TRUE, withse = TRUE, 
                                   verbose = FALSE, log_scale = FALSE, offset = 1L, .smooth.span = 1/2,
                                   .filter = 1L, .trim = if (.filter > 0L) { c(1, 36) } else { NULL }) {
     ## check kmers specified
-    kmers <- checkKmers(kmers, verbose)
-
-    ## check Sequence info in rowData
-    se <- checkProbeSequences(se, verbose)
+    if (!is.vector(kmers, mode = "character")) {
+        stop("If specified, 'kmers' must be a vector of nucleotide sequences as character strings.")
+    }
+    if (length(unique(nchar(kmers))) != 1L) {
+        stop("If specified, 'kmers' must be a vector of nucleotide sequences of equal length.")
+    }
 
     ## filter probes
     se <- pbmFilterProbes(se, .filter)

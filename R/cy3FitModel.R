@@ -63,9 +63,6 @@ cy3FitModel <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
                         refit = TRUE, threshold = 1L, verbose = FALSE) {
     stopifnot(is(pe, "PBMExperiment")) 
 
-    ## check Sequence info in rowData
-    npe <- checkProbeSequences(pe, FALSE)
-
     ## filter probes
     npe <- pbmFilterProbes(npe)
 

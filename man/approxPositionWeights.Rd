@@ -5,17 +5,18 @@
 \title{Approximate Positional Bias}
 \usage{
 approxPositionWeights(se,
-  assay = SummarizedExperiment::assayNames(se)[1], kmers, nk = 100L,
-  smooth = TRUE, withse = TRUE, verbose = FALSE, log_scale = FALSE,
-  offset = 1L, .smooth.span = 1/2, .filter = 1L, .trim = if
-  (.filter > 0L) {     c(1, 36) } else {     NULL })
+  assay = SummarizedExperiment::assayNames(se)[1],
+  kmers = uniqueKmers(8L), nk = 100L, smooth = TRUE, withse = TRUE,
+  verbose = FALSE, log_scale = FALSE, offset = 1L,
+  .smooth.span = 1/2, .filter = 1L, .trim = if (.filter > 0L) {    
+  c(1, 36) } else {     NULL })
 }
 \arguments{
 \item{se}{SummarizedExperiment of probe intensities.}
 
 \item{assay}{string name of the assay. (default = \code{SummarizedExperiment::assayNames(se)[1]})}
 
-\item{kmers}{character vector of k-mers to predict.}
+\item{kmers}{a character vector of k-mers to predict. (default = \code{uniqueKmers(8L)})}
 
 \item{nk}{number of top k-mers to use to estimate positional
 trend for each sample. This should be larger for longer

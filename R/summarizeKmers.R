@@ -1,11 +1,12 @@
-#' Summarize K-mer Intensities
+#' @title Compute K-mer summary metrics from probe intensities
 #'
+#' @description
 #' This function calculates k-mer intensity information from
 #' PBM data. 
 #' 
 #' @param se SummarizedExperiment object containing PBM intensity data.
 #' @param assay string name of the assay to use. (default = \code{SummarizedExperiment::assayNames(se)[1]})
-#' @param kmers character vector of k-mers to predict.
+#' @param kmers a character vector of k-mers to predict. (default = \code{uniqueKmers(8L)})
 #' @param stat_set character vector of statistics to calculate for each sample.
 #'        The set of supported statistics are listed in the details. By default,
 #'        all possible statistics are computed. Details on available statistics are
@@ -54,7 +55,8 @@
 #' @importFrom matrixStats colMedians colMeans2 colSds colMads colQuantiles
 #' @export
 #' @author Patrick Kimes
-summarizeKmers <- function(se, assay = SummarizedExperiment::assayNames(se)[1], kmers = NULL, 
+summarizeKmers <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
+                           kmers = uniqueKmers(8L), 
                            stat_set = c("median", "mean", "mad", "sd", "log2mean",
                                         "log2mad", "log2sd", "na", "quantile"),
                            offset = 1, weights = NULL, q = 0.25, verbose = FALSE, .filter = 1L,
@@ -67,10 +69,12 @@ summarizeKmers <- function(se, assay = SummarizedExperiment::assayNames(se)[1], 
     }
 
     ## check kmers specified
-    kmers <- checkKmers(kmers, verbose)
-
-    ## check Sequence info in rowData
-    se <- checkProbeSequences(se, verbose)
+    if (!is.vector(kmers, mode = "character")) {
+        stop("If specified, 'kmers' must be a vector of nucleotide sequences as character strings.")
+    }
+    if (length(unique(nchar(kmers))) != 1L) {
+        stop("If specified, 'kmers' must be a vector of nucleotide sequences of equal length.")
+    }
     
     ## filter probes
     se <- pbmFilterProbes(se, .filter)

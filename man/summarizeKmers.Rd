@@ -2,20 +2,20 @@
 % Please edit documentation in R/summarizeKmers.R
 \name{summarizeKmers}
 \alias{summarizeKmers}
-\title{Summarize K-mer Intensities}
+\title{Compute K-mer summary metrics from probe intensities}
 \usage{
 summarizeKmers(se, assay = SummarizedExperiment::assayNames(se)[1],
-  kmers = NULL, stat_set = c("median", "mean", "mad", "sd", "log2mean",
-  "log2mad", "log2sd", "na", "quantile"), offset = 1, weights = NULL,
-  q = 0.25, verbose = FALSE, .filter = 1L, .trim = if (.filter >
-  0L) {     c(1, 36) } else {     NULL })
+  kmers = uniqueKmers(8L), stat_set = c("median", "mean", "mad", "sd",
+  "log2mean", "log2mad", "log2sd", "na", "quantile"), offset = 1,
+  weights = NULL, q = 0.25, verbose = FALSE, .filter = 1L,
+  .trim = if (.filter > 0L) {     c(1, 36) } else {     NULL })
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing PBM intensity data.}
 
 \item{assay}{string name of the assay to use. (default = \code{SummarizedExperiment::assayNames(se)[1]})}
 
-\item{kmers}{character vector of k-mers to predict.}
+\item{kmers}{a character vector of k-mers to predict. (default = \code{uniqueKmers(8L)})}
 
 \item{stat_set}{character vector of statistics to calculate for each sample.
 The set of supported statistics are listed in the details. By default,
