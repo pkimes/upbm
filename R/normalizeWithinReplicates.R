@@ -26,7 +26,7 @@
 #' normalization should be performed with caution, and analyses and plots comparing the distributions
 #' of lower-tail probe intensities should be explored.}
 #'  
-#' @param pe SummarizedExperiment object containing GPR intensity information.
+#' @param pe a SummarizedExperiment object containing GPR intensity information.
 #' @param assay a string name of the assay to normalize.
 #'        (default = \code{SummarizedExperiment::assayNames(pe)[1]})
 #' @param method a string specifying the method to use for normalization. Must be one of
@@ -47,13 +47,12 @@
 #'        (default = \code{"id"})
 #' @param stratify a character string specifying a column in \code{colData(pe)} to use for determining
 #'        the unique baseline scan within each \code{group}. (default = \code{"condition"})
-#' @param baseline a character string specifying the baseline condition in \code{stratify} column to normalize
+#' @param baseline a character string specifying the baseline condition in the \code{stratify} column to normalize
 #'        other conditions against within each \code{group}. If not specified and set to NULL, the baseline
-#'        value is guessed by looking for ``ref" in any value of the stratifying variable. If multiple
+#'        value is guessed by looking for ``ref" in any value of the \code{stratify} column. If multiple
 #'        matching values are found, an error is thrown. If the baseline condition is missing from any
 #'        \code{group}, an error is thrown. (default = NULL)
-#' @param verbose a logical value whether to print verbose output
-#'        during analysis. (default = FALSE)
+#' @param verbose a logical value whether to print verbose output during analysis. (default = FALSE)
 #'
 #' @details
 #' The trimmed mean of M-values (\code{"tmm"}) method implemented in this function for cross-sample normalization
@@ -220,7 +219,7 @@ normalizeWithinReplicates <- function(pe, assay = SummarizedExperiment::assayNam
     }
 
     ## add scaling factors to colData
-    assay_fits <- dplyr::select(assay_fits, -Stratify)
+    assay_fits <- dplyr::select(assay_fits, -Stratify, -Group)
     if ("fits" %in% names(assay_fits)) {
         assay_fits <- dplyr::select(assay_fits, -fits)
     }

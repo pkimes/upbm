@@ -10,7 +10,7 @@ normalizeWithinReplicates(pe,
   stratify = "condition", baseline = NULL, verbose = FALSE)
 }
 \arguments{
-\item{pe}{SummarizedExperiment object containing GPR intensity information.}
+\item{pe}{a SummarizedExperiment object containing GPR intensity information.}
 
 \item{assay}{a string name of the assay to normalize.
 (default = \code{SummarizedExperiment::assayNames(pe)[1]})}
@@ -39,14 +39,13 @@ This parameter is ignored when \code{method = "quantile"}. (default = 0.2)}
 \item{stratify}{a character string specifying a column in \code{colData(pe)} to use for determining
 the unique baseline scan within each \code{group}. (default = \code{"condition"})}
 
-\item{baseline}{a character string specifying the baseline condition in \code{stratify} column to normalize
+\item{baseline}{a character string specifying the baseline condition in the \code{stratify} column to normalize
 other conditions against within each \code{group}. If not specified and set to NULL, the baseline
-value is guessed by looking for ``ref" in any value of the stratifying variable. If multiple
+value is guessed by looking for ``ref" in any value of the \code{stratify} column. If multiple
 matching values are found, an error is thrown. If the baseline condition is missing from any
 \code{group}, an error is thrown. (default = NULL)}
 
-\item{verbose}{a logical value whether to print verbose output
-during analysis. (default = FALSE)}
+\item{verbose}{a logical value whether to print verbose output during analysis. (default = FALSE)}
 }
 \value{
 Original PBMExperiment object with assay containing within-replicate normalized intensities
