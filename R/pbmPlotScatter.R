@@ -169,7 +169,7 @@ pbmPlotScatter <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
     uniq_strat <- rownames(sgtab)
     
     if (any(colMaxs(sgtab, na.rm = TRUE) > 1L)) {
-        stop("Stratifying variable '", strat, "' is not unique across samples.\n",
+        stop("Stratifying variable '", strat, "' is not unique across samples within groups.\n",
              "Specify a different column in colData.")
     }
 
@@ -199,6 +199,11 @@ pbmPlotScatter <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
                          check.rows = FALSE, stringsAsFactors = FALSE)
     coldat <- tibble::rownames_to_column(coldat, "sample")
     coldat <- dplyr::rename(coldat, Stratify = I(strat))
-    coldat <- dplyr::select(coldat, sample, Stratify)
+    if (is.null(gp)) {
+        coldat <- dplyr::select(coldat, sample, Stratify)
+    } else {
+        coldat <- dplyr::rename(coldat, Group = I(gp))
+        coldat <- dplyr::select(coldat, sample, Stratify, Group)
+    }
     return(list(coldat = coldat, baseline = bl))
 }
