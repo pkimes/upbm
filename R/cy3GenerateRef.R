@@ -53,7 +53,7 @@ cy3GenerateRef <- function(cy3pe, assay = SummarizedExperiment::assayNames(cy3pe
     }
     
     ## tidy scan data for parsing
-    cy3vals <- tidy.PBMExperiment(cy3pe, assay, long = TRUE)
+    cy3vals <- broom::tidy(cy3pe, assay, long = TRUE)
     
     ## scale scans
     if (register) {
