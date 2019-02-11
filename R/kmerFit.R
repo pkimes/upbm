@@ -56,7 +56,7 @@
 #' \item Viechtbauer, W. (2010). Conducting meta-analyses in R with the metafor package. Journal of Statistical Software, 36(3), 1-48. URL: http://www.jstatsoft.org/v36/i03/
 #' }
 #'
-#' @importFrom dplyr select_ group_by left_join ungroup do mutate
+#' @importFrom dplyr select_ group_by left_join ungroup do mutate arrange
 #' @importFrom tidyr unnest spread
 #' @export
 #' @author Patrick Kimes
