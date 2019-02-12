@@ -98,10 +98,20 @@ normalizeAcrossReplicates <- function(pe, assay = SummarizedExperiment::assayNam
         cat("|| upbm::normalizeAcrossReplicates \n")
         cat("|| - Starting cross-replicate normalization for", ncol(pe), "PBM scans.\n")
     }
+    
+    if (verbose) {
+        cat("|| - Filtering probes according to", length(pe@probeFilter),
+            "probeFilter rule(s).\n")
+        ntotal <- nrow(pe)
+    }
 
     ## filter probes - only for computing shift/scale factors (return original pe)
     fpe <- pbmFilterProbes(pe)
     
+    if (verbose) {
+        cat("|| - Data filtered from", ntotal, "probes to", nrow(fpe), "probes.\n")
+    }
+
     ## check stratify params
     strats <- .pbmCheckStratify(fpe, stratify, baseline, group)
     coldat <- strats$coldat
@@ -247,6 +257,7 @@ normalizeAcrossReplicates <- function(pe, assay = SummarizedExperiment::assayNam
     
     if (verbose) {
         cat("|| - Finished cross-replicate normalization.\n")
+        cat("|| - Returning PBMExperiment with", nrow(pe), "rows and", ncol(pe), "columns.\n")
     }
 
     return(pe)

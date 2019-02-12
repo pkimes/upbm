@@ -77,7 +77,7 @@ spatiallyAdjust <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
 
     ## filter using rules
     pe <- pbmFilterProbes(pe)
-
+    
     if (verbose) {
         cat("|| - Data filtered from", ntotal, "probes to", nrow(pe), "probes.\n")
     }
@@ -155,6 +155,7 @@ spatiallyAdjust <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
 
     if (verbose) {
         cat("|| - Finished spatial adjustment.\n")
+        cat("|| - Returning PBMExperiment with", nrow(pe), "rows and", ncol(pe), "columns.\n")
     }
     return(pe) 
 }

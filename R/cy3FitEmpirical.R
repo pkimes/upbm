@@ -57,9 +57,6 @@ cy3FitEmpirical <- function(pe, refpe, assay = SummarizedExperiment::assayNames(
     stopifnot(is(pe, "PBMExperiment")) 
     stopifnot(is(refpe, "PBMExperiment")) 
 
-    ## filter probes
-    npe <- pbmFilterProbes(pe)
-
     ## check validity of Cy3 empirical reference
     stopifnot("ref" %in% SummarizedExperiment::assayNames(refpe))
     stopifnot("sfactor" %in% names(metadata(refpe)))
@@ -75,6 +72,19 @@ cy3FitEmpirical <- function(pe, refpe, assay = SummarizedExperiment::assayNames(
         cat("|| upbm::cy3FitEmpirical \n")
         cat("|| - Starting calculation of Cy3 deviations from empirical reference",
             "for", ncol(pe), "Cy3 PBM scans.\n")
+    }
+
+    if (verbose) {
+        cat("|| - Filtering probes according to", length(pe@probeFilter),
+            "probeFilter rule(s).\n")
+        ntotal <- nrow(pe)
+    }
+
+    ## filter using rules
+    npe <- pbmFilterProbes(pe)
+    
+    if (verbose) {
+        cat("|| - Data filtered from", ntotal, "probes to", nrow(npe), "probes.\n")
     }
 
     ## determine overlap in probe columns
@@ -232,6 +242,7 @@ cy3FitEmpirical <- function(pe, refpe, assay = SummarizedExperiment::assayNames(
 
     if (verbose) {
         cat("|| - Finished calculation of Cy3 deviations.\n")
+        cat("|| - Returning PBMExperiment with", nrow(pe), "rows and", ncol(pe), "columns.\n")
     }
     return(pe)
 }

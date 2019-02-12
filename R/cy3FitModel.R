@@ -63,17 +63,32 @@ cy3FitModel <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
                         refit = TRUE, threshold = 1L, verbose = FALSE) {
     stopifnot(is(pe, "PBMExperiment")) 
 
-    ## filter probes
-    npe <- pbmFilterProbes(npe)
-
-    ## trim probe sequences
-    npe <- pbmTrimProbes(npe)
-
     if (verbose) {
         cat("|| upbm::cy3FitModel \n")
         cat("|| - Starting calculation of Cy3 deviations from OLS fit",
             "for", ncol(pe), "Cy3 PBM scans.\n")
     }
+
+    if (verbose) {
+        cat("|| - Filtering probes according to", length(pe@probeFilter),
+            "probeFilter rule(s).\n")
+        ntotal <- nrow(pe)
+    }
+
+    ## filter probes
+    npe <- pbmFilterProbes(pe)
+
+    if (verbose) {
+        cat("|| - Data filtered from", ntotal, "probes to", nrow(npe), "probes.\n")
+    }
+
+    if (verbose && length(pe@probeTrim > 0L)) {
+        cat("|| - Trimming probes according to probeTrim settings:",
+            paste0("[", paste0(npe@probeTrim, collapse = ", "), "]"), "\n")
+    }
+
+    ## trim probe sequences
+    npe <- pbmTrimProbes(npe)
 
     ## determine row, sequence metadata
     rowdat <- as.data.frame(rowData(npe), optional = TRUE)
@@ -138,7 +153,7 @@ cy3FitModel <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
         metadata(pe)$cy3models_init <- initial_fits
 
         if (verbose) {
-            cat("|| - Refitting trinucleotide models to probes passing filtering cutoff.\n")
+            cat("|| - Refitting trinucleotide models to probes passing filtering rules.\n")
         }
         
         ## refit models after setting outliers to NA
@@ -199,6 +214,7 @@ cy3FitModel <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
 
     if (verbose) {
         cat("|| - Finished calculation of Cy3 deviations.\n")
+        cat("|| - Returning PBMExperiment with", nrow(pe), "rows and", ncol(pe), "columns.\n")
     }
     return(pe)
 }

@@ -72,8 +72,18 @@ probeFit <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
     eb_args <- list(trend = TRUE, robust = TRUE)
     eb_args <- replace(eb_args, names(dots), dots)
 
-    ## filter probes
-    pe <- pbmFilterProbes(pe) 
+    if (verbose) {
+        cat("|| - Filtering probes according to", length(pe@probeFilter),
+            "probeFilter rule(s).\n")
+        ntotal <- nrow(pe)
+    }
+
+    ## filter using rules
+    pe <- pbmFilterProbes(pe)
+    
+    if (verbose) {
+        cat("|| - Data filtered from", ntotal, "probes to", nrow(pe), "probes.\n")
+    }
 
     ## extract probe data matrix
     datp <- SummarizedExperiment::assay(pe, assay)
@@ -134,15 +144,17 @@ probeFit <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
         })
     }
 
+    newpe <- PBMExperiment(assays = assayl,
+                           rowData = rowData(pe),
+                           probeCols = pe@probeCols,
+                           probeTrim = pe@probeTrim,
+                           probeFilter = pe@probeFilter)
+
     if (verbose) {
         cat("|| - Finished probe-level model fitting.\n")
+        cat("|| - Returning PBMExperiment with", nrow(newpe), "rows and", ncol(newpe), "columns.\n")
     }
-    
-    PBMExperiment(assays = assayl,
-                  rowData = rowData(pe),
-                  probeCols = pe@probeCols,
-                  probeTrim = pe@probeTrim,
-                  probeFilter = pe@probeFilter)
+    return(newpe)
 }
 
 

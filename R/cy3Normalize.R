@@ -180,6 +180,7 @@ cy3Normalize <- function(pe, cy3pe, assay = SummarizedExperiment::assayNames(pe)
     
     if (verbose) {
         cat("|| - Finished probe-level Cy3 normalization and filtering.\n")
+        cat("|| - Returning PBMExperiment with", nrow(pe), "rows and", ncol(pe), "columns.\n")
     }
     return(pe)
 }

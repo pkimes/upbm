@@ -103,9 +103,19 @@ normalizeWithinReplicates <- function(pe, assay = SummarizedExperiment::assayNam
         cat("|| - Starting within-replicate normalization for", ncol(pe), "PBM scans.\n")
     }
 
+    if (verbose) {
+        cat("|| - Filtering probes according to", length(pe@probeFilter),
+            "probeFilter rule(s).\n")
+        ntotal <- nrow(pe)
+    }
+
     ## filter probes - only for computing shift/scale factors (return original pe)
     fpe <- pbmFilterProbes(pe)
     rdat <- dplyr::as_tibble(as.data.frame(rowData(fpe)[, fpe@probeCols, drop = FALSE], optional = TRUE))
+
+    if (verbose) {
+        cat("|| - Data filtered from", ntotal, "probes to", nrow(fpe), "probes.\n")
+    }
 
     ## check normalization stratification settings
     strats <- .pbmCheckStratify(fpe, stratify, baseline, group)
@@ -238,6 +248,7 @@ normalizeWithinReplicates <- function(pe, assay = SummarizedExperiment::assayNam
     
     if (verbose) {
         cat("|| - Finished within-replicate normalization.\n")
+        cat("|| - Returning PBMExperiment with", nrow(pe), "rows and", ncol(pe), "columns.\n")
     }
 
     return(pe)
