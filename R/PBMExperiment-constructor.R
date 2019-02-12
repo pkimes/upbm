@@ -31,10 +31,10 @@ PBMExperiment <- function(probeFilter = list(),
     se <- SummarizedExperiment(...)
     rd <- rowData(se)
     if (! "Sequence" %in% colnames(rd)) {
-        rowData(se)$Sequence <- character()
+        rowData(se)$Sequence <- character(length = nrow(se))
     }
     if (! "probeID" %in% colnames(rd)) {
-        rowData(se)$probeID <- character()
+        rowData(se)$probeID <- character(length = nrow(se))
     }
     .PBMExperiment(se,
                    probeFilter = probeFilter,
