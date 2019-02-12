@@ -2,41 +2,65 @@
 % Please edit documentation in R/probeFit.R
 \name{probeFit}
 \alias{probeFit}
-\title{Fit Probe Models}
+\title{Fit probe models}
 \usage{
-probeFit(se, assay = SummarizedExperiment::assayNames(se)[1],
-  groups = condition, offset = 1L, .filter = 1L, ...)
+probeFit(pe, assay = SummarizedExperiment::assayNames(pe)[1],
+  stratify = "condition", offset = 1L, verbose = FALSE, ...)
 }
 \arguments{
-\item{se}{SummarizedExperiment object containing PBM intensity data.}
+\item{pe}{a PBMExperiment object containing PBM intensity data.}
 
-\item{assay}{string name of the assay to use. (default = \code{assayNames(se)[1]})}
+\item{assay}{a string name of the assay to use for fitting probe models.
+(default = \code{SummarizedExperiment::assayNames(pe)[1]})}
 
-\item{groups}{unquoted name of column in colData of SummarizedExperiment (or
-'\code{sample}') for grouping samples; values in columns will be
-used as group labels. If no group labels are available, all samples
-can be pooled by specifying \code{NULL}. (default = condition)}
+\item{stratify}{a character string specifying a column in \code{colData(pe)} to
+use for grouping samples, e.g. into . (default = \code{"condition"})}
 
-\item{offset}{integer offset to add to intensities before log2 scaling to
+\item{offset}{an integer offset to add to intensities before log2 scaling to
 prevent errors with zero intensities. If set to 0, probes with
-zero intensities are dropped/ignored in estimation. (default = 1)}
+zero intensities are dropped/ignored in estimation. (default = 1)
+reference samples. (default = FALSE)}
 
-\item{.filter}{integer specifying level of probe filtering to
-perform prior to estimating affinities. See \code{pbmFilterProbes}
-for more details on probe filter levels. (default = 1)}
+\item{verbose}{a logical value whether to print verbose output during analysis. (default = FALSE)}
 
-\item{...}{named arguments to be passed to \code{limma::eBayes}. See
-Details for default parameters used in this function (different from
-\code{limma::eBayes} default).}
+\item{...}{additional parameters to be passed to \code{limma::eBayes}. See
+Details for default parameters used in this function as they differ from
+the \code{limma::eBayes} default values.}
 }
 \value{
-SummarizedExperiment object with probe-level intensity information aggregated
-across replicates. Each assay contains probe-level information for a single
-group in the specified \code{groups} variable.
+PBMExperiment object with probe-level log2 intensity information aggregated
+across replicates for each unique value in \code{stratify}. Columns in the returned
+PBMExperiment correspond to unique values of the \code{stratify} variable, and
+rows correspond to the subset of probes passing the filtering criteria
+of the original PBMExperiment object. The PBMExperiment includes three assays,
+\code{"beta"}, \code{"sd"}, and \code{"df"}, storing the cross-replicate
+mean, standard deviation, and degrees of freedom estimates for each condition and probe.
 }
 \description{
-This function uses limma to estimate probe-level mean and moderated
-variance estimates across replicates within conditions.
+Given a PBMExperiment of normalized probe intensities, this function fits
+robust probe-level models across samples using the \code{lmFit} and \code{eBayes}
+functions from the \pkg{limma} package. The output is a PBMExperiment object with
+probes in rows and conditions, rather than individual samples, in columns. The
+condition labels of each sample should be specified as a column in the colData of
+input PBMExperiment using the \code{stratify=} parameter. By default, the function
+expects a \code{"condition"} column in the colData of the input object.
+}
+\details{
+More specifically, \code{limma::lmFit} is called on the log2-transformed values of the
+specified assay with no intercept and a binary design matrix with columns corresponding
+to the unique values of \code{colData(pe)[[stratify]]}. Since PBM experiments are often
+performed with few replicates per condition, the fit is then passed to \code{limma::eBayes}
+with \code{robust = TRUE} and \code{trend = TRUE} by default. Parameters to
+\code{limma::eBayes} can be modified by specifying them during the call to \code{probeFit}.
+}
+\references{
+The cross-probe robust and trended variance estimates are obtained using the
+\code{eBayes} function from the limma package with \code{robust = TRUE} and
+\code{trend = TRUE} by default. The procedure was developed and described
+in the following paper:
+\itemize{
+\item Phipson, B., Lee, S., Majewski, I. J., Alexander, W. S., & Smyth, G. K. (2016). Robust hyperparameter estimation protects against hypervariable genes and improves power to detect differential expression. Annals of Applied Statistics, 10(2), 946-963.
+}
 }
 \author{
 Patrick Kimes
