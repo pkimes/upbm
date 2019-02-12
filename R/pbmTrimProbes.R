@@ -22,11 +22,12 @@ pbmTrimProbes <- function(pe) {
     }
 
     if (is(pe, "PBMExperiment")) {
-        pd <- rowData(pe)
+        rowData(pe)$Sequence <- stringr::str_sub(rowData(pe)$Sequence,
+                                                 pe@probeTrim[1], pe@probeTrim[2])
     } else {
-        pd <- pe@design
+        pe@design$Sequence <- stringr::str_sub(pe@design$Sequence,
+                                               pe@probeTrim[1], pe@probeTrim[2])
     }
-    pd$Sequence <- stringr::str_sub(pd$Sequence, pe@probeTrim[1], pe@probeTrim[2])
 
     return(pe)
 }
