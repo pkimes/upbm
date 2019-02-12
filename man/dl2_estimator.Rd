@@ -2,7 +2,7 @@
 % Please edit documentation in R/kmerFit-estimators.R
 \name{dl2_estimator}
 \alias{dl2_estimator}
-\title{Two-Step DerSimonian aand Kacker Estimator}
+\title{DerSimonian and Kacker estimator}
 \usage{
 dl2_estimator(Y, vi, k)
 }

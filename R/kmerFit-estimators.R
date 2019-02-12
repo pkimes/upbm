@@ -5,12 +5,12 @@
    return(tcrossprod(res.qrs))
 }
 
-#' DerSimonian and Laird Estimator
+#' @title DerSimonian and Laird estimator
 #'
 #' @description
 #' This is an implementation of the DerSimonian and Laird one step estimator of
 #' cross-study variance, originally proposed in the context of meta analysis,
-#' adapted from the \code{metafor} package. The function is used to estimate
+#' adapted from the \pkg{metafor} package. The function is used to estimate
 #' the cross-probe variance for each k-mer probe set.  
 #' 
 #' @param Y probe effect sizes
@@ -67,7 +67,7 @@ dl_estimator <- function(Y, vi, k) {
          tau2 = tau2)
 }
 
-#' Two-Step DerSimonian aand Kacker Estimator
+#' @title DerSimonian and Kacker estimator
 #'
 #' @description
 #' This is an implementation of the DerSimonian and Kacker two-step estimator of

@@ -2,7 +2,7 @@
 % Please edit documentation in R/kmerFit-estimators.R
 \name{dl_estimator}
 \alias{dl_estimator}
-\title{DerSimonian and Laird Estimator}
+\title{DerSimonian and Laird estimator}
 \usage{
 dl_estimator(Y, vi, k)
 }
@@ -26,7 +26,7 @@ list of estimates:
 \description{
 This is an implementation of the DerSimonian and Laird one step estimator of
 cross-study variance, originally proposed in the context of meta analysis,
-adapted from the \code{metafor} package. The function is used to estimate
+adapted from the \pkg{metafor} package. The function is used to estimate
 the cross-probe variance for each k-mer probe set.
 }
 \references{
