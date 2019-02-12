@@ -8,8 +8,9 @@ gpr2PBMExperiment(scans, useMedian = TRUE, filterFlags = TRUE,
   readBackground = TRUE, probes = NULL, ...)
 }
 \arguments{
-\item{scans}{a data.frame of scans with at least a single `gpr' column
-corresponding to GPR file paths.}
+\item{scans}{a data.frame of GPR scan information with at least a single `gpr'
+column, and preferrably a second `type' column. See details for more
+information on the content of these columns.}
 
 \item{useMedian}{a logical value whether to use median fluorescent intensity
 for each probe rather than mean fluorescent intensity.
@@ -36,24 +37,36 @@ includes the following assays:
 * \code{fore} - foreground probe intensities,
 * \code{back} - background probe intensities (unless \code{readBackground = FALSE}).
 
-Scan metadata included in the data.frame are stored as column data.
-Probe design information, if specified, is included as row data.
+Scan metadata included in the data.frame are stored as colData.
+Probe design information, if specified, is included as rowData.
 }
 \description{
-Read PBM scan data from GenePix Results (GPR) files and combine into
-a single \code{\link[=PBMExperiment-class]{PBMExperiment}} object.
-Paths to GPR file must be specified as part of a larger
+This function reads PBM scan data from GenePix Results (GPR) files and returns
+a single \code{\link[=PBMExperiment-class]{PBMExperiment}} object containing
+foreground and optionally background probe intensity data in assays. Each
+GPR is stored as a column in the object, with metadata specified in the
+input \code{scans} table stored in the colData of the object.
+
+If probe design information is also specified as a \code{\link[=PBMDesign-class]{PBMDesign}}
+object to the optional \code{probes=} argument, this information is also stored
+in the rowData of the returned PBMExperiment.
 }
 \details{
-GPR files are parsed differently depending on the file type which can take values
-of ``Alexa", ``Cy3", or ``Masliner". Both ``Alexa" and ``Cy3" scans
-are treated as untouched GenePix Results (GPR) files, while ``Masliner" files are
-treated as Masliner-processed GPR files. If a `scan' column is not provided in the
-input table, GPR files are assumed to be Alexa488 scans unless the file name in
-the `gpr' column contains "Masliner".
+The primary argument, \code{scans}, must be a data.frame of GPR scan metadata.
+Each row of the data.frame should correspond to a single GPR scan. At a minimum
+the data.frame must include a single \code{"gpr"} column specifying the paths
+to the corresponding GPR files to be read in. 
+
+Additionally, GPR files are parsed differently depending on the file type which must be
+one of ``Alexa", ``Cy3", or ``Masliner". Both ``Alexa" and ``Cy3" scans
+are treated as untouched GPR files, while ``Masliner" files treated as Masliner-processed
+GPR files. If possible the scan type of each file should be
+specified in a \code{"type"} column of the \code{scans} data.frame.
+If a \code{"type"} column is not included, all GPR files are assumed to be Alexa488
+scans unless the file name in the \code{"gpr"} column contains ``Masliner".
 }
 \seealso{
-\code{\link{PBMExperiment-class}}, \code{\link{PBMExperiment}}
+\code{\link{PBMExperiment-class}}, \code{\link{PBMExperiment}}, \code{\link{PBMDesign-class}}
 }
 \author{
 Patrick Kimes

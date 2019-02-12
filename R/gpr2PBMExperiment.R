@@ -1,12 +1,19 @@
 #' @title Load raw PBM scan data as PBMExperiment
 #'
 #' @description
-#' Read PBM scan data from GenePix Results (GPR) files and combine into
-#' a single \code{\link[=PBMExperiment-class]{PBMExperiment}} object.
-#' Paths to GPR file must be specified as part of a larger 
-#' 
-#' @param scans a data.frame of scans with at least a single `gpr' column
-#'        corresponding to GPR file paths.
+#' This function reads PBM scan data from GenePix Results (GPR) files and returns
+#' a single \code{\link[=PBMExperiment-class]{PBMExperiment}} object containing
+#' foreground and optionally background probe intensity data in assays. Each
+#' GPR is stored as a column in the object, with metadata specified in the
+#' input \code{scans} table stored in the colData of the object.
+#'
+#' If probe design information is also specified as a \code{\link[=PBMDesign-class]{PBMDesign}}
+#' object to the optional \code{probes=} argument, this information is also stored
+#' in the rowData of the returned PBMExperiment.
+#'
+#' @param scans a data.frame of GPR scan information with at least a single `gpr'
+#'        column, and preferrably a second `type' column. See details for more
+#'        information on the content of these columns.
 #' @param useMedian a logical value whether to use median fluorescent intensity
 #'        for each probe rather than mean fluorescent intensity.
 #'        (default = TRUE)
@@ -28,18 +35,24 @@
 #' * \code{fore} - foreground probe intensities,
 #' * \code{back} - background probe intensities (unless \code{readBackground = FALSE}).
 #'
-#' Scan metadata included in the data.frame are stored as column data.
-#' Probe design information, if specified, is included as row data.
+#' Scan metadata included in the data.frame are stored as colData.
+#' Probe design information, if specified, is included as rowData.
 #' 
 #' @details
-#' GPR files are parsed differently depending on the file type which can take values
-#' of ``Alexa", ``Cy3", or ``Masliner". Both ``Alexa" and ``Cy3" scans
-#' are treated as untouched GenePix Results (GPR) files, while ``Masliner" files are
-#' treated as Masliner-processed GPR files. If a `scan' column is not provided in the
-#' input table, GPR files are assumed to be Alexa488 scans unless the file name in
-#' the `gpr' column contains "Masliner".
+#' The primary argument, \code{scans}, must be a data.frame of GPR scan metadata.
+#' Each row of the data.frame should correspond to a single GPR scan. At a minimum
+#' the data.frame must include a single \code{"gpr"} column specifying the paths
+#' to the corresponding GPR files to be read in. 
 #'
-#' @seealso \code{\link{PBMExperiment-class}}, \code{\link{PBMExperiment}}
+#' Additionally, GPR files are parsed differently depending on the file type which must be
+#' one of ``Alexa", ``Cy3", or ``Masliner". Both ``Alexa" and ``Cy3" scans
+#' are treated as untouched GPR files, while ``Masliner" files treated as Masliner-processed
+#' GPR files. If possible the scan type of each file should be
+#' specified in a \code{"type"} column of the \code{scans} data.frame.
+#' If a \code{"type"} column is not included, all GPR files are assumed to be Alexa488
+#' scans unless the file name in the \code{"gpr"} column contains ``Masliner".
+#'
+#' @seealso \code{\link{PBMExperiment-class}}, \code{\link{PBMExperiment}}, \code{\link{PBMDesign-class}}
 #' @importFrom S4Vectors DataFrame
 #' @import SummarizedExperiment
 #' @importFrom purrr reduce
@@ -59,16 +72,16 @@ gpr2PBMExperiment <- function(scans, useMedian = TRUE,
     stopifnot(is.logical(filterFlags))
 
     ## guess scan type if not specified - only care if Masliner or not
-    if ("scan" %in% names(scans)) {
-        tab_scan <- scans$scan
-        if (!all(tab_scan %in% c("Alexa", "Cy3", "Masliner"))) {
-            stop("\"scan\" column entries can only take the following values: \n",
+    if ("type" %in% names(scans)) {
+        tab_type <- scans$type
+        if (!all(tab_type %in% c("Alexa", "Cy3", "Masliner"))) {
+            stop("\"type\" column entries can only take the following values: \n",
                  "\"Alexa\", \"Cy3\", \"Masliner\".")
         }
     } else {
-        ## don't add to 'scans' since don't want in colData of output
-        tab_scan <- rep("Alexa", nrow(scans))
-        tab_scan[grep("MaslinerOutput", scans$gpr,
+        ## don't add to 'types' since don't want in colData of output
+        tab_type <- rep("Alexa", nrow(scans))
+        tab_type[grep("MaslinerOutput", scans$gpr,
                       ignore.case = TRUE)] <- "Masliner"
     }
     
@@ -82,7 +95,7 @@ gpr2PBMExperiment <- function(scans, useMedian = TRUE,
     }
     
     ## read in all data files
-    assay_table <- mapply(readGPR, gpr_path = scans$gpr, gpr_type = tab_scan,
+    assay_table <- mapply(readGPR, gpr_path = scans$gpr, gpr_type = tab_type,
                           useMedian = useMedian, filterFlags = filterFlags,
                           readBackground = readBackground, SIMPLIFY = FALSE)
 
@@ -139,16 +152,16 @@ gpr2PBMExperiment <- function(scans, useMedian = TRUE,
     ## column/condition-level metadata
     coldat <- S4Vectors::DataFrame(dplyr::select(scans, -gpr))
     rownames(coldat) <- names(assaydat[["fore"]])
-    
-    PBMExperiment(assays = assaydat,
-                  rowData = rowdat, colData = coldat,
-                  metadata = list(steps = list(),
-                                  spatialAdjustment = NULL,
-                                  backgroundCorrection = NULL,
-                                  betweenArrayNormalization = NULL),
-                  probeFilter = if (is.null(probes)) { list() } else { probes@probeFilter },
-                  probeTrim = if (is.null(probes)) { numeric() } else { probes@probeTrim },
-                  probeCols = if (is.null(probes)) { character() } else { names(probes@design) })
+
+    if (is.null(probes)) {
+        pe <- PBMExperiment(assays = assaydat, rowData = rowdat, colData = coldat)
+    } else {
+        pe <- PBMExperiment(assays = assaydat, rowData = rowdat, colData = coldat,
+                            probeFilter = probes@probeFilter,
+                            probeTrim = probes@probeTrim,
+                            probeCols = names(probes@design))
+    }
+    pe
 }
 
 
@@ -217,13 +230,16 @@ readGPR <- function(gpr_path, gpr_type, useMedian = TRUE, filterFlags = TRUE,
         back_idx <- grep("^\"B.* Mean\"$", header)
     }
     if (length(fore_idx) == 0) {
-        stop("Foreground column could not be identified!\n",
-             "Try setting 'scan' column in sample table to 'RawData'.")
+        stop("Foreground column could not be identified for the following file!\n",
+             gpr_path, "\n",
+             "Please verify that this is a valid GPR or Masliner GPR file.")
     }
     colt[c(fore_idx)] <- 'd'
     if (readBackground) {
         if (length(back_idx) == 0) {
-            stop("Background column could not be identified! \n",
+            stop("Background column could not be identified for the following file!\n",
+                 gpr_path, "\n",
+                 "Please verify that this is a valid GPR or Masliner GPR file.\n",
                  "If background intensities are not needed, try rerunning ",
                  "with readBackground = FALSE.")
         }
