@@ -14,6 +14,9 @@
 #' across the array. This approach is taken directly from the Universal PBM
 #' Analysis Suite described in Berger and Bulyk (Nature Protocols, 2008).
 #' 
+#' Only probes passing all \code{probeFilter} rules defined in the original PBMExperiment
+#' object are spatially adjusted and included in the returned object.
+#'
 #' @param pe a PBMExperiment object containing PBM intensity data.
 #' @param assay a string name of the assay to adjust. (default = \code{SummarizedExperiment::assayNames(pe)[1]})
 #' @param k an integer specifying the size of the region to use to for computing

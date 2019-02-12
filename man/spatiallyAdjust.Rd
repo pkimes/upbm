@@ -44,6 +44,9 @@ intensity in a \code{k} by \code{k}
 region surrounding the probe and the median intensity of all probes
 across the array. This approach is taken directly from the Universal PBM
 Analysis Suite described in Berger and Bulyk (Nature Protocols, 2008).
+
+Only probes passing all \code{probeFilter} rules defined in the original PBMExperiment
+object are spatially adjusted and included in the returned object.
 }
 \references{
 \itemize{
