@@ -42,10 +42,6 @@ setValidity2("PBMExperiment",
                      stop("PBMExperiment probe sequences must be character strings.\n",
                           "Please check 'Sequence' rowData values.")
                  }
-                 ## if (any(duplicated(rd$probeID))) {
-                 ##     stop("PBMExperiment probe IDs must be unique.\n",
-                 ##          "Please check 'probeID' rowData values.")
-                 ## }
                  ## check probeFilter specification
                  if (length(object@probeFilter) > 1) {
                      if (is.null(names(object@probeFilter)) | any(names(object@probeFilter) == "")) {
@@ -79,6 +75,13 @@ setValidity2("PBMExperiment",
                           "corresponding to probe design information.\n",
                           "The following columns listed in 'probeCols' are not found in rowData: \n",
                           paste0(setdiff(object@probeCols, colnames(rd)), collapse = ", "), ".")
+                 }
+                 ## check properties of filtered object
+                 objf <- pbmFilterProbes(object)
+                 ## check filtered probeIDs are unique
+                  if (any(duplicated(rowData(objf)$probeID))) {
+                     stop("PBMExperiment probe IDs must be unique after filtering.\n",
+                          "Please check 'probeID' rowData values.")
                  }
                  TRUE
              })
@@ -136,9 +139,16 @@ setValidity2("PBMDesign",
                  }
                  if (length(object@probeTrim) == 2L &&
                      (object@probeTrim[1] > object@probeTrim[2] || object@probeTrim[1] < 0)) {
-                     stop("PBMExperiment 'probeTrim' specification is invalid. \n",
+                     stop("PBMDesign 'probeTrim' specification is invalid. \n",
                           "If specified, 'probeTrim' must be a vector of length 2 with ",
                           "0 <= probeTrim[1] <= probeTrim[2].")
+                 }
+                 ## check properties of filtered object
+                 objf <- pbmFilterProbes(object)
+                 ## check filtered probeIDs are unique
+                  if (any(duplicated(objf@design$probeID))) {
+                     stop("PBMDesign probe IDs must be unique after filtering.\n",
+                          "Please check 'probeID' column values of design.")
                  }
                  TRUE
              })
