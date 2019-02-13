@@ -56,12 +56,16 @@ of the following assays:
 \item \code{"contrastAverage"}: (optional) k-mer average affinities with \code{baseline} condition.
 \item \code{"contrastVariance"}: (optional) k-mer differential affinity variances.
 }
+
+If computed, the values of the \code{"contrast"} assays will be NA for the specified
+baseline condition.
 }
 \description{
 Given a PBMExperiment of probe-level summaries returned by \code{probeFit} and a list of k-mers,
 this function applies probe set aggregation to obtain k-mer level estimates of affinity and
 variance on the scale of log2 signal intensities. Additionally, if \code{contrasts = TRUE},
-estimates are also estimated for differential k-mer affinity against a baseline condition. 
+effect size and variance estimates are also returned for differential k-mer affinities against
+a baseline condition specified with \code{baseline=}.
 
 The output can be passed to \code{\link{kmerTestContrast}}, \code{\link{kmerTestAffinity}},
 \code{\link{kmerTestSpecificity}} to perform various statistical tests with the estimated

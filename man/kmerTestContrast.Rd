@@ -2,18 +2,37 @@
 % Please edit documentation in R/kmerTestContrast.R
 \name{kmerTestContrast}
 \alias{kmerTestContrast}
-\title{Test k-mer Contrasts}
+\title{Test for k-mer differential affinities}
 \usage{
 kmerTestContrast(se)
 }
 \arguments{
-\item{se}{SummarizedExperiment of k-mer results from \code{kmerFit}.}
+\item{se}{SummarizedExperiment of k-mer results from \code{\link{kmerFit}} with
+\code{contrasts = TRUE}.}
 }
 \value{
-SummarizedExperiment of significance results for testing k-mer affinity
-differences between conditions.
+SummarizedExperiment of k-mer differential affinity results with the following
+assays:
+
+\itemize{
+\item \code{"contrastAverage"}: input k-mer average affinities.
+\item \code{"contrastDifference"}: input k-mer differential affinities.
+\item \code{"contrastVariance"}: input k-mer differential affinity variances.
+\item \code{"contrastZ"}: studentized differences (\code{contrastDifference / sqrt(contrastVariance)}).
+\item \code{"contrastP"}: two-sided tail p-values for studentized differences.
+\item \code{"contrastQ"}: FDR-controlling Benjamini-Hochberg adjusted p-values.
+}
 }
 \description{
+Using estimated k-mer level affinities returned by \code{kmerFit}, this
+function tests for differential affinities across conditions for each k-mer
+separately. The call to \code{kmerFit} must have been made with
+\code{contrasts = TRUE}.
+
+While a column for the baseline condition of the contrasts is included in the
+returned SummarizedExperiment object to match the dimensions of the input
+object, all values for this column are set to NA.
+
 After estimating k-mer level affinities using probe-set aggregate, this
 function tests for differential affinity between conditions.
 }

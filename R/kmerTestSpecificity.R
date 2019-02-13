@@ -1,4 +1,20 @@
-#' Test k-mer Specificities
+#' @title Test for k-mer differential specificities
+#'
+#' @description
+#' Using estimated k-mer level affinities returned by \code{kmerFit}, this
+#' function tests for differential specificities across conditions for each k-mer
+#' separately. The call to \code{kmerFit} must have been made with
+#' \code{contrasts = TRUE}. Here, shared specificity is defined as a common ordering of
+#' k-mer affinities across conditions. Therefore, differential specificity is tested by
+#' assessing the statistical significance of deviations from a common trend
+#' of k-mer affinities observed between conditions.
+#'
+#' For each condition, the common trend is estimated by fitting a LOESS curve
+#' to the corresponding columns of the \code{"contrastAverage"} (x) and
+#' \code{"contrastDifference"} (y) assays of the input SummarizedExperiment object.
+#' Then, the difference between the observed differential affinity and the
+#' LOESS-estimated specificity trend is taken as the estimate of differential
+#' specificity.
 #'
 #' @description
 #' After estimating k-mer level affinities using probe-set aggregate, this
@@ -10,8 +26,19 @@
 #' @param ... other parameters to pass to \code{limma::loessFit}.
 #' 
 #' @return
-#' SummarizedExperiment of significance results for testing k-mer specificity
-#' differences between conditions.
+#' SummarizedExperiment of k-mer differential specificity results with the following
+#' assays:
+#' 
+#' \itemize{
+#' \item \code{"contrastAverage"}: input k-mer average affinities.
+#' \item \code{"contrastDifference"}: input k-mer differential affinities.
+#' \item \code{"contrastVariance"}: input k-mer differential affinity variances.
+#' \item \code{"contrastFit"}: estimated specificity trend.
+#' \item \code{"contrastResidual"}: residual from estimated specificity trend (\code{contrastDifference - contrastFit}).
+#' \item \code{"specificityZ"}: studentized differences (\code{contrastResidual / sqrt(contrastVariance)}).
+#' \item \code{"specificityP"}: two-sided tail p-values for studentized differences.
+#' \item \code{"specificityQ"}: FDR-controlling Benjamini-Hochberg adjusted p-values.
+#' }
 #'
 #' @importFrom broom tidy
 #' @importFrom limma loessFit
@@ -21,6 +48,13 @@
 #' @export
 #' @author Patrick Kimes
 kmerTestSpecificity <- function(se, span = 0.05, ...) {
+
+    stopifnot(is(se, "SummarizedExperiment"))
+    if (!all(c("contrastAverage", "contrastDifference", "contrastVariance") %in%
+             assayNames(se))) {
+        stop("Input SummarizedExperiment is missing k-mer contrast estimates.\n",
+             "SummarizedExperiment should be created by calling kmerFit(..) with 'contrasts=TRUE'.")
+    }
 
     kmers <- rowData(se)$seq
 

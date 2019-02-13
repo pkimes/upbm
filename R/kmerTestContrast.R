@@ -1,14 +1,34 @@
-#' Test k-mer Contrasts
+#' @title Test for k-mer differential affinities
 #'
+#' @description
+#' Using estimated k-mer level affinities returned by \code{kmerFit}, this
+#' function tests for differential affinities across conditions for each k-mer
+#' separately. The call to \code{kmerFit} must have been made with
+#' \code{contrasts = TRUE}.
+#'
+#' While a column for the baseline condition of the contrasts is included in the
+#' returned SummarizedExperiment object to match the dimensions of the input
+#' object, all values for this column are set to NA. 
+#' 
 #' @description
 #' After estimating k-mer level affinities using probe-set aggregate, this
 #' function tests for differential affinity between conditions. 
 #'
-#' @param se SummarizedExperiment of k-mer results from \code{kmerFit}.
+#' @param se SummarizedExperiment of k-mer results from \code{\link{kmerFit}} with
+#'        \code{contrasts = TRUE}.
 #' 
 #' @return
-#' SummarizedExperiment of significance results for testing k-mer affinity
-#' differences between conditions.
+#' SummarizedExperiment of k-mer differential affinity results with the following
+#' assays:
+#' 
+#' \itemize{
+#' \item \code{"contrastAverage"}: input k-mer average affinities.
+#' \item \code{"contrastDifference"}: input k-mer differential affinities.
+#' \item \code{"contrastVariance"}: input k-mer differential affinity variances.
+#' \item \code{"contrastZ"}: studentized differences (\code{contrastDifference / sqrt(contrastVariance)}).
+#' \item \code{"contrastP"}: two-sided tail p-values for studentized differences.
+#' \item \code{"contrastQ"}: FDR-controlling Benjamini-Hochberg adjusted p-values.
+#' }
 #'
 #' @importFrom broom tidy
 #' @importFrom stats p.adjust
@@ -18,6 +38,13 @@
 #' @author Patrick Kimes
 kmerTestContrast <- function(se) {
 
+    stopifnot(is(se, "SummarizedExperiment"))
+    if (!all(c("contrastAverage", "contrastDifference", "contrastVariance") %in%
+             assayNames(se))) {
+        stop("Input SummarizedExperiment is missing k-mer contrast estimates.\n",
+             "SummarizedExperiment should be created by calling kmerFit(..) with 'contrasts=TRUE'.")
+    }
+    
     kmers <- rowData(se)$seq
 
     ## gather data

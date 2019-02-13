@@ -2,32 +2,32 @@
 #'
 #' @description
 #' Using estimated k-mer level affinities returned by \code{kmerFit}, this
-#' function tests for preferential affinity across k-mers in each condition
-#' separately. Here, preferential affinity is defined as statistically significant
-#' affinity above a normal background affinity distribution fit to each
+#' function tests for preferential affinity within conditions for each k-mer.
+#' Here, preferential affinity is defined as statistically significant
+#' affinity above a normal background distribution fit to each
 #' condition.
 #'
 #' For each condition, the k-mer affinities above background are determined by
-#' fitting a normal+exponential convolution to the distribution of estimated
-#' affinities and taking the expected exponential component for each
-#' k-mer. Intuitively, the normal component of the fitted convolution captures
-#' the background distribution of binding affinities for k-mers, while the exponential
-#' component captures any signal (preferential) affinity above this
-#' background.
+#' first fitting a normal+exponential convolution to the distribution of estimated
+#' affinities. Then, the expected exponential component for each k-mer is taken
+#' as the estimate of preferential affinity. Under this formulation, the normal component
+#' of the fitted convolution corresponds to the background distribution of binding
+#' affinities for k-mers, while the exponential component corresponds to the signal
+#' (preferential) affinity above this background.
 #'
 #' @param se a SummarizedExperiment of k-mer-level estimated affinities returned by
 #'        \code{\link{kmerFit}}.
 #' 
 #' @return
-#' SummarizedExperiment of k-mer affinity testing results with the following
+#' SummarizedExperiment of k-mer preferential affinity results with the following
 #' assays:
 #' 
 #' \itemize{
 #' \item \code{"affinityEstimate"}: input k-mer affinities.
 #' \item \code{"affinityVariance"}: input k-mer affinity variances.
 #' \item \code{"affinitySignal"}: estimated affinity signals above background.
-#' \item \code{"affinityZ"}: studentized signals (signal / sqrt(variance)).
-#' \item \code{"affinityP"}: one-sided tail p-values for studentized signals .
+#' \item \code{"affinityZ"}: studentized signals (\code{affinitySignal / sqrt(affinityVariance)}).
+#' \item \code{"affinityP"}: one-sided tail p-values for studentized signals.
 #' \item \code{"affinityQ"}: FDR-controlling Benjamini-Hochberg adjusted p-values.
 #' }
 #'
@@ -41,9 +41,11 @@
 kmerTestAffinity <- function(se) {
 
     stopifnot(is(se, "SummarizedExperiment"))
-    stopifnot(c("affinityEstimate", "affinityVariance") %in%
-              assayNames(se))
-
+    if (!all(c("affinityEstimate", "affinityVariance") %in% assayNames(se))) {
+        stop("Input SummarizedExperiment is missing k-mer affinity estimates.\n",
+             "SummarizedExperiment should be created by calling kmerFit(..).")
+    }
+    
     kmers <- rowData(se)$seq
 
     ## gather data
