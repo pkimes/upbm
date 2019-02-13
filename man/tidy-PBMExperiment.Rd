@@ -6,27 +6,43 @@
 \title{Tidy PBMExperiment object}
 \usage{
 \method{tidy}{PBMExperiment}(x,
-  assay = SummarizedExperiment::assayNames(x)[1], long = FALSE, ...)
+  assay = SummarizedExperiment::assayNames(x)[1], long = FALSE,
+  process = TRUE, ...)
 }
 \arguments{
 \item{x}{a PBMExperiment object.}
 
-\item{assay}{a numeric index or string name specifying the assay to use.
+\item{assay}{a numeric index or string name specifying the assay to tidy.
 (default = \code{SummarizedExperiment::assayNames(x)[1]})}
 
-\item{long}{a logical whether to transform data to long format and
+\item{long}{a logical value whether to transform data to long format and
 include colData in output rather than default wide format with
 dimension similar to original PBMExperiment object.
 (default = FALSE)}
 
-\item{...}{other parameters for \code{tidy} generic function.}
+\item{process}{a logical value whether to filter probes and trim probe sequences
+according to PBMExperiment rules in \code{probeFilter} and \code{probeTrim}
+slots. (default = TRUE)}
+
+\item{...}{other parameters for the \code{tidy} generic function.}
 }
 \value{
-tibble with assay data.
+tibble containing values from a single PBMExperiment assay
+along with rowData and optionally colData.
 }
 \description{
 Simple helper function to convert assay format data in PBMExperiment
-object into a tidy tibble.
+object into a tidy tibble. If 
+If \code{process = TRUE}, probe filtering and trimming are performed
+according to the \code{probeFilter} and \code{probeTrim} slots of the PBMExperiment
+object before passing the object to the SummarizedExperiment
+\code{\link[=tidy-SummarizedExperiment]{tidy}} method.
+If \code{process = FALSE}, the PBMExperiment is passed directly to the
+\code{\link[=tidy-SummarizedExperiment]{tidy}} method without any
+processing.
+}
+\seealso{
+tidy-SummarizedExperiment
 }
 \author{
 Patrick Kimes
