@@ -1,14 +1,35 @@
-#' Test k-mer Affinities
+#' @title Test for k-mer preferential affinities
 #'
 #' @description
-#' After estimating k-mer level affinities using probe-set aggregate, this
-#' function tests for high affinity within individual conditions. 
+#' Using estimated k-mer level affinities returned by \code{kmerFit}, this
+#' function tests for preferential affinity across k-mers in each condition
+#' separately. Here, preferential affinity is defined as statistically significant
+#' affinity above a normal background affinity distribution fit to each
+#' condition.
 #'
-#' @param se SummarizedExperiment of k-mer results from \code{kmerFit}.
+#' For each condition, the k-mer affinities above background are determined by
+#' fitting a normal+exponential convolution to the distribution of estimated
+#' affinities and taking the expected exponential component for each
+#' k-mer. Intuitively, the normal component of the fitted convolution captures
+#' the background distribution of binding affinities for k-mers, while the exponential
+#' component captures any signal (preferential) affinity above this
+#' background.
+#'
+#' @param se a SummarizedExperiment of k-mer-level estimated affinities returned by
+#'        \code{\link{kmerFit}}.
 #' 
 #' @return
-#' SummarizedExperiment of significance results for testing k-mer affinity
-#' strength within conditions.
+#' SummarizedExperiment of k-mer affinity testing results with the following
+#' assays:
+#' 
+#' \itemize{
+#' \item \code{"affinityEstimate"}: input k-mer affinities.
+#' \item \code{"affinityVariance"}: input k-mer affinity variances.
+#' \item \code{"affinitySignal"}: estimated affinity signals above background.
+#' \item \code{"affinityZ"}: studentized signals (signal / sqrt(variance)).
+#' \item \code{"affinityP"}: one-sided tail p-values for studentized signals .
+#' \item \code{"affinityQ"}: FDR-controlling Benjamini-Hochberg adjusted p-values.
+#' }
 #'
 #' @importFrom broom tidy
 #' @importFrom limma normexp.fit normexp.signal
@@ -19,12 +40,16 @@
 #' @author Patrick Kimes
 kmerTestAffinity <- function(se) {
 
+    stopifnot(is(se, "SummarizedExperiment"))
+    stopifnot(c("affinityEstimate", "affinityVariance") %in%
+              assayNames(se))
+
     kmers <- rowData(se)$seq
 
     ## gather data
-    aest <- broom::tidy(se, "affinityEstimate", long = TRUE, .filter = 0L)
+    aest <- broom::tidy(se, "affinityEstimate", long = TRUE)
     aest <- dplyr::select(aest, seq, condition = cname, affinityEstimate = value)
-    avar <- broom::tidy(se, "affinityVariance", long = TRUE, .filter = 0L)
+    avar <- broom::tidy(se, "affinityVariance", long = TRUE)
     avar <- dplyr::select(avar, seq, condition = cname, affinityVariance = value)
 
     adat <- dplyr::left_join(aest, avar, by = c("condition", "seq"))
