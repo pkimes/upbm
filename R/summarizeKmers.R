@@ -77,9 +77,6 @@ summarizeKmers <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
     ## find mapping between kmers and probes
     kmermap <- mapKmers(pdes, kmers)
 
-    ## use ordering from input 'kmers' --- pkk check
-    kmermap$seq <- factor(kmermap$seq, levels = kmers)
-    
     ## extract intensities
     pdat <- SummarizedExperiment::assay(pe, assay)
     pdat <- as.data.frame(pdat, optional = TRUE)
