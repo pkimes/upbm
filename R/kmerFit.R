@@ -39,8 +39,17 @@
 #' @param verbose a logical value whether to print verbose output during analysis. (default = FALSE)
 #' 
 #' @return
-#' SummarizedExperiment of estimated k-mer affinities and differences.
+#' SummarizedExperiment of estimated k-mer affinities and differences with some or all
+#' of the following assays:
 #'
+#' \itemize{
+#' \item \code{"affinityEstimate"}: k-mer affinities.
+#' \item \code{"affinityVariance"}: k-mer affinity variances.
+#' \item \code{"contrastDifference"}: (optional) k-mer differential affinities with \code{baseline} condition.
+#' \item \code{"contrastAverage"}: (optional) k-mer average affinities with \code{baseline} condition.
+#' \item \code{"contrastVariance"}: (optional) k-mer differential affinity variances.
+#' }
+#' 
 #' @details
 #' By default, probe intensities are corrected within each k-mer probe set
 #' to account for biases introduced by where the k-mer lies along the probe sequence. Bias
@@ -65,7 +74,8 @@
 #'
 #' If \code{contrast = TRUE}, k-mer differential affinities, the corresponding variances, and
 #' average affinities are also returned as three assays, \code{"contrastDifference"},
-#' \code{"contrastVariance"}, and \code{"contrastAverage"}.
+#' \code{"contrastVariance"}, and \code{"contrastAverage"}. Positive differential affinities indicate
+#' higher affinity relative to the baseline condition. 
 #' 
 #' @references
 #' If using \code{method = "dl2"} cross-probe variance estimator:
