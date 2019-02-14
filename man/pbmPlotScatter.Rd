@@ -6,7 +6,7 @@
 \usage{
 pbmPlotScatter(se, assay = SummarizedExperiment::assayNames(se)[1],
   stratify = "condition", baseline = NULL, log_scale = TRUE,
-  maplot = FALSE, .method = "auto", .filter = 1)
+  maplot = FALSE, .method = "auto")
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing GPR
@@ -34,9 +34,6 @@ scatter plot. (default = FALSE)}
 \code{ggplot2::geom_smooth} function for adding a smoothed
 fit to each scatter plot; to prevent any line, set NULL.
 (default = "auto")}
-
-\item{.filter}{integer specifying level of probe filtering to
-perform prior to plotting. (default = 1)}
 }
 \value{
 ggplot object

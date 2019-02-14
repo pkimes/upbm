@@ -46,7 +46,7 @@
 #' @author Patrick Kimes
 pbmPlotChip <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
                         log_scale = TRUE, relative_scale = NULL,
-                        bound = Inf, .facet = TRUE, .filter = 1) {
+                        bound = Inf, .facet = TRUE) {
     stopifnot(assay %in% SummarizedExperiment::assayNames(se))
     stopifnot("Row" %in% names(rowData(se)))
     stopifnot("Column" %in% names(rowData(se)))
@@ -57,7 +57,7 @@ pbmPlotChip <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
     }
 
     ## filter probes
-    se <- pbmFilterProbes(se, .filter) 
+    se <- pbmFilterProbes(se) 
 
     ## condition must be a unique column for faceting plot
     coldat <- data.frame(colData(se), check.names = FALSE,
@@ -102,6 +102,8 @@ pbmPlotChip <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
     if (log_scale) {
         ## direct-scale values since 'fill' doesn't accept 'trans='
         pdat <- dplyr::mutate(pdat, value = log2(value))
+        ## re-check for negative values
+        pdat_negative <- (min(pdat$value, na.rm = TRUE) < 0)
         ptitle <- "PBM Intensity (log2)"
     } else {
         ptitle <- "PBM Intensity"

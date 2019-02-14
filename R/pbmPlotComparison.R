@@ -26,8 +26,6 @@
 #'        \code{ggplot2::geom_smooth} function for adding a smoothed
 #'        fit to each scatter plot; to prevent any line, set NULL.
 #'        (default = "auto")
-#' @param .filter integer specifying level of probe filtering to
-#'        perform prior to plotting. (default = 1)
 #'
 #' @return
 #' ggplot object
@@ -50,7 +48,7 @@
 #' @author Patrick Kimes
 pbmPlotComparison <- function(se1, se2, assay = SummarizedExperiment::assayNames(se1)[1],
                               match_by = condition, log_scale = TRUE,  maplot = FALSE,
-                              .method = "auto", .filter = 1) {
+                              .method = "auto") {
     stopifnot(assay %in% SummarizedExperiment::assayNames(se1))
     if (! "Row" %in% names(rowData(se1)) || ! "Column" %in% names(rowData(se1))) {
         if ("kmer" %in% names(rowData(se1))) {
@@ -103,8 +101,8 @@ pbmPlotComparison <- function(se1, se2, assay = SummarizedExperiment::assayNames
     se2 <- se2[, colData(se2)[[match_by_str]] %in% match_overlap, drop = FALSE]
     
     ## filter probes
-    se1 <- pbmFilterProbes(se1, .filter) 
-    se2 <- pbmFilterProbes(se2, .filter) 
+    se1 <- pbmFilterProbes(se1) 
+    se2 <- pbmFilterProbes(se2) 
 
     ## condition must be a unique column for faceting plot
     coldat1 <- data.frame(colData(se1), check.names = FALSE,

@@ -5,7 +5,7 @@
 \title{Plot of Intensity Densities}
 \usage{
 pbmPlotDensity(se, assay = SummarizedExperiment::assayNames(se)[1],
-  log_scale = TRUE, .facet = TRUE, .filter = 1)
+  log_scale = TRUE, .facet = TRUE)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing GPR
@@ -20,9 +20,6 @@ on the log-scale. (default = TRUE)}
 \item{.facet}{logical whether plot should be faceted using
 the default 'condition' column from the colData of the
 SummarizedExperiment. (default = TRUE)}
-
-\item{.filter}{integer specifying level of probe filtering to
-perform prior to plotting. (default = 1)}
 }
 \value{
 ggplot object

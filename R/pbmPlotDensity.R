@@ -11,8 +11,6 @@
 #' @param .facet logical whether plot should be faceted using
 #'        the default 'condition' column from the colData of the
 #'        SummarizedExperiment. (default = TRUE)
-#' @param .filter integer specifying level of probe filtering to
-#'        perform prior to plotting. (default = 1)
 #'
 #' @return
 #' ggplot object
@@ -22,7 +20,7 @@
 #' @export
 #' @author Patrick Kimes
 pbmPlotDensity <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
-                           log_scale = TRUE, .facet = TRUE, .filter = 1) {
+                           log_scale = TRUE, .facet = TRUE) {
     stopifnot(assay %in% SummarizedExperiment::assayNames(se))
 
     ## condition must be a unique column for faceting plot
@@ -31,7 +29,7 @@ pbmPlotDensity <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
     }
 
     ## filter probes
-    se <- pbmFilterProbes(se, .filter) 
+    se <- pbmFilterProbes(se)
 
     ## extract sample metadata
     coldat <- data.frame(colData(se), check.names = FALSE,

@@ -29,8 +29,6 @@
 #'        \code{ggplot2::geom_smooth} function for adding a smoothed
 #'        fit to each scatter plot; to prevent any line, set NULL.
 #'        (default = "auto")
-#' @param .filter integer specifying level of probe filtering to
-#'        perform prior to plotting. (default = 1)
 #'
 #' @return
 #' ggplot object
@@ -46,7 +44,7 @@
 #' @author Patrick Kimes
 pbmPlotScatter <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
                            stratify = "condition", baseline = NULL,
-                           log_scale = TRUE, maplot = FALSE, .method = "auto", .filter = 1) {
+                           log_scale = TRUE, maplot = FALSE, .method = "auto") {
     stopifnot(assay %in% SummarizedExperiment::assayNames(se))
 
     if (! "Row" %in% names(rowData(se)) || ! "Column" %in% names(rowData(se))) {
@@ -64,7 +62,7 @@ pbmPlotScatter <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
     baseline <- strats$baseline
 
     ## filter probes
-    se <- pbmFilterProbes(se, .filter) 
+    se <- pbmFilterProbes(se) 
     
     ## extract intensities
     pdat <- SummarizedExperiment::assay(se, assay)

@@ -7,7 +7,7 @@
 pbmPlotComparison(se1, se2,
   assay = SummarizedExperiment::assayNames(se1)[1],
   match_by = condition, log_scale = TRUE, maplot = FALSE,
-  .method = "auto", .filter = 1)
+  .method = "auto")
 }
 \arguments{
 \item{se1}{first SummarizedExperiment object containing GPR
@@ -34,9 +34,6 @@ scatter plot. (default = FALSE)}
 \code{ggplot2::geom_smooth} function for adding a smoothed
 fit to each scatter plot; to prevent any line, set NULL.
 (default = "auto")}
-
-\item{.filter}{integer specifying level of probe filtering to
-perform prior to plotting. (default = 1)}
 }
 \value{
 ggplot object

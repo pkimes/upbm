@@ -6,7 +6,7 @@
 \usage{
 pbmPlotChip(se, assay = SummarizedExperiment::assayNames(se)[1],
   log_scale = TRUE, relative_scale = NULL, bound = Inf,
-  .facet = TRUE, .filter = 1)
+  .facet = TRUE)
 }
 \arguments{
 \item{se}{SummarizedExperiment object containing GPR
