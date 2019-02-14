@@ -42,7 +42,7 @@
 #'
 #' @importFrom broom tidy
 #' @importFrom limma loessFit
-#' @importFrom stats p.adjust
+#' @importFrom stats p.adjust pnorm
 #' @importFrom dplyr select group_by left_join ungroup mutate
 #' @importFrom tidyr nest unnest
 #' @export
@@ -85,20 +85,20 @@ kmerTestSpecificity <- function(se, span = 0.05, ...) {
 
     ## compute z-scores, p-values, and adjusted p-values
     cdat <- dplyr::mutate(cdat, specificityZ = contrastResidual / sqrt(contrastVariance))
-    cdat <- dplyr::mutate(cdat, specificityP = 2 * pnorm(-abs(specificityZ)))
+    cdat <- dplyr::mutate(cdat, specificityP = 2 * stats::pnorm(-abs(specificityZ)))
     cdat <- dplyr::group_by(cdat, condition)
-    cdat <- dplyr::mutate(cdat, specificityQ = p.adjust(specificityP, method = "BH"))
+    cdat <- dplyr::mutate(cdat, specificityQ = stats::p.adjust(specificityP, method = "BH"))
     cdat <- dplyr::ungroup(cdat)
 
     ## tidy results to assays
-    assaylist <- list(contrastAverage = upbm:::.tidycol2mat(cdat, "contrastAverage", kmers, colnames(se)),
-                      contrastDifference = upbm:::.tidycol2mat(cdat, "contrastDifference", kmers, colnames(se)),
-                      contrastVariance = upbm:::.tidycol2mat(cdat, "contrastVariance", kmers, colnames(se)),
-                      contrastFit = upbm:::.tidycol2mat(cdat, "contrastFit", kmers, colnames(se)),
-                      contrastResidual = upbm:::.tidycol2mat(cdat, "contrastResidual", kmers, colnames(se)),
-                      specificityZ = upbm:::.tidycol2mat(cdat, "specificityZ", kmers, colnames(se)),
-                      specificityP = upbm:::.tidycol2mat(cdat, "specificityP", kmers, colnames(se)),
-                      specificityQ = upbm:::.tidycol2mat(cdat, "specificityQ", kmers, colnames(se)))
+    assaylist <- list(contrastAverage = .tidycol2mat(cdat, "contrastAverage", kmers, colnames(se)),
+                      contrastDifference = .tidycol2mat(cdat, "contrastDifference", kmers, colnames(se)),
+                      contrastVariance = .tidycol2mat(cdat, "contrastVariance", kmers, colnames(se)),
+                      contrastFit = .tidycol2mat(cdat, "contrastFit", kmers, colnames(se)),
+                      contrastResidual = .tidycol2mat(cdat, "contrastResidual", kmers, colnames(se)),
+                      specificityZ = .tidycol2mat(cdat, "specificityZ", kmers, colnames(se)),
+                      specificityP = .tidycol2mat(cdat, "specificityP", kmers, colnames(se)),
+                      specificityQ = .tidycol2mat(cdat, "specificityQ", kmers, colnames(se)))
 
     rdat <- dplyr::select(cdat, seq)
     rdat <- rdat[match(kmers, rdat$seq), ]

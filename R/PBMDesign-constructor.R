@@ -49,6 +49,9 @@ NULL
 #' @rdname PBMDesign
 #' @exportMethod "PBMDesign"
 setMethod("PBMDesign", signature(x = "data.frame"), .PBMDesign.table)
+
+#' @rdname PBMDesign
+#' @exportMethod "PBMDesign"
 setMethod("PBMDesign", signature(x = "DataFrame"), .PBMDesign.table)
 
 #' @rdname PBMDesign

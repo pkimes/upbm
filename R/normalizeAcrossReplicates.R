@@ -80,6 +80,7 @@
 #' @importFrom SummarizedExperiment assay assayNames
 #' @importFrom dplyr filter left_join mutate as_tibble select summarize rename_all group_by ungroup funs
 #' @importFrom tidyr nest expand gather nesting
+#' @importFrom stats approx qqplot
 #' @export
 #' @author Patrick Kimes
 normalizeAcrossReplicates <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
@@ -198,7 +199,7 @@ normalizeAcrossReplicates <- function(pe, assay = SummarizedExperiment::assayNam
         peref <- dplyr::group_by(peref, Stratify)
         peref <- dplyr::mutate(peref, nmin = min(vsortn, na.rm = TRUE))
 
-        peref <- dplyr::mutate(peref, vapprox = mapply(function(x, n1, n2) { approx(1L:n1, x, n = n2)$y },
+        peref <- dplyr::mutate(peref, vapprox = mapply(function(x, n1, n2) { stats::approx(1L:n1, x, n = n2)$y },
                                                        x = vsort, n1 = vsortn, n2 = nmin, SIMPLIFY = FALSE))
         peref <- dplyr::select(peref, Stratify, Group, vapprox)
         peref <- dplyr::summarize(peref, vapprox = list(rowMeans(do.call(cbind, vapprox))))
@@ -272,7 +273,7 @@ qqslope <- function(x, y, lq = .1, uq = .9, center = TRUE) {
     if (is.null(x) | is.null(y)) {
         return(NA)
     }
-    zz <- qqplot(x$value, y$value, plot.it = FALSE)
+    zz <- stats::qqplot(x$value, y$value, plot.it = FALSE)
     nlq <- floor(length(zz$x) * lq)
     nuq <- ceiling(length(zz$x) * uq)
     zz$x <- zz$x[nlq:nuq]

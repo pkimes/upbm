@@ -32,9 +32,6 @@ Ignored if \code{Inf}. (default = Inf)}
 \item{.facet}{logical whether plot should be faceted using
 the default 'condition' column from the colData of the
 SummarizedExperiment. (default = TRUE)}
-
-\item{.filter}{integer specifying level of probe filtering to
-perform prior to plotting. (default = 1)}
 }
 \value{
 ggplot object

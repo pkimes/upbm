@@ -33,7 +33,7 @@
 #'
 #' @importFrom broom tidy
 #' @importFrom limma normexp.fit normexp.signal
-#' @importFrom stats p.adjust
+#' @importFrom stats p.adjust pnorm
 #' @importFrom dplyr select group_by left_join ungroup mutate
 #' @importFrom tidyr nest unnest
 #' @export
@@ -70,18 +70,18 @@ kmerTestAffinity <- function(se) {
     adat <- tidyr::unnest(adat)
     adat <- dplyr::mutate(adat,
                           affinityZ = affinitySignal / sqrt(affinityVariance),
-                          affinityP = 2*pnorm(-abs(affinityZ)))
+                          affinityP = 2 * stats::pnorm(-abs(affinityZ)))
     adat <- dplyr::group_by(adat, condition)
-    adat <- dplyr::mutate(adat, affinityQ = p.adjust(affinityP, method = "BH"))
+    adat <- dplyr::mutate(adat, affinityQ = stats::p.adjust(affinityP, method = "BH"))
     adat <- dplyr::ungroup(adat)
 
     ## tidy results to assays
-    assaylist <- list(affinityEstimate = upbm:::.tidycol2mat(adat, "affinityEstimate", kmers, colnames(se)),
-                      affinityVariance = upbm:::.tidycol2mat(adat, "affinityVariance", kmers, colnames(se)),
-                      affinitySignal = upbm:::.tidycol2mat(adat, "affinitySignal", kmers, colnames(se)),
-                      affinityZ = upbm:::.tidycol2mat(adat, "affinityZ", kmers, colnames(se)),
-                      affinityP = upbm:::.tidycol2mat(adat, "affinityP", kmers, colnames(se)),
-                      affinityQ = upbm:::.tidycol2mat(adat, "affinityQ", kmers, colnames(se)))
+    assaylist <- list(affinityEstimate = .tidycol2mat(adat, "affinityEstimate", kmers, colnames(se)),
+                      affinityVariance = .tidycol2mat(adat, "affinityVariance", kmers, colnames(se)),
+                      affinitySignal = .tidycol2mat(adat, "affinitySignal", kmers, colnames(se)),
+                      affinityZ = .tidycol2mat(adat, "affinityZ", kmers, colnames(se)),
+                      affinityP = .tidycol2mat(adat, "affinityP", kmers, colnames(se)),
+                      affinityQ = .tidycol2mat(adat, "affinityQ", kmers, colnames(se)))
 
     rdat <- dplyr::select(adat, seq)
     rdat <- rdat[match(kmers, rdat$seq), ]

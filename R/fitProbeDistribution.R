@@ -28,6 +28,7 @@
 #' @importFrom SummarizedExperiment assayNames assay
 #' @importFrom limma normexp.fit
 #' @importFrom NormalGamma normgam.fit
+#' @importFrom stats na.omit
 #' @export
 #' @author Dongyuan Song
 fitProbeDistribution <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
@@ -41,7 +42,7 @@ fitProbeDistribution <- function(pe, assay = SummarizedExperiment::assayNames(pe
     
     ## extract intensity matrix
     new_assay <- as.matrix(SummarizedExperiment::assay(pe, assay))
-    assay_vector <- apply(new_assay, 2, na.omit)
+    assay_vector <- apply(new_assay, 2, stats::na.omit)
     
     if (model == "NormGam") {
         par_e <- sapply(assay_vector, function(x) {NormalGamma::normgam.fit(x)$par}, simplify = TRUE)

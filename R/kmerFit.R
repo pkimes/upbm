@@ -32,7 +32,7 @@
 #'        applied to the absolute value of an approximate robust studentized residual
 #'        computed for each probe in each probe set and can be turned off by
 #'        setting the value to NULL. By default, approximate 0.5% tails are trimmed.
-#'        (default = \code{qnorm(0.995)})
+#'        (default = \code{stats::qnorm(0.995)})
 #' @param outlier_maxp a numeric threshold on the maximum proportion of probes to filter
 #'        for each k-mer probe set according to \code{outlier_cutoff}. This should be
 #'        set to a reasonably small value to avoid over-filtering based on the approximate
@@ -98,11 +98,12 @@
 #' @seealso \code{\link{probeFit}}, \code{\link{uniqueKmers}}
 #' @importFrom dplyr select_ group_by left_join ungroup do mutate arrange one_of
 #' @importFrom tidyr unnest spread
+#' @importFrom stats qnorm
 #' @export
 #' @author Patrick Kimes
 kmerFit <- function(pe, kmers = uniqueKmers(8L), positionbias = TRUE,
                     method = c("dl2", "dl"), contrasts = TRUE, baseline = NULL,
-                    outlier_cutoff = qnorm(0.995), outlier_maxp = 0.2,
+                    outlier_cutoff = stats::qnorm(0.995), outlier_maxp = 0.2,
                     verbose = FALSE) {
     
     stopifnot(is(pe, "PBMExperiment"))

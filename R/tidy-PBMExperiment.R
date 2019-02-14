@@ -103,5 +103,5 @@ tidy.PBMExperiment <- function(x, assay = SummarizedExperiment::assayNames(x)[1]
     }
 
     ## treat as regular SummarizedExperiment
-    upbm::tidy.SummarizedExperiment(x, assay, long, ...)
+    tidy.SummarizedExperiment(x, assay, long, ...)
 }

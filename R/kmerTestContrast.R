@@ -31,7 +31,7 @@
 #' }
 #'
 #' @importFrom broom tidy
-#' @importFrom stats p.adjust
+#' @importFrom stats p.adjust pnorm
 #' @importFrom dplyr select group_by left_join ungroup mutate
 #' @importFrom tidyr nest unnest
 #' @export
@@ -57,18 +57,18 @@ kmerTestContrast <- function(se) {
 
     ## compute z-scores, p-values, and adjusted p-values
     cdat <- dplyr::mutate(cdat, contrastZ = contrastDifference / sqrt(contrastVariance))
-    cdat <- dplyr::mutate(cdat, contrastP = 2 * pnorm(-abs(contrastZ)))
+    cdat <- dplyr::mutate(cdat, contrastP = 2 * stats::pnorm(-abs(contrastZ)))
     cdat <- dplyr::group_by(cdat, condition)
-    cdat <- dplyr::mutate(cdat, contrastQ = p.adjust(contrastP, method = "BH"))
+    cdat <- dplyr::mutate(cdat, contrastQ = stats::p.adjust(contrastP, method = "BH"))
     cdat <- dplyr::ungroup(cdat)
 
     ## tidy results to assays
     assaylist <- list(contrastAverage = assay(se, "contrastAverage"),
-                      contrastDifference = upbm:::.tidycol2mat(cdat, "contrastDifference", kmers, colnames(se)),
-                      contrastVariance = upbm:::.tidycol2mat(cdat, "contrastVariance", kmers, colnames(se)),
-                      contrastZ = upbm:::.tidycol2mat(cdat, "contrastZ", kmers, colnames(se)),
-                      contrastP = upbm:::.tidycol2mat(cdat, "contrastP", kmers, colnames(se)),
-                      contrastQ = upbm:::.tidycol2mat(cdat, "contrastQ", kmers, colnames(se)))
+                      contrastDifference = .tidycol2mat(cdat, "contrastDifference", kmers, colnames(se)),
+                      contrastVariance = .tidycol2mat(cdat, "contrastVariance", kmers, colnames(se)),
+                      contrastZ = .tidycol2mat(cdat, "contrastZ", kmers, colnames(se)),
+                      contrastP = .tidycol2mat(cdat, "contrastP", kmers, colnames(se)),
+                      contrastQ = .tidycol2mat(cdat, "contrastQ", kmers, colnames(se)))
 
     rdat <- dplyr::select(cdat, seq)
     rdat <- rdat[match(kmers, rdat$seq), ]

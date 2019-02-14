@@ -4,12 +4,15 @@
 \name{PBMDesign}
 \alias{PBMDesign}
 \alias{PBMDesign,data.frame-method}
+\alias{PBMDesign,DataFrame-method}
 \alias{PBMDesign,PBMExperiment-method}
 \title{Create a new PBMDesign object}
 \usage{
 PBMDesign(x, ...)
 
 \S4method{PBMDesign}{data.frame}(x, ...)
+
+\S4method{PBMDesign}{DataFrame}(x, ...)
 
 \S4method{PBMDesign}{PBMExperiment}(x)
 }

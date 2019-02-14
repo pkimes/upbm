@@ -6,7 +6,8 @@
 \usage{
 kmerFit(pe, kmers = uniqueKmers(8L), positionbias = TRUE,
   method = c("dl2", "dl"), contrasts = TRUE, baseline = NULL,
-  outlier_cutoff = qnorm(0.995), outlier_maxp = 0.2, verbose = FALSE)
+  outlier_cutoff = stats::qnorm(0.995), outlier_maxp = 0.2,
+  verbose = FALSE)
 }
 \arguments{
 \item{pe}{a PBMExperiment object containing probe-level summarized intensity data
@@ -36,7 +37,7 @@ probe sets before fitting each k-mer level model. The threshold is
 applied to the absolute value of an approximate robust studentized residual
 computed for each probe in each probe set and can be turned off by
 setting the value to NULL. By default, approximate 0.5% tails are trimmed.
-(default = \code{qnorm(0.995)})}
+(default = \code{stats::qnorm(0.995)})}
 
 \item{outlier_maxp}{a numeric threshold on the maximum proportion of probes to filter
 for each k-mer probe set according to \code{outlier_cutoff}. This should be
