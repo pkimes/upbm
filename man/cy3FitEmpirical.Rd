@@ -6,7 +6,7 @@
 \usage{
 cy3FitEmpirical(pe, refpe,
   assay = SummarizedExperiment::assayNames(pe)[1], useMean = TRUE,
-  standardize = TRUE, threshold = 1L, verbose = FALSE)
+  standardize = TRUE, threshold = 1/2, verbose = FALSE)
 }
 \arguments{
 \item{pe}{a PBMExperiment object containing Cy3 intensity data.}
@@ -28,7 +28,7 @@ computed for PBM Cy3 reference data. (default = TRUE)}
 observed and expected Cy3 intensities. If \code{standardize} is
 specified, the log2 ratios are first scaled before comparing against
 the threshold. In this case, the threshold is also scaled by the
-median of the probe-level MAD intensities. (default = 1L)}
+median of the probe-level MAD intensities. (default = 1/2)}
 
 \item{verbose}{a logical value whether to print verbose output during
 analysis. (default = FALSE)}

@@ -37,7 +37,7 @@
 #'        observed and expected Cy3 intensities. If \code{standardize} is
 #'        specified, the log2 ratios are first scaled before comparing against
 #'        the threshold. In this case, the threshold is also scaled by the
-#'        median of the probe-level MAD intensities. (default = 1L)
+#'        median of the probe-level MAD intensities. (default = 1/2)
 #' @param verbose a logical value whether to print verbose output during
 #'        analysis. (default = FALSE)
 #' 
@@ -52,7 +52,7 @@
 #' @export
 #' @author Patrick Kimes
 cy3FitEmpirical <- function(pe, refpe, assay = SummarizedExperiment::assayNames(pe)[1],
-                            useMean = TRUE, standardize = TRUE, threshold = 1L,
+                            useMean = TRUE, standardize = TRUE, threshold = 1/2,
                             verbose = FALSE) {
     stopifnot(is(pe, "PBMExperiment")) 
     stopifnot(is(refpe, "PBMExperiment")) 

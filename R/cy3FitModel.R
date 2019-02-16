@@ -37,7 +37,7 @@
 #' @param refit a logical value whether to filter outliers and refit trinucleotide
 #'        linear regression model. (default = TRUE)
 #' @param threshold a numeric threshold on absolute value of log2 ratio between
-#'        observed and expected Cy3 intensities. (default = 1L)
+#'        observed and expected Cy3 intensities. (default = 1/2)
 #' @param verbose a logical value whether to print verbose output during
 #'        analysis. (default = FALSE)
 #'
@@ -60,7 +60,7 @@
 #' @export
 #' @author Patrick Kimes
 cy3FitModel <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
-                        refit = TRUE, threshold = 1L, verbose = FALSE) {
+                        refit = TRUE, threshold = 1/2, verbose = FALSE) {
     stopifnot(is(pe, "PBMExperiment")) 
 
     if (verbose) {

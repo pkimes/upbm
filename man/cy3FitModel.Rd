@@ -5,7 +5,7 @@
 \title{Compute Cy3 scaling factors using regression}
 \usage{
 cy3FitModel(pe, assay = SummarizedExperiment::assayNames(pe)[1],
-  refit = TRUE, threshold = 1L, verbose = FALSE)
+  refit = TRUE, threshold = 1/2, verbose = FALSE)
 }
 \arguments{
 \item{pe}{a PBMExperiment object containing Cy3 intensity data.}
@@ -17,7 +17,7 @@ cy3FitModel(pe, assay = SummarizedExperiment::assayNames(pe)[1],
 linear regression model. (default = TRUE)}
 
 \item{threshold}{a numeric threshold on absolute value of log2 ratio between
-observed and expected Cy3 intensities. (default = 1L)}
+observed and expected Cy3 intensities. (default = 1/2)}
 
 \item{verbose}{a logical value whether to print verbose output during
 analysis. (default = FALSE)}
