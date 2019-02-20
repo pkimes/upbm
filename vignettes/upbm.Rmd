@@ -4,7 +4,7 @@ author: Patrick K. Kimes
 date: "`r BiocStyle::doc_date()`"
 package: "`r BiocStyle::pkg_ver('upbm')`"
 abstract: >
-  "Protein binding microarrays (PBMs) allow for the high-throughput quantification of DNA binding specificities of proteins, e.g. transcription factors, in vitro. While several probe designs have been proposed for PBMs, universal-design PBMs (uPBMs) which cover all 10-mer DNA sequences, have enjoyed the most wide-spread use and success. The *upbm* package provides tools and methods for organizing probe-level PBM data from raw GPR scan files, summarizing PBM data at k-mer resolution, and performing statistical inference when replicate experiments are available. The package was developed for the analysis of uPBMs, but should be appropriate for most other PBM designs as well. upbm package version: `r packageVersion("upbm")`"
+  "Protein binding microarrays (PBMs) allow for the high-throughput quantification of DNA binding specificities of proteins, such as transcription factors, in vitro. While several probe designs have been proposed for PBMs, universal PBMs (uPBMs) designed to cover all 10-mer DNA sequences, have enjoyed the most wide-spread adoption. The *upbm* package provides tools and methods for organizing probe-level PBM data from raw GPR scan files, summarizing PBM data at k-mer resolution, and performing statistical inference when replicate experiments are available. The package was developed for the analysis of uPBMs, but should be appropriate for many other PBM designs as well. upbm package version: `r packageVersion("upbm")`"
 output:
   BiocStyle::html_document:
     highlight: pygments
@@ -60,7 +60,7 @@ data(hoxc9cy3, package = "upbmData")
 
 Metadata for Alexa488 and Cy3 scans are provided in the sample table.
 
-```{r show-table}
+```{r show-table, comment="#"}
 hoxc9table
 ```
 
@@ -85,7 +85,7 @@ hoxc9a450 <- hoxc9a450[, colData(hoxc9a450)$condition %in%
 
 Using the example data included in the *upbmData* package, we first demonstrate how GPR data can be analyzed to obtain 8-mer-level affinity summaries and used to perform differential affinity analysis without going in to detail.
 
-First, input data should ideally be available as GenePix Results (GPR) files, with each GPR file corresponding to a single scan of a sample. Metadata for the GPR files, including paths to the files, should be organized in a data.frame or tibble of scans with each row correspond to a scan. The path to the GPR file **must** be specified in a column named `gpr` in the table. The table should also include any relevant metadata about the scan and sample (e.g. scan parameters or the name of the transcription factor) as additional columns. Scan information for the example dataset in _upbmData_ is provided in `hoxc9table` shown above. More details on the process of loading GPR data are covered in a later section of this vignette.
+First, input data should ideally be available as GenePix Results (GPR) files, with each GPR file corresponding to a single scan of a sample. Metadata for the GPR files, including paths to the files, should be organized in a data.frame or tibble with each row corresponding to a scan. The path to the GPR file **must** be specified in a column named `gpr`. The table should also include any relevant metadata about the scan and sample (e.g. scan parameters or the name of the transcription factor). Scan information for the example dataset in _upbmData_ is provided in the `hoxc9table` table shown above. The process of loading GPR data is covered in more detail in a later section of this vignette.
 
 First, we perform basic pre-processing on the probe intensities of each assay in `hoxc9a450`, including background subtraction, Cy3 normalization, and spatial adjustment. 
 
@@ -93,33 +93,33 @@ First, we perform basic pre-processing on the probe intensities of each assay in
 hoxc9a450 <- backgroundSubtract(hoxc9a450, assay = "fore", assayb = "back")
 ```
 
-Cy3 normalization requires comparing the observed Cy3 intensities against a empirical reference of Cy3 scans. We use the `refcy3_8x60k_v1` empirical reference for 8x60k design included with the _upbmAux_ package.
+Cy3 normalization requires comparing the observed Cy3 intensities against a empirical reference of Cy3 scans. We use the `refcy3_8x60k_v1` empirical reference for the 8x60k design included with the _upbmAux_ package.
 
 ```{r quick-loadcy3ref}
 data(refcy3_8x60k_v1, package = "upbmAux")
+hoxc9cy3e <- cy3FitEmpirical(hoxc9cy3, refcy3_8x60k_v1)
 ```
 
-After comparing the observed Cy3 intensities against the empirical reference, we normalize the Alexa488 scans according to the relative over or under abundance of dsDNA as measured by Cy3. We use information in `id_idx`, a colData column which specifies the plate ID and array position of each array in both `hoxc9a450` and `hoxc9cy3` (and `hoxc9cy3e`) to uniquely match Alexa488 and Cy3 scans.
+After comparing the observed Cy3 intensities against the empirical reference, we normalize the Alexa488 scans according to the relative over or under abundance of dsDNA as measured by Cy3. We use information in `id_idx`, a colData column which specifies the plate ID and array position of each scan in `hoxc9a450` and `hoxc9cy3e` to uniquely match Alexa488 and Cy3 scans.
 
 ```{r quick-cy3norm}
-hoxc9cy3e <- cy3FitEmpirical(hoxc9cy3, refcy3_8x60k_v1)
 hoxc9a450 <- cy3Normalize(hoxc9a450, hoxc9cy3e, match_by = "id_idx")
 ```
 
-Next, we perform spatial adjustment to correct biases due to the physical position of probes on the array. This is performed using the probe row and column coordinates, if available. Probe coordinates are specified for all standard uPBM designs included in the _upbmAux_ package.
+Next, we perform spatial adjustment to correct for bias due to the physical position of probes on the array. This step requires row and column coordinates be specified for all probes as `Row` and `Column` in the rowData. Probe coordinates are specified for all standard uPBM designs included in the _upbmAux_ package.
 
 ```{r quick-spatial-adjust}
 hoxc9a450 <- spatiallyAdjust(hoxc9a450)
 ```
 
-After pre-processing arrays separately, we normalize across samples, in two steps - first within replicates, i.e. across arrays multiplexed on the same plate, and second across replicates, i.e. across plates. Plate and condition information should be specified in the colData of the _PBMExperiment_ object. By default, the functions expect plate and condition labels to be included in columns named `id` and `condition`.
+All previous pre-processing steps considered arrays separately. We next normalize across arrays in two steps - first within replicates, i.e. across arrays multiplexed on the same plate, and second across replicates using matched conditions. Plate and condition information should be specified in the colData of the _PBMExperiment_ object. By default, the functions expect plate and condition labels to be included in columns named `id` and `condition`.
 
 ```{r quick-cross-sample-norm}
 hoxc9a450 <- normalizeWithinReplicates(hoxc9a450)
 hoxc9a450 <- normalizeAcrossReplicates(hoxc9a450)
 ```
 
-Now that arrays have been properly pre-processed, we aggregate across replicates for each condition by fitting probe-level models to the data.
+Now that arrays have been properly pre-processed and normalized, we aggregate across replicates for each condition by fitting probe-level models to the data. Again, condition labels are assumed to be colData column named `condition`.
 
 ```{r quick-probefit}
 hoxc9pfit <- probeFit(hoxc9a450)
@@ -234,7 +234,7 @@ Many of the PBM pre-processing steps of the *Universal PBM Analysis Suite* are m
 
 # Alternative Inputs
 
-While PBM data are commonly stored as GPR scan files, several similar probe-level summaries files have been generated and made publicly available on platforms include [Uniprobe](http://the_brain.bwh.harvard.edu/uniprobe/) [@hume2014]. In addition to raw GPR data, the *upbm* software can be used to read in alternative sources of extrapolated or processed probe-level intensity data, e.g. from [Masliner](http://arep.med.harvard.edu/masliner/supplement.htm) or the *Universal PBM Analysis Suite*. We recommend using original GPR data files when possible.
+While PBM data are commonly stored as GPR scan files, several similar probe-level summaries files have been generated and made publicly available on platforms include [UniPROBE](http://the_brain.bwh.harvard.edu/uniprobe/) [@hume2014]. In addition to raw GPR data, the *upbm* software can be used to read in alternative sources of extrapolated or processed probe-level intensity data, e.g. from [Masliner](http://arep.med.harvard.edu/masliner/supplement.htm) or the *Universal PBM Analysis Suite*. We recommend using original GPR data files when possible.
 
 # References
 
