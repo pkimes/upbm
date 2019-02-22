@@ -117,6 +117,19 @@ normalizeWithinReplicates <- function(pe, assay = SummarizedExperiment::assayNam
         cat("|| - Data filtered from", ntotal, "probes to", nrow(fpe), "probes.\n")
     }
 
+    ## separate out groups with only single scan
+    singletons <- table(colData(fpe)[[group]])
+    singletons <- names(singletons)[singletons == 1]
+    isingletons <- length(singletons) > 0
+    if (isingletons) {
+        singleton_cols <- colData(fpe)[[group]] %in% singletons
+        singleton_fits <- dplyr::tibble(sample = colnames(fpe)[singleton_cols],
+                                        Group = colData(fpe)[[group]][singleton_cols],
+                                        Stratify = colData(fpe)[[stratify]][singleton_cols],
+                                        withinRepScale = 1L)
+        fpe <- fpe[, !singleton_cols]
+    }
+    
     ## check normalization stratification settings
     strats <- .pbmCheckStratify(fpe, stratify, baseline, group)
     coldat <- strats$coldat
@@ -182,7 +195,12 @@ normalizeWithinReplicates <- function(pe, assay = SummarizedExperiment::assayNam
 
     } else {
         stop("Specified 'method=' parameter is invalid.")
-    } 
+    }
+
+    ## add singletons back
+    if (isingletons) {
+        assay_fits <- dplyr::bind_rows(assay_fits, singleton_fits)
+    }
     
     ## tidy up original data
     new_assay <- as.data.frame(assay(pe, assay), optional = TRUE)
@@ -191,10 +209,10 @@ normalizeWithinReplicates <- function(pe, assay = SummarizedExperiment::assayNam
                                Row = rowData(pe)[, "Row"],
                                Column = rowData(pe)[, "Column"])
     new_assay <- tidyr::gather(new_assay, sample, value, -Row, -Column)
-    new_assay <- dplyr::left_join(new_assay, coldat, by = "sample")
+    ##new_assay <- dplyr::left_join(new_assay, coldat, by = "sample")
     
     ## adjust to reference
-    new_assay <- dplyr::left_join(new_assay, assay_fits, by = c("sample", "Stratify"))
+    new_assay <- dplyr::left_join(new_assay, assay_fits, by = c("sample"))
     new_assay <- dplyr::mutate(new_assay, value = value / withinRepScale)
     
     ## return to square assay shape
