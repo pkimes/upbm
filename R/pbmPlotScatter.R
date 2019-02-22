@@ -175,9 +175,11 @@ pbmPlotScatter <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
     if (is.null(bl)) {
         bl <- grep("ref", uniq_strat, value = TRUE, ignore.case = TRUE)
         if (length(bl) > 1) {
-            stop("Too many candidate baseline states in '", strat, "' column: ",
-                 paste0(bl, collapse = ", "), ".\n",
-                 "Specify correct baseline condition w/ 'baseline'.")
+            warning("Too many candidate baseline states in '", strat, "' column: ",
+                    paste0(bl, collapse = ", "), ".\n",
+                    "Using first match: ", bl[1], ".\n",
+                    "If other value should be used, specify correct baseline condition w/ 'baseline'.")
+            bl <- bl[1]
         }
     } else {
         if (! bl %in% uniq_strat) {
