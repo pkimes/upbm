@@ -122,7 +122,7 @@ cy3FitModel <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
                                 na.action = na.exclude))
     pfits <- dplyr::ungroup(pfits)
     pdat <- dplyr::ungroup(pdat)
-    
+
     ## compute expected values
     pexps <- dplyr::left_join(pfits, tidyr::nest(pdat, -condition), by = "condition")
     pexps <- dplyr::mutate(pexps, preds = mapply(predict, object = fit, newdata = data,
@@ -131,7 +131,7 @@ cy3FitModel <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
     pexps <- dplyr::select(pexps, condition, preds, probecols)
     pexps <- tidyr::unnest(pexps)
     pexps <- tidyr::spread(pexps, condition, preds)
-
+    
     ## compute ratios
     pratios <- tidyr::gather(pexps, condition, preds, -(!! npe@probeCols))
     pratios <- dplyr::left_join(pratios, dplyr::select_at(pdat, c("condition", "intensity", npe@probeCols)),
@@ -186,9 +186,9 @@ cy3FitModel <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
         pratios <- tidyr::spread(pratios, condition, ratio)
     }
     pdrop <- tidyr::spread(pdrop, condition, lowq)
-    
+
     ## left join to original rowData to get full set
-    full_rowdat <- as.data.frame(rowData(pe), optional = TRUE)
+    full_rowdat <- as.data.frame(rowData(pbmTrimProbes(pe)), optional = TRUE)
     full_rowdat <- dplyr::as_tibble(full_rowdat)
     full_rowdat <- dplyr::select_at(full_rowdat, npe@probeCols)
     pexps <- dplyr::left_join(dplyr::select_at(full_rowdat, npe@probeCols), pexps, by = npe@probeCols)
