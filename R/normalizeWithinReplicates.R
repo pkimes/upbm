@@ -148,8 +148,8 @@ normalizeWithinReplicates <- function(pe, assay = SummarizedExperiment::assayNam
     }
     
     ## check normalization stratification settings
-    strats <- upbm:::.pbmCheckStratify(s = fpe, strat = stratify, bl = baseline, gp = group,
-                                       needbl = TRUE, verb = verbose)
+    strats <- .pbmCheckStratify(s = fpe, strat = stratify, bl = baseline, gp = group,
+                                needbl = TRUE, verb = verbose)
     coldat <- strats$coldat
     baseline <- strats$baseline
 
