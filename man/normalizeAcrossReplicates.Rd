@@ -7,7 +7,7 @@
 normalizeAcrossReplicates(pe,
   assay = SummarizedExperiment::assayNames(pe)[1], group = "id",
   stratify = "condition", baseline = NULL, pairwise = FALSE,
-  onlyref = FALSE, verbose = FALSE, ...)
+  onlybaseline = FALSE, verbose = FALSE, ...)
 }
 \arguments{
 \item{pe}{SummarizedExperiment object containing GPR intensity information.}
@@ -28,12 +28,13 @@ value is guessed by looking for ``ref" in any value of the \code{stratify} colum
 matching values are found, an error is thrown. If the baseline condition is missing from any
 \code{group}, an error is thrown. (default = NULL)}
 
-\item{pairwise}{logical whether scaling factors should be computed using all
+\item{pairwise}{a logical value whether scaling factors should be computed using all
 pairwise comparisons or just using a single comparison against a median
 quantile reference. See 'Details' for more information. (default = FALSE)}
 
-\item{onlyref}{logical whether scaling factors should be computed using only
-reference samples. (default = FALSE)}
+\item{onlybaseline}{a logical value whether scaling factors should be computed using only
+baseline samples. If any group is missing a baseline sample and set to TRUE, an error is thrown.
+(default = FALSE)}
 
 \item{verbose}{a logical value whether to print verbose output during analysis. (default = FALSE)}
 
@@ -90,7 +91,7 @@ is applied to all samples in the replicate.
 
 While the default behavior is to compute log-scale multiplicative factors using all conditions
 and by making comparisons to cross-replicate reference distributions, this can be changed.
-To use only the \code{baseline} condition, set \code{onlyref = TRUE}. To use all pairwise comparisons
+To use only the \code{baseline} condition, set \code{onlybaseline = TRUE}. To use all pairwise comparisons
 between replicates (rather than comparisons against the cross-replicate references), set \code{pairwise = TRUE}.
 Note that specifying \code{pairwise = TRUE} may be substantially more computational expensive when the number of
 replicates is large.

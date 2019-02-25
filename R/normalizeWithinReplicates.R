@@ -44,14 +44,14 @@
 #'        deviations from baseline condition will be filtered from normalization.
 #'        This parameter is ignored when \code{method = "quantile"}. (default = 0.2)
 #' @param group a character string specifying a column in \code{colData(pe)} to use for grouping replicates.
-#'        (default = \code{"id"})
+#'        If scans shouldn't be grouped, specify NULL. (default = \code{"id"})
 #' @param stratify a character string specifying a column in \code{colData(pe)} to use for determining
 #'        the unique baseline scan within each \code{group}. (default = \code{"condition"})
 #' @param baseline a character string specifying the baseline condition in the \code{stratify} column to normalize
 #'        other conditions against within each \code{group}. If not specified and set to NULL, the baseline
 #'        value is guessed by looking for ``ref" in any value of the \code{stratify} column. If multiple
-#'        matching values are found, an error is thrown. If the baseline condition is missing from any
-#'        \code{group}, an error is thrown. (default = NULL)
+#'        matching values are found, one value is chosen arbitrarily. If the baseline condition is missing
+#'        from any \code{group} with more than one scan, an error is thrown. (default = NULL)
 #' @param verbose a logical value whether to print verbose output during analysis. (default = FALSE)
 #'
 #' @details
@@ -89,14 +89,15 @@ normalizeWithinReplicates <- function(pe, assay = SummarizedExperiment::assayNam
                                       verbose = FALSE) {
     stopifnot(is(pe, "PBMExperiment"))
     method <- match.arg(method)
-    
+
     stopifnot(q >= 0, q < 1)
     stopifnot(qlower < 1 - q)
     stopifnot(qdiff >= 0, qdiff <= 0.5)
     stopifnot(assay %in% SummarizedExperiment::assayNames(pe))
 
     ## check normalization groups
-    stopifnot(group %in% names(colData(pe)))
+    stopifnot(is.null(group) || group %in% names(colData(pe)))
+    stopifnot(stratify %in% names(colData(pe)))
     
     if (verbose) {
         cat("|| upbm::normalizeWithinReplicates \n")
@@ -108,7 +109,18 @@ normalizeWithinReplicates <- function(pe, assay = SummarizedExperiment::assayNam
             "probeFilter rule(s).\n")
         ntotal <- nrow(pe)
     }
-
+    
+    if (ncol(pe) == 1L) {
+        SummarizedExperiment::assays(pe) <- c(S4Vectors::SimpleList(normalized = assay(pe, assay)),
+                                              SummarizedExperiment::assays(pe))
+        if (verbose) {
+            cat("|| - Since only 1 scan, no normalization is performed.\n")
+            cat("|| - Finished within-replicate normalization.\n")
+            cat("|| - Returning PBMExperiment with", nrow(pe), "rows and", ncol(pe), "columns.\n")
+        }
+        return(pe)
+    }
+    
     ## filter probes - only for computing shift/scale factors (return original pe)
     fpe <- pbmFilterProbes(pe)
     rdat <- dplyr::as_tibble(as.data.frame(rowData(fpe)[, fpe@probeCols, drop = FALSE], optional = TRUE))
@@ -118,20 +130,26 @@ normalizeWithinReplicates <- function(pe, assay = SummarizedExperiment::assayNam
     }
 
     ## separate out groups with only single scan
-    singletons <- table(colData(fpe)[[group]])
-    singletons <- names(singletons)[singletons == 1]
-    isingletons <- length(singletons) > 0
-    if (isingletons) {
-        singleton_cols <- colData(fpe)[[group]] %in% singletons
-        singleton_fits <- dplyr::tibble(sample = colnames(fpe)[singleton_cols],
-                                        Group = colData(fpe)[[group]][singleton_cols],
-                                        Stratify = colData(fpe)[[stratify]][singleton_cols],
-                                        withinRepScale = 1L)
-        fpe <- fpe[, !singleton_cols]
+    if (is.null(group)) {
+        isingletons <- FALSE
+    } else {
+        singletons <- table(colData(fpe)[[group]])
+        singletons <- names(singletons)[singletons == 1]
+        isingletons <- length(singletons) > 0
+        if (isingletons) {
+            singleton_cols <- colData(fpe)[[group]] %in% singletons
+            singleton_fits <- dplyr::tibble(sample = colnames(fpe)[singleton_cols],
+                                            Group = colData(fpe)[[group]][singleton_cols],
+                                            Stratify = colData(fpe)[[stratify]][singleton_cols],
+                                            isBaseline = TRUE, 
+                                            withinRepScale = 1L)
+            fpe <- fpe[, !singleton_cols]
+        }
     }
     
     ## check normalization stratification settings
-    strats <- .pbmCheckStratify(fpe, stratify, baseline, group)
+    strats <- upbm:::.pbmCheckStratify(s = fpe, strat = stratify, bl = baseline, gp = group,
+                                       needbl = TRUE, verb = verbose)
     coldat <- strats$coldat
     baseline <- strats$baseline
 
@@ -160,7 +178,8 @@ normalizeWithinReplicates <- function(pe, assay = SummarizedExperiment::assayNam
             cat("||     - qlower:", qlower, "\n")
             cat("||     - qdiff:", qdiff, "\n")
         }
-        bl_assay <- dplyr::filter(assay_fits, Stratify == baseline)
+        
+        bl_assay <- dplyr::filter(assay_fits, isBaseline)
         bl_assay <- dplyr::select_at(bl_assay, c("value", "Group", fpe@probeCols))
         assay_fits <- dplyr::left_join(assay_fits, bl_assay, by = c("Group", fpe@probeCols),
                                        suffix = c("", ".bl"))
@@ -168,7 +187,7 @@ normalizeWithinReplicates <- function(pe, assay = SummarizedExperiment::assayNam
         assay_fits <- dplyr::mutate(assay_fits,
                                     M.value = (log2(value) - log2(value.bl)),
                                     A.value = (log2(value) + log2(value.bl))/2)  
-        assay_fits <- tidyr::nest(assay_fits, -sample, -Stratify, -Group)
+        assay_fits <- tidyr::nest(assay_fits, -sample, -Stratify, -Group, -isBaseline)
 
         assay_fits <- dplyr::mutate(assay_fits,
                                     withinRepScale = vapply(data, function(x) {
@@ -184,12 +203,12 @@ normalizeWithinReplicates <- function(pe, assay = SummarizedExperiment::assayNam
             cat("|| - Performing quantile-based normalization with:\n")
             cat("||     - q:", q, "\n")
         }
-        assay_fits <- dplyr::group_by(scale_assay, sample, Stratify, Group)
+        assay_fits <- dplyr::group_by(scale_assay, sample, Stratify, Group, isBaseline)
         assay_fits <- dplyr::summarize(assay_fits, ul = quantile(value, probs = q, na.rm = TRUE))
         assay_fits <- dplyr::ungroup(assay_fits)
 
         assay_fits <- dplyr::group_by(assay_fits, Group)
-        assay_fits <- dplyr::mutate(assay_fits, withinRepScale = ul / ul[Stratify == baseline])
+        assay_fits <- dplyr::mutate(assay_fits, withinRepScale = ul / ul[isBaseline])
         assay_fits <- dplyr::ungroup(assay_fits)
         assay_fits <- dplyr::select(assay_fits, -ul)
 
@@ -212,7 +231,7 @@ normalizeWithinReplicates <- function(pe, assay = SummarizedExperiment::assayNam
     ##new_assay <- dplyr::left_join(new_assay, coldat, by = "sample")
     
     ## adjust to reference
-    new_assay <- dplyr::left_join(new_assay, assay_fits, by = c("sample"))
+    new_assay <- dplyr::left_join(new_assay, assay_fits, by = "sample")
     new_assay <- dplyr::mutate(new_assay, value = value / withinRepScale)
     
     ## return to square assay shape
@@ -247,7 +266,7 @@ normalizeWithinReplicates <- function(pe, assay = SummarizedExperiment::assayNam
     }
 
     ## add scaling factors to colData
-    assay_fits <- dplyr::select(assay_fits, -Stratify, -Group)
+    assay_fits <- dplyr::select(assay_fits, -Stratify, -Group, -isBaseline)
     if ("fits" %in% names(assay_fits)) {
         assay_fits <- dplyr::select(assay_fits, -fits)
     }

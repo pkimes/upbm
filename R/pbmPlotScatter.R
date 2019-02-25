@@ -36,8 +36,8 @@
 #' @details
 #' MA plots are drawn on the log scale by definition.
 #'
-#' @importFrom tidyr spread gather
-#' @importFrom dplyr mutate select left_join rename
+#' @importFrom tidyr spread gather replace_na
+#' @importFrom dplyr mutate select left_join rename top_n
 #' @importFrom rlang enquo quo_name UQ 
 #' @import ggplot2 SummarizedExperiment
 #' @export
@@ -152,58 +152,67 @@ pbmPlotScatter <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
 }
 
 
-.pbmCheckStratify <- function(s, strat, bl, gp = NULL) {
+.pbmCheckStratify <- function(s, strat, bl, gp = NULL, needbl = FALSE, verb = FALSE) {
     
     ## check validity of stratifying colData column
     stopifnot(strat %in% names(colData(s)))
-    
-    strat_vals <- colData(s)[[strat]]
-    if (!is.null(gp)) {
-        group_vals <- colData(s)[[gp]]
+    stopifnot(is.null(gp) || gp %in% names(colData(s)))
+
+    if (is.null(gp)) {
+        sg <- dplyr::tibble(sample = colnames(s),
+                            Stratify = colData(s)[[strat]],
+                            Group = "noGroups")
     } else {
-        group_vals <- rep("noGroups", length(strat_vals))
-    }
-    sgtab <- table(strat_vals, group_vals)
-    uniq_strat <- rownames(sgtab)
-    
-    if (any(colMaxs(sgtab, na.rm = TRUE) > 1L)) {
-        stop("Stratifying variable '", strat, "' is not unique across samples within groups.\n",
-             "Specify a different column in colData.")
+        sg <- dplyr::tibble(sample = colnames(s),
+                            Stratify = colData(s)[[strat]],
+                            Group = colData(s)[[gp]])
     }
 
     ## determine baseline if necessary; check validity
     if (is.null(bl)) {
-        bl <- grep("ref", uniq_strat, value = TRUE, ignore.case = TRUE)
-        if (length(bl) > 1) {
+        bl <- grep("ref$", unique(sg$Stratify), value = TRUE, ignore.case = TRUE)
+        if (verb && length(bl) > 1) {
             warning("Too many candidate baseline states in '", strat, "' column: ",
                     paste0(bl, collapse = ", "), ".\n",
                     "Using first match: ", bl[1], ".\n",
-                    "If other value should be used, specify correct baseline condition w/ 'baseline'.")
+                    "If other value should be used, specify correct baseline condition w/ 'baseline='.")
             bl <- bl[1]
         }
-    } else {
-        if (! bl %in% uniq_strat) {
-            stop(bl, " is not a value in '", strat, "' column.\n",
-                 "Specify correct baseline condition w/ 'baseline'.")
-        }
-    } 
-
-    if (any(sgtab[bl, ] < 1L)) {
-        stop("Baseline condition [", bl, "] is not present in all groups.\n",
-             "Missing from groups: ",
-             paste(colnames(sgtab)[sgtab[bl, ] < 1L], collapse = ", "))
+    } else if (! bl %in% sg$Stratify) {
+        stop(bl, " is not a value in '", strat, "' column.\n",
+             "Specify correct baseline condition w/ 'baseline='.")
     }
     
-    ## condition must be a unique column for faceting plot
-    coldat <- data.frame(colData(s), check.names = FALSE,
-                         check.rows = FALSE, stringsAsFactors = FALSE)
-    coldat <- tibble::rownames_to_column(coldat, "sample")
-    coldat <- dplyr::rename(coldat, Stratify = I(strat))
-    if (is.null(gp)) {
-        coldat <- dplyr::select(coldat, sample, Stratify)
-    } else {
-        coldat <- dplyr::rename(coldat, Group = I(gp))
-        coldat <- dplyr::select(coldat, sample, Stratify, Group)
+    sg_tab <- dplyr::count(sg, Stratify, Group)
+    sg_tab <- tidyr::spread(sg_tab, Stratify, n)
+    
+    if (needbl && any(is.na(sg_tab[[bl]]))) {
+        stop("Baseline condition [", bl, "] is not present in all groups.\n",
+             "Missing from groups: ",
+             paste(sg_tab$Group[is.na(sg_tab[[bl]])], collapse = ", "))
     }
-    return(list(coldat = coldat, baseline = bl))
+    
+    ## determine baseline sample for each group
+    sg_bl <- dplyr::filter(sg, Stratify == !! bl)
+    sg_bl <- dplyr::group_by(sg_bl, Group)
+    if (verb && any(sg_tab[[bl]] > 1L)) {
+        warning("Too many samples with baseline states in some groups.\n",
+                "Multiple samples in groups: ",
+                paste(sg_tab$Group[sg_tab[[bl]] > 1L], collapse = ", "), "\n",
+                "Using first sample (by column name) in each group as baseline sample.")
+    }
+    sg_bl <- dplyr::top_n(sg_bl, 1L, sample)
+    sg_bl <- dplyr::ungroup(sg_bl)
+    sg_bl <- dplyr::mutate(sg_bl, isBaseline = TRUE)
+
+    ## add baseline status to table of samples
+    sg <- dplyr::left_join(sg, sg_bl, by = c("sample", "Stratify", "Group"))
+    sg <- tidyr::replace_na(sg, list(isBaseline = FALSE))
+
+    ## remove group labels if just using dummy variables
+    if (is.null(gp)) {
+        sg <- dplyr::select(sg, -Group)
+    }
+
+    return(list(coldat = sg, baseline = bl))
 }

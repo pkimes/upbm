@@ -34,7 +34,7 @@ deviations from baseline condition will be filtered from normalization.
 This parameter is ignored when \code{method = "quantile"}. (default = 0.2)}
 
 \item{group}{a character string specifying a column in \code{colData(pe)} to use for grouping replicates.
-(default = \code{"id"})}
+If scans shouldn't be grouped, specify NULL. (default = \code{"id"})}
 
 \item{stratify}{a character string specifying a column in \code{colData(pe)} to use for determining
 the unique baseline scan within each \code{group}. (default = \code{"condition"})}
@@ -42,8 +42,8 @@ the unique baseline scan within each \code{group}. (default = \code{"condition"}
 \item{baseline}{a character string specifying the baseline condition in the \code{stratify} column to normalize
 other conditions against within each \code{group}. If not specified and set to NULL, the baseline
 value is guessed by looking for ``ref" in any value of the \code{stratify} column. If multiple
-matching values are found, an error is thrown. If the baseline condition is missing from any
-\code{group}, an error is thrown. (default = NULL)}
+matching values are found, one value is chosen arbitrarily. If the baseline condition is missing
+from any \code{group} with more than one scan, an error is thrown. (default = NULL)}
 
 \item{verbose}{a logical value whether to print verbose output during analysis. (default = FALSE)}
 }
