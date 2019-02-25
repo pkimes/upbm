@@ -28,6 +28,10 @@
 
 setValidity2("PBMExperiment",
              function(object) {
+                 ## check colnames is non-NULL and unique
+                 if (is.null(colnames(object)) | any(duplicated(colnames(object)))) {
+                     stop("PBMExperiment must have non-NULL and unique column names.")
+                 }
                  ## check rowData necessary columns (Sequence, probeID)
                  rd <- rowData(object)
                  if (!all(c("Sequence", "probeID") %in% colnames(rd))) {
