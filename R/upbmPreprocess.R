@@ -20,9 +20,9 @@
 #'        (default = \code{SummarizedExperiment::assayNames(pe)[1]})
 #' @param params a named list specifying any non-default parameters that should be used 
 #'        for preprocessing the data. Only entries in the list exactly matching the name
-#'        of a preprocessing step are considered valid (\code{``backgroundSubtract"},
-#'        \code{``cy3Normalize"}, \code{``spatiallyAdjust"},
-#'        \code{``normalizeWithinReplicates"}, or \code{``normalizeAcrossReplicates"}).
+#'        of a preprocessing step are considered valid (\code{"backgroundSubtract"},
+#'        \code{"cy3Normalize"}, \code{"spatiallyAdjust"},
+#'        \code{"normalizeWithinReplicates"}, or \code{"normalizeAcrossReplicates"}).
 #'        For each step, non-default parameters must be specified as a list of named
 #'        parameter values. (default = \code{list()}). See below for examples.
 #' @param skip a string vector specifying any steps to skip during preprocessing. Strings
@@ -45,8 +45,8 @@
 #' upbmPreprocess(hoxc9alexa, NULL, NULL, params = list(backgroundSubtract = FALSE))
 #'
 #' upbmPreprocess(hoxc9alexa, hoxc9cy3, refcy3_8x60k_v1,
-#'                params = list(backgroundSubtract = list(assayb = "back"),
-#'                              cy3FitEmpirical = FALSE, cy3Normalize = FALSE))
+#'                params = list(backgroundSubtract = list(assayb = "back")),
+#'                skip = "cy3Normalize")
 #' }
 #' 
 #' @seealso \code{\link{backgroundSubtract}}, \code{\link{cy3FitEmpirical}}, \code{\link{cy3FitModel}}, \code{\link{cy3Normalize}}, \code{\link{spatiallyAdjust}}, \code{\link{normalizeWithinReplicates}}, \code{\link{normalizeAcrossReplicates}}
