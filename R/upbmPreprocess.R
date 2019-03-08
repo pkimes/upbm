@@ -119,7 +119,7 @@ upbmPreprocess <- function(pe, cy3pe, cy3refpe, assay = SummarizedExperiment::as
         }
         npe <- do.call(backgroundSubtract, p)
         if (!is.null(cy3pe)) {
-            cy3pe <- do.call(backgroundSubtract, replace(p, pe = cy3pe))
+            cy3pe <- do.call(backgroundSubtract, replace(p, "pe", cy3pe))
         }
 
         if (verbose > 0L) {
@@ -197,7 +197,6 @@ upbmPreprocess <- function(pe, cy3pe, cy3refpe, assay = SummarizedExperiment::as
         }
     } else {
         if (verbose > 0L) {
-            cat("|| ... finished!\n") 
             cat("||\n") 
             cat("|| Within-replicate normalization ... \n")
         }
