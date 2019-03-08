@@ -8,7 +8,7 @@
 #' @param cy3pe an optional PBMExperiment object containing Cy3 intensity data. If
 #'        corresponding Cy3 data is not available for the Alexa488 scans, this must be
 #'        set to NULL.
-#' @param refpe an optional PBMExperiment object containing Cy3 reference data to
+#' @param cy3refpe an optional PBMExperiment object containing Cy3 reference data to
 #'        use for Cy3 normalization with \code{\link{cy3FitEmpirical}} (recommended).
 #'        To perform model-based normalization with \code{\link{cy3FitModel}},
 #'        set to NULL. This option is ignored if \code{cy3pe = NULL}.

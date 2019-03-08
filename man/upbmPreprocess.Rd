@@ -15,6 +15,11 @@ upbmPreprocess(pe, cy3pe, cy3refpe,
 corresponding Cy3 data is not available for the Alexa488 scans, this must be
 set to NULL.}
 
+\item{cy3refpe}{an optional PBMExperiment object containing Cy3 reference data to
+use for Cy3 normalization with \code{\link{cy3FitEmpirical}} (recommended).
+To perform model-based normalization with \code{\link{cy3FitModel}},
+set to NULL. This option is ignored if \code{cy3pe = NULL}.}
+
 \item{assay}{a numeric index or string specifying the foreground assay in
 both the Alexa488 and (optional) Cy3 PBMExperiment objects.
 Note that this assay is only used for the initial background subtraction and
@@ -39,11 +44,6 @@ must exactly match step names as with the \code{params} parameter.
 only provided to indicate when each preprocessing step is started and finished.
 If 2, in addition to the basic progress messages, \code{verbose = TRUE} is also specified
 for all preprocessing functions called internally. (default = \code{1L})}
-
-\item{refpe}{an optional PBMExperiment object containing Cy3 reference data to
-use for Cy3 normalization with \code{\link{cy3FitEmpirical}} (recommended).
-To perform model-based normalization with \code{\link{cy3FitModel}},
-set to NULL. This option is ignored if \code{cy3pe = NULL}.}
 }
 \value{
 PBMExperiment containing filtered and normalized Alexa488 probe intensities.
