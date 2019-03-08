@@ -120,6 +120,19 @@ normalizeAcrossReplicates <- function(pe, assay = SummarizedExperiment::assayNam
                                 needbl = onlybaseline, verb = verbose)
     coldat <- strats$coldat
     baseline <- strats$baseline
+
+    ## check cases with only one replicate
+    if (length(unique(coldat$Group)) == 1L) {
+        if (! "normalized" %in% assayNames(pe)) {
+            SummarizedExperiment::assay(pe, "normalized") <- SummarizedExperiment::assay(pe, assay)
+        }
+        if (verbose) {
+            cat("|| - Sample only has one replicate group - no normalization needed.\n")
+            cat("|| - Finished cross-replicate normalization.\n")
+            cat("|| - Returning PBMExperiment with", nrow(pe), "rows and", ncol(pe), "columns.\n")
+        }
+        return(pe)
+    }
     
     if (verbose) {
         cat("|| - Performing cross-replicate normalization with:\n")
