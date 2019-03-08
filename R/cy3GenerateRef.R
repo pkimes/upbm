@@ -4,38 +4,40 @@
 #' Given a collection of Cy3 scans, this function estimates an empirical
 #' reference distribution of expected Cy3 intensities per probe. Scans
 #' must all be for the same array design. For each probe, the mean,
-#' median, MAD and standard deviation across scans is computed across all
-#' Cy3 scans.
+#' median, MAD, and standard deviation of the log2 intensities is computed
+#' across all Cy3 scans.
 #'
 #' The estimated reference distributions can be passed to \code{cy3FitEmpirical}
-#' with Cy3 scan data to determine probe-level outliers and scaling factors
-#' for the individual Cy3 scans relative to the reference. 
+#' with a PBMExperiment of Cy3 scan intensities to determine probe-level outliers and
+#' scaling factors for the individual Cy3 scans relative to the reference. 
 #'
 #' @param cy3pe a PBMExperiment object containing Cy3 intensity data.
-#' @param assay a numeric index or string name specifying the assay to use.
+#' @param assay a numeric index or string specifying the intensity assay.
 #'        (default = \code{SummarizedExperiment::assayNames(cy3pe)[1]})
 #' @param offset a numeric offset to add to intensities before log2 transforming
-#'        to prevent NAs with zero intensities. (default = 1L)
-#' @param register logical whether to scale intensities across samples.
+#'        to prevent NAs with zero intensities. (default = \code{1L})
+#' @param register a logical value whether to scale intensities across samples.
 #'        (default = TRUE)
 #' 
 #' @return
-#' SummarizedExperiment object with Cy3 probe-level reference metrics. 
+#' PBMExperiment object with Cy3 probe-level reference metrics.
 #'
 #' @details
 #' By default, samples are first scaled to have a common
 #' median intensity, and the reference probe-level intensities are
-#' computed on the log2 scale. The reference is calculated on the
-#' log2 scale rather than the raw scale because the Cy3 scans will be
-#' used for filtering and scaling, actions which require examining
-#' fold changes and ratios rather than raw intensity differences.
+#' computed on the log2 scale.
 #'
 #' Scaling is performed such that the median intensity of each
 #' sample is equal to the median sample-median intensity of the original
 #' intensities. This multiplicative scaling is equivalent to an additive
 #' shift on the log2 scale. This behavior can be turned off by specifying
 #' \code{register = FALSE}.
-#'  
+#'
+#' The probe-level summary metrics are calculated on the
+#' log2 scale because Cy3 scans will be
+#' used for filtering and scaling, actions which require examining
+#' fold changes and ratios rather than raw intensity differences.
+#'
 #' @export
 #' @importFrom stats mad median sd
 #' @importFrom dplyr group_by group_by_at mutate ungroup summarize left_join select

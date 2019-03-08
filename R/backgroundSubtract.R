@@ -7,16 +7,16 @@
 #' foreground intensities.
 #'
 #' @param pe a PBMExperiment object containing PBM intensity data.
-#' @param assay a string name of the foreground assay to adjust.
+#' @param assay a numeric index or string specifying the foreground assay.
 #'        (default = \code{SummarizedExperiment::assayNames(pe)[1]})
-#' @param assayb a string name of the background assay to use for adjustment.
+#' @param assayb a numeric index or string specifying the background assay.
 #'        (default = \code{SummarizedExperiment::assayNames(pe)[2]})
 #' @param keepb a logical value whether to keep the background assay
 #'        after subtraction. (default = TRUE)
+#' @param nonnegative a logical value whether to restrict intensities to
+#'        non-negative values by setting negative values to NA. (default = TRUE)
 #' @param verbose a logical value whether to print verbose output
 #'        during analysis. (default = FALSE)
-#' @param nonnegative a logical whether to restrict intensities to non-negative
-#'        values by setting negative values to NA. (default = TRUE)
 #' 
 #' @return
 #' PBMExperiment object with background subtracted intensities replacing the original
@@ -27,7 +27,7 @@
 #' @author Patrick Kimes
 backgroundSubtract <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
                                assayb = SummarizedExperiment::assayNames(pe)[2],
-                               keepb = TRUE, verbose = FALSE, nonnegative = TRUE) {
+                               keepb = TRUE, nonnegative = TRUE, verbose = FALSE) {
     stopifnot(is(pe, "PBMExperiment"))
     stopifnot(assay %in% SummarizedExperiment::assayNames(pe))
     stopifnot(assayb %in% SummarizedExperiment::assayNames(pe))

@@ -85,7 +85,7 @@ tidy.SummarizedExperiment <- function(x, assay = SummarizedExperiment::assayName
 #' tibble containing values from a single PBMExperiment assay
 #' along with rowData and optionally colData.
 #'
-#' @seealso tidy-SummarizedExperiment
+#' @seealso \code{\link{tidy-SummarizedExperiment}}
 #' @name tidy-PBMExperiment
 #' @importFrom dplyr as_tibble bind_cols left_join
 #' @importFrom tibble rownames_to_column

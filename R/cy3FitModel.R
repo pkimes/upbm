@@ -12,7 +12,8 @@
 #' be used to estimate scaling factors for filtering and scaling
 #' Alexa488 probe intensities using Cy3 information. The \code{cy3FitEmpirical}
 #' approach is recommended when an appropriate reference set of Cy3 scans
-#' are available.}
+#' are available. A precomputed Cy3 reference for the uPBM 8x60k design is 
+#' available in the \pkg{upbmAux} package.}
 #'
 #' Since probe intensities in the Cy3 scans are roughly
 #' proportional to the number of adenines in the probe sequence, the
@@ -28,16 +29,18 @@
 #' PBMExperiment object.
 #'
 #' The returned PBMExperiment object can be passed to \code{cy3Normalize}
+#' with a PBMExperiment of Alexa488 scan intensities
 #' to filter low quality probes and/or normalize Alexa488 intensities by the
 #' computed ratios.
 #' 
 #' @param pe a PBMExperiment object containing Cy3 intensity data.
-#' @param assay a numeric index or string name specifying the assay to use.
+#' @param assay a numeric index or string specifying the intensity assay.
 #'        (default = \code{SummarizedExperiment::assayNames(pe)[1]})
-#' @param refit a logical value whether to filter outliers and refit trinucleotide
-#'        linear regression model. (default = TRUE)
-#' @param threshold a numeric threshold on absolute value of log2 ratio between
-#'        observed and expected Cy3 intensities. (default = 1/2)
+#' @param refit a logical value whether to refit trinucleotide
+#'        linear regression models after filtering outliers to compute
+#'        observed-to-expected ratios. (default = TRUE)
+#' @param threshold a numeric threshold on the absolute value of the log2 ratio between
+#'        observed and expected Cy3 intensities. (default = \code{1/2})
 #' @param verbose a logical value whether to print verbose output during
 #'        analysis. (default = FALSE)
 #'
@@ -52,7 +55,7 @@
 #' \item Berger, M. F., & Bulyk, M. L. (2009). Universal protein-binding microarrays for the comprehensive characterization of the DNA-binding specificities of transcription factors. Nature Protocols, 4(3), 393-411.
 #' }
 #'
-#' @seealso cy3Normalize cy3FitEmpirical
+#' @seealso \code{\link{cy3Normalize}}, \code{\link{cy3FitEmpirical}}
 #' @importFrom stats lm na.exclude predict
 #' @importFrom dplyr as_tibble select select_at bind_cols group_by do ungroup left_join mutate starts_with
 #' @importFrom tidyr gather spread

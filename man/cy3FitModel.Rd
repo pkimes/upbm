@@ -10,14 +10,15 @@ cy3FitModel(pe, assay = SummarizedExperiment::assayNames(pe)[1],
 \arguments{
 \item{pe}{a PBMExperiment object containing Cy3 intensity data.}
 
-\item{assay}{a numeric index or string name specifying the assay to use.
+\item{assay}{a numeric index or string specifying the intensity assay.
 (default = \code{SummarizedExperiment::assayNames(pe)[1]})}
 
-\item{refit}{a logical value whether to filter outliers and refit trinucleotide
-linear regression model. (default = TRUE)}
+\item{refit}{a logical value whether to refit trinucleotide
+linear regression models after filtering outliers to compute
+observed-to-expected ratios. (default = TRUE)}
 
-\item{threshold}{a numeric threshold on absolute value of log2 ratio between
-observed and expected Cy3 intensities. (default = 1/2)}
+\item{threshold}{a numeric threshold on the absolute value of the log2 ratio between
+observed and expected Cy3 intensities. (default = \code{1/2})}
 
 \item{verbose}{a logical value whether to print verbose output during
 analysis. (default = FALSE)}
@@ -40,7 +41,8 @@ probes.
 be used to estimate scaling factors for filtering and scaling
 Alexa488 probe intensities using Cy3 information. The \code{cy3FitEmpirical}
 approach is recommended when an appropriate reference set of Cy3 scans
-are available.}
+are available. A precomputed Cy3 reference for the uPBM 8x60k design is 
+available in the \pkg{upbmAux} package.}
 
 Since probe intensities in the Cy3 scans are roughly
 proportional to the number of adenines in the probe sequence, the
@@ -56,6 +58,7 @@ ratios for each probe as new assays added to the original Cy3
 PBMExperiment object.
 
 The returned PBMExperiment object can be passed to \code{cy3Normalize}
+with a PBMExperiment of Alexa488 scan intensities
 to filter low quality probes and/or normalize Alexa488 intensities by the
 computed ratios.
 }
@@ -65,7 +68,7 @@ computed ratios.
 }
 }
 \seealso{
-cy3Normalize cy3FitEmpirical
+\code{\link{cy3Normalize}}, \code{\link{cy3FitEmpirical}}
 }
 \author{
 Patrick Kimes

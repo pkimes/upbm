@@ -42,7 +42,7 @@ If \code{process = FALSE}, the PBMExperiment is passed directly to the
 processing.
 }
 \seealso{
-tidy-SummarizedExperiment
+\code{\link{tidy-SummarizedExperiment}}
 }
 \author{
 Patrick Kimes

@@ -5,7 +5,7 @@
 \title{Perform Cy3 normalization}
 \usage{
 cy3Normalize(pe, cy3pe, assay = SummarizedExperiment::assayNames(pe)[1],
-  match_by, filter = TRUE, scale = TRUE, verbose = FALSE)
+  match_by = "uid", filter = TRUE, scale = TRUE, verbose = FALSE)
 }
 \arguments{
 \item{pe}{a PBMExperiment object containing Alexa488 intensity data.}
@@ -18,7 +18,7 @@ using \code{cy3FitEmpirical} or \code{cy3FitModel}.}
 
 \item{match_by}{a string column name in colData of \code{pe} and \code{cy3pe}
 to use for matching scans across the two objects; values of
-column must be unique for each scan in each object.}
+column must be unique for each scan in each object. (default = \code{"uid"})}
 
 \item{filter}{a logical value whether to filter "low quality" flagged probes by setting to NA.
 (default = TRUE)}
@@ -47,7 +47,7 @@ Alexa488 scans (e.g. if an array was reused or scanned multiple times), the
 values must be unique across the Cy3 PBMExperiment object.
 }
 \seealso{
-cy3FitEmpirical
+\code{\link{cy3FitEmpirical}}
 }
 \author{
 Patrick Kimes

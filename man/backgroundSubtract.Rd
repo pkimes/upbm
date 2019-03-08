@@ -6,25 +6,25 @@
 \usage{
 backgroundSubtract(pe, assay = SummarizedExperiment::assayNames(pe)[1],
   assayb = SummarizedExperiment::assayNames(pe)[2], keepb = TRUE,
-  verbose = FALSE, nonnegative = TRUE)
+  nonnegative = TRUE, verbose = FALSE)
 }
 \arguments{
 \item{pe}{a PBMExperiment object containing PBM intensity data.}
 
-\item{assay}{a string name of the foreground assay to adjust.
+\item{assay}{a numeric index or string specifying the foreground assay.
 (default = \code{SummarizedExperiment::assayNames(pe)[1]})}
 
-\item{assayb}{a string name of the background assay to use for adjustment.
+\item{assayb}{a numeric index or string specifying the background assay.
 (default = \code{SummarizedExperiment::assayNames(pe)[2]})}
 
 \item{keepb}{a logical value whether to keep the background assay
 after subtraction. (default = TRUE)}
 
+\item{nonnegative}{a logical value whether to restrict intensities to
+non-negative values by setting negative values to NA. (default = TRUE)}
+
 \item{verbose}{a logical value whether to print verbose output
 during analysis. (default = FALSE)}
-
-\item{nonnegative}{a logical whether to restrict intensities to non-negative
-values by setting negative values to NA. (default = TRUE)}
 }
 \value{
 PBMExperiment object with background subtracted intensities replacing the original
