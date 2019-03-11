@@ -6,8 +6,7 @@
 \usage{
 normalizeAcrossReplicates(pe,
   assay = SummarizedExperiment::assayNames(pe)[1], group = "id",
-  stratify = "condition", baseline = NULL, pairwise = FALSE,
-  onlybaseline = FALSE, verbose = FALSE, ...)
+  stratify = "condition", baseline = NULL, verbose = FALSE, ...)
 }
 \arguments{
 \item{pe}{SummarizedExperiment object containing GPR intensity information.}
@@ -25,16 +24,8 @@ the unique baseline scan within each \code{group} and to match samples across va
 \item{baseline}{a character string specifying the baseline condition in the \code{stratify} column to normalize
 other conditions against within each \code{group}. If not specified and set to NULL, the baseline
 value is guessed by looking for ``ref" in any value of the \code{stratify} column. If multiple
-matching values are found, an error is thrown. If the baseline condition is missing from any
-\code{group}, an error is thrown. (default = NULL)}
-
-\item{pairwise}{a logical value whether scaling factors should be computed using all
-pairwise comparisons or just using a single comparison against a median
-quantile reference. See 'Details' for more information. (default = FALSE)}
-
-\item{onlybaseline}{a logical value whether scaling factors should be computed using only
-baseline samples. If any group is missing a baseline sample and set to TRUE, an error is thrown.
-(default = FALSE)}
+matching values are found, a warning is thrown and the first matching sample is used.
+(default = NULL)}
 
 \item{verbose}{a logical value whether to print verbose output during analysis. (default = FALSE)}
 
@@ -88,13 +79,6 @@ The log-scale additive factor estimated as the difference between the median nor
 intensity of the \code{baseline} sample in each replicate and the "global median".
 While the log-scale additive factor is estimated using only \code{baseline} samples, the normalization
 is applied to all samples in the replicate.
-
-While the default behavior is to compute log-scale multiplicative factors using all conditions
-and by making comparisons to cross-replicate reference distributions, this can be changed.
-To use only the \code{baseline} condition, set \code{onlybaseline = TRUE}. To use all pairwise comparisons
-between replicates (rather than comparisons against the cross-replicate references), set \code{pairwise = TRUE}.
-Note that specifying \code{pairwise = TRUE} may be substantially more computational expensive when the number of
-replicates is large.
 }
 \author{
 Patrick Kimes

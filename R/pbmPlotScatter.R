@@ -195,10 +195,10 @@ pbmPlotScatter <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
     ## determine baseline sample for each group
     sg_bl <- dplyr::filter(sg, Stratify == !! bl)
     sg_bl <- dplyr::group_by(sg_bl, Group)
-    if (verb && any(sg_tab[[bl]] > 1L)) {
+    if (verb && min(sg_tab[[bl]], na.rm = TRUE) > 1L) {
         warning("Too many samples with baseline states in some groups.\n",
                 "Multiple samples in groups: ",
-                paste(sg_tab$Group[sg_tab[[bl]] > 1L], collapse = ", "), "\n",
+                paste(sg_tab$Group[na.omit(sg_tab[[bl]] > 1L)], collapse = ", "), "\n",
                 "Using first sample (by column name) in each group as baseline sample.")
     }
     sg_bl <- dplyr::top_n(sg_bl, 1L, sample)
@@ -208,7 +208,7 @@ pbmPlotScatter <- function(se, assay = SummarizedExperiment::assayNames(se)[1],
     ## add baseline status to table of samples
     sg <- dplyr::left_join(sg, sg_bl, by = c("sample", "Stratify", "Group"))
     sg <- tidyr::replace_na(sg, list(isBaseline = FALSE))
-
+    
     ## remove group labels if just using dummy variables
     if (is.null(gp)) {
         sg <- dplyr::select(sg, -Group)

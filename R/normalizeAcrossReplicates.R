@@ -29,14 +29,8 @@
 #' @param baseline a character string specifying the baseline condition in the \code{stratify} column to normalize
 #'        other conditions against within each \code{group}. If not specified and set to NULL, the baseline
 #'        value is guessed by looking for ``ref" in any value of the \code{stratify} column. If multiple
-#'        matching values are found, an error is thrown. If the baseline condition is missing from any
-#'        \code{group}, an error is thrown. (default = NULL)
-#' @param pairwise a logical value whether scaling factors should be computed using all
-#'        pairwise comparisons or just using a single comparison against a median
-#'        quantile reference. See 'Details' for more information. (default = FALSE)
-#' @param onlybaseline a logical value whether scaling factors should be computed using only
-#'        baseline samples. If any group is missing a baseline sample and set to TRUE, an error is thrown.
-#'        (default = FALSE)
+#'        matching values are found, a warning is thrown and the first matching sample is used.
+#'        (default = NULL)
 #' @param verbose a logical value whether to print verbose output during analysis. (default = FALSE)
 #' @param ... additional parameters to be passed to \code{qqslope} to compute
 #'        scaling factors.
@@ -70,28 +64,19 @@
 #' intensity of the \code{baseline} sample in each replicate and the "global median".
 #' While the log-scale additive factor is estimated using only \code{baseline} samples, the normalization
 #' is applied to all samples in the replicate.
-#' 
-#' While the default behavior is to compute log-scale multiplicative factors using all conditions
-#' and by making comparisons to cross-replicate reference distributions, this can be changed.
-#' To use only the \code{baseline} condition, set \code{onlybaseline = TRUE}. To use all pairwise comparisons
-#' between replicates (rather than comparisons against the cross-replicate references), set \code{pairwise = TRUE}.
-#' Note that specifying \code{pairwise = TRUE} may be substantially more computational expensive when the number of
-#' replicates is large.
 #'
 #' @importFrom SummarizedExperiment assay assayNames
-#' @importFrom dplyr filter left_join mutate as_tibble select summarize rename_all group_by ungroup funs
+#' @importFrom dplyr filter left_join mutate as_tibble select summarize rename_all group_by ungroup funs desc
 #' @importFrom tidyr nest expand gather nesting
 #' @importFrom stats approx qqplot
 #' @export
 #' @author Patrick Kimes
 normalizeAcrossReplicates <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
                                       group = "id", stratify = "condition", baseline = NULL,
-                                      pairwise = FALSE, onlybaseline = FALSE, verbose = FALSE, ...) {
+                                      verbose = FALSE, ...) {
 
     stopifnot(is(pe, "PBMExperiment"))
     stopifnot(assay %in% SummarizedExperiment::assayNames(pe))
-    stopifnot(is(pairwise, "logical"))
-    stopifnot(is(onlybaseline, "logical"))
     
     ## check normalization groups
     stopifnot(group %in% names(colData(pe)))
@@ -117,7 +102,7 @@ normalizeAcrossReplicates <- function(pe, assay = SummarizedExperiment::assayNam
 
     ## check stratify params
     strats <- .pbmCheckStratify(s = fpe, strat = stratify, bl = baseline, gp = group,
-                                needbl = onlybaseline, verb = verbose)
+                                needbl = FALSE, verb = verbose)
     coldat <- strats$coldat
     baseline <- strats$baseline
 
@@ -150,129 +135,115 @@ normalizeAcrossReplicates <- function(pe, assay = SummarizedExperiment::assayNam
     ## compute median log2 intensities before any scaling
     pemed <- dplyr::group_by(petidy, Group, Stratify, sample, isBaseline)
     pemed <- dplyr::summarize(pemed, med = median(value, na.rm = TRUE))
-    pemed <- dplyr::group_by(pemed, Group)
+    pemed <- dplyr::ungroup(pemed)
     pemed <- dplyr::left_join(pemed, dplyr::select(dplyr::filter(pemed, isBaseline), Group, med),
                               by = "Group", suffix = c("", "_bl"))
+
+    ## compute per-condition quantile reference (mean)
+    blref <- dplyr::filter(petidy, isBaseline)
+    blref <- dplyr::group_by(blref, Group, sample)
+    blref <- dplyr::summarize(blref, value = list(value))
+    blref <- dplyr::ungroup(blref)
     
-    ## compute log-scale multiplicative scaling factors
-    if (pairwise) {
-        if (verbose) {
-            cat("|| - Performing cross-replicate normalization using all pairwise comparisons (pairwise = TRUE).\n")
-        }
-        petidy <- tidyr::nest(petidy, value)
-        tab <- tidyr::expand(dplyr::select(petidy, Group, Stratify, sample),
-                             tidyr::nesting(Group, Stratify, sample), tidyr::nesting(Group, Stratify, sample))
-        
-        tab <- dplyr::filter(tab, Group != Group1, Group < Group1)
-        tab <- dplyr::filter(tab, Stratify == Stratify1)
+    blref <- dplyr::mutate(blref, vsort = lapply(value, sort), vsortn = sapply(vsort, length))
+    blref <- dplyr::mutate(blref, nmin = min(vsortn, na.rm = TRUE))
 
-        tab <- dplyr::left_join(tab, petidy, by = c("Group", "Stratify", "sample"))
-        tab <- dplyr::left_join(tab, dplyr::rename_all(petidy, dplyr::funs(paste0(., "1"))),
-                                by = c("Group1", "Stratify1", "sample1"))
-        tab <- dplyr::mutate(tab, sfactor = mapply(qqslope, x = data, y = data1, ...))
-        tab <- dplyr::select(tab, -data, -data1, -Stratify1, -sample1)
-        
-        tab2 <- tab
-        tab2[, c("Group", "Group1")] <- tab2[, c("Group1", "Group")]
-        tab <- dplyr::mutate(tab, sfactor = 1/sfactor)
-        tab <- bind_rows(tab, tab2)
-        
-        if (onlybaseline) {
-            if (verbose) {
-                cat("|| - Performing cross-replicate normalization using only baseline condition (onlybaseline = TRUE).\n")
-            }
-            tab <- dplyr::filter(tab, isBaseline, isBaseline1)
-        } else if (verbose) {
-            cat("|| - Performing cross-replicate normalization using all conditions (onlybaseline = FALSE).\n")
-        }
+    blref <- dplyr::mutate(blref, vapprox = mapply(function(x, n1, n2) { stats::approx(1L:n1, x, n = n2)$y },
+                                                   x = vsort, n1 = vsortn, n2 = nmin, SIMPLIFY = FALSE))
 
-        ## compute geometric means across conditions - arithmetic mean on log-scale
-        tab <- dplyr::group_by(tab, Group, Group1)
-        tab <- dplyr::summarize(tab, sfactor = exp(mean(log(sfactor), na.rm = TRUE)))
-        tab <- dplyr::ungroup(tab)
-
-        ## average scaling across pairwise comparisons with offset to get approximate same
-        ## means on log-scale
-        ## e.g. 1/2 and 2 --> 3/4 and 3/2
-        tab <- dplyr::group_by(tab, Group)
-        tab <- dplyr::mutate(tab, sfactor = (1 + sum(sfactor, na.rm = TRUE)) / (1 + sum(!is.na(sfactor))))
-        tab <- dplyr::ungroup(tab)
-
-    } else {
-        if (verbose) {
-            cat("|| - Performing cross-replicate normalization using mean reference comparisons (pairwise = FALSE).\n")
-        }
-        ## compute per-condition quantile reference (mean)
-        peref <- dplyr::group_by(petidy, Stratify, Group, sample)
-        peref <- dplyr::summarize(peref, value = list(value))
-        
-        ## filter out conditions with only 1 replicate
-        peref <- dplyr::group_by(peref, Stratify)
-        peref <- dplyr::mutate(peref, nreps = dplyr::n_distinct(Group))
-        peref <- dplyr::ungroup(peref)
-        if (any(peref$nreps == 1L) && verbose) {
-            cat("|| - Dropping following conditions with replicates in only one group from calculation of normalization factor:\n")
-            cat("||     -", paste0(peref$Stratify[peref$nreps == 1L], collapse = ", "), "\n")
-        }
-        peref <- dplyr::filter(peref, nreps > 1L)
-        peref <- dplyr::select(peref, -nreps)
-        
-        peref <- dplyr::mutate(peref, vsort = lapply(value, sort), vsortn = sapply(vsort, length))
-        peref <- dplyr::group_by(peref, Stratify)
-        peref <- dplyr::mutate(peref, nmin = min(vsortn, na.rm = TRUE))
-
-        peref <- dplyr::mutate(peref, vapprox = mapply(function(x, n1, n2) { stats::approx(1L:n1, x, n = n2)$y },
-                                                       x = vsort, n1 = vsortn, n2 = nmin, SIMPLIFY = FALSE))
-
-        peref <- dplyr::select(peref, Stratify, Group, sample, vapprox)
-        peref <- dplyr::summarize(peref, vapprox = list(rowMeans(do.call(cbind, vapprox))))
-        peref <- dplyr::mutate(peref, vapprox = lapply(vapprox, function(x) { tibble(value = x) }))
-
-        ## compute scaling factors based on qq plot against references
-        tab <- tidyr::nest(petidy, value)
-        tab <- dplyr::left_join(tab, peref, by = "Stratify")
-
-        ## -- filter out conditions with only 1 replicate
-        tab <- dplyr::filter(tab, vapply(vapprox, function(x) { !is.null(x) }, logical(1L))) 
-
-        if (onlybaseline) {
-            if (verbose) {
-                cat("|| - Performing cross-replicate normalization using only baseline condition (onlybaseline = TRUE).\n")
-            }
-            tab <- dplyr::filter(tab, isBaseline)
-        } else if (verbose) {
-            cat("|| - Performing cross-replicate normalization using all conditions (onlybaseline = FALSE).\n")
-        }
-
-        ## (do the actual computing)
-        tab <- dplyr::mutate(tab, sfactor = mapply(qqslope, x = vapprox, y = data, ...))
-        tab <- dplyr::select(tab, -data, -vapprox)
+    blref <- dplyr::select(blref, Group, sample, vapprox)
+    blref <- dplyr::summarize(blref, vapprox = list(rowMeans(do.call(cbind, vapprox))))
+    blref <- dplyr::mutate(blref, vapprox = lapply(vapprox, function(x) { tibble(value = x) }))
+    blref <- dplyr::mutate(blref, Stratify = !!baseline)
     
-        ## compute geometric means across conditions - arithmetic mean on log-scale
-        tab <- dplyr::group_by(tab, Group)
-        tab <- dplyr::summarize(tab, sfactor = exp(mean(log(sfactor), na.rm = TRUE)))
-        tab <- dplyr::ungroup(tab)
-    }
-
+    ## compute scaling factors based on qq plot against references
+    tab <- dplyr::filter(petidy, isBaseline)
+    tab <- tidyr::nest(tab, value)
+    tab <- dplyr::left_join(tab, blref, by = "Stratify")
+    
+    ## (do the actual computing)
+    tab <- dplyr::mutate(tab, sfactor = mapply(qqslope, x = vapprox, y = data, ...))
+    tab <- dplyr::select(tab, Group, sfactor)
+    
     ## compute log-scale additive scaling factors
-    tab <- dplyr::left_join(tab, pemed, by = "Group")
-    
+    tab <- dplyr::left_join(pemed, tab, by = "Group")
     med_mean <- mean(dplyr::filter(tab, isBaseline)$med)
     tab <- dplyr::mutate(tab, afactor = med_mean - sfactor * med_bl)
     tab <- dplyr::mutate(tab, med_new = (med - med_bl) * sfactor + med_mean)
 
-    ## fill in additive factors for any groups missing baseline using
-    ## normalization factors for scans with same condition from other groups
-    if (any(is.na(tab$med_bl))) {
-        tab <- dplyr::group_by(tab, Stratify)
-        tab <- dplyr::mutate(tab, afactor = ifelse(is.na(afactor),
-                                                   mean(med_new, na.rm = TRUE) - sfactor * med,
-                                                   afactor))
-    }
+    ## determine groups with or without baseline condition sample
     tab <- dplyr::group_by(tab, Group)
-    tab <- dplyr::summarize(tab, sfactor = mean(sfactor), afactor = mean(afactor))
+    tab <- dplyr::mutate(tab, hasBaseline = any(isBaseline))
     tab <- dplyr::ungroup(tab)
+    
+    ## loop through additional secondary baseline conditions for replicates
+    ## without baseline conditions
+    if (any(is.na(tab$sfactor))) {
+        altBaselines <- unique(tab$Stratify[is.na(tab$sfactor)])
 
+        abltab <- dplyr::filter(tab, Stratify %in% altBaselines)
+
+        ## choose order of alternative baseline conditions to try based
+        altBaselines <- dplyr::group_by(abltab, Stratify)
+        altBaselines <- dplyr::summarize(altBaselines, nbl = sum(hasBaseline), n = n())
+        altBaselines <- dplyr::arrange(altBaselines, dplyr::desc(nbl), dplyr::desc(n))
+        altBaselines <- altBaselines$Stratify
+
+        ablref <- dplyr::select(petidy, sample, value)
+        ablref <- dplyr::left_join(ablref, tab, by = "sample")
+        
+        for (ibl in altBaselines) { 
+            iblref <- dplyr::filter(ablref, Stratify == !!ibl, !is.na(sfactor))
+            ## skip if no normalized samples available for condition
+            if (nrow(iblref) == 0L) {
+                next
+            }
+            
+            ## compute quantile reference for alternative baseline (mean)
+            iblref <- dplyr::group_by(iblref, Group, sample)
+            iblref <- dplyr::summarize(iblref, value = list(value))
+            iblref <- dplyr::ungroup(iblref)
+            
+            iblref <- dplyr::mutate(iblref, vsort = lapply(value, sort), vsortn = sapply(vsort, length))
+            iblref <- dplyr::mutate(iblref, nmin = min(vsortn, na.rm = TRUE))
+
+            iblref <- dplyr::mutate(iblref, vapprox = mapply(function(x, n1, n2) {
+                stats::approx(1L:n1, x, n = n2)$y },
+                x = vsort, n1 = vsortn, n2 = nmin, SIMPLIFY = FALSE))
+
+            iblref <- dplyr::select(iblref, Group, sample, vapprox)
+            iblref <- dplyr::summarize(iblref, vapprox = list(rowMeans(do.call(cbind, vapprox))))
+            iblref <- dplyr::mutate(iblref, vapprox = lapply(vapprox, function(x) { tibble(value = x) }))
+            iblref <- dplyr::mutate(iblref, Stratify = !!ibl)
+
+            ## compute scaling factors based on qq plot against references
+            itab <- dplyr::filter(ablref, is.na(sfactor), Stratify == !!ibl)
+            itab <- tidyr::nest(itab, value)
+            itab <- dplyr::left_join(itab, iblref, by = "Stratify")
+            
+            ## (do the actual computing)
+            itab <- dplyr::mutate(itab, sfactor = mapply(qqslope, x = vapprox, y = data, ...))
+            itab <- dplyr::select(itab, Group, sfactor)
+
+            ## merge with old 
+            tab <- dplyr::left_join(tab, itab, by = "Group", suffix = c("", ".i"))
+
+            ## determine additive scaling factors
+            imed_mean <- mean(dplyr::filter(tab, Stratify == !!ibl, !is.na(sfactor))$med_new)
+            tab <- dplyr::mutate(tab, afactor.i = imed_mean - sfactor.i * med)
+
+            ## replace NAs with new values
+            tab <- dplyr::mutate(tab,
+                                 sfactor = ifelse(is.na(sfactor), sfactor.i, sfactor),
+                                 afactor = ifelse(is.na(afactor), afactor.i, afactor))
+            tab <- dplyr::select(tab, -sfactor.i, -afactor.i)
+
+            ## stop if we don't 
+            if (!any(is.na(tab$sfactor)))
+                break
+        }
+    }
+    
     if (any(is.na(tab$afactor) | is.na(tab$sfactor))) {
         warning("Cross-replicate normalization factors could not be estimated for some groups.\n",
                 "This is likely due to the group not containing a baseline scan \n",
@@ -335,4 +306,3 @@ qqslope <- function(x, y, lq = .1, uq = .9, center = TRUE) {
     }
     median(zz$x / zz$y, na.rm = TRUE)
 }
-
