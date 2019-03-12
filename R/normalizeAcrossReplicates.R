@@ -178,70 +178,85 @@ normalizeAcrossReplicates <- function(pe, assay = SummarizedExperiment::assayNam
     ## loop through additional secondary baseline conditions for replicates
     ## without baseline conditions
     if (any(is.na(tab$sfactor))) {
-        altBaselines <- unique(tab$Stratify[is.na(tab$sfactor)])
+        
+        ## maximum number times to try to solve for scaling factors
+        ## -- effectively, maximum number of steps from baseline-containing
+        ##    replicate before giving up on normalizing replicate
+        max_try <- 10
+        for (i in seq_len(max_try)) { 
+            altBaselines <- unique(tab$Stratify[is.na(tab$sfactor)])
 
-        abltab <- dplyr::filter(tab, Stratify %in% altBaselines)
+            abltab <- dplyr::filter(tab, Stratify %in% altBaselines)
 
-        ## choose order of alternative baseline conditions to try based
-        altBaselines <- dplyr::group_by(abltab, Stratify)
-        altBaselines <- dplyr::summarize(altBaselines, nbl = sum(hasBaseline), n = n())
-        altBaselines <- dplyr::arrange(altBaselines, dplyr::desc(nbl), dplyr::desc(n))
-        altBaselines <- altBaselines$Stratify
+            ## choose order of alternative baseline conditions to try based
+            altBaselines <- dplyr::group_by(abltab, Stratify)
+            altBaselines <- dplyr::summarize(altBaselines, nbl = sum(hasBaseline), n = n())
+            altBaselines <- dplyr::arrange(altBaselines, dplyr::desc(nbl), dplyr::desc(n))
+            altBaselines <- altBaselines$Stratify
 
-        ablref <- dplyr::select(petidy, sample, value)
-        ablref <- dplyr::left_join(ablref, tab, by = "sample")
+            ablref <- dplyr::select(petidy, sample, value)
+            ablref <- dplyr::left_join(ablref, tab, by = "sample")
 
-        for (ibl in altBaselines) { 
-            iblref <- dplyr::filter(ablref, Stratify == !!ibl, !is.na(sfactor))
+            iblref <- dplyr::filter(ablref, !is.na(sfactor), Stratify %in% altBaselines)
+
             ## skip if no normalized samples available for condition
             if (nrow(iblref) == 0L) {
-                next
+                break
             }
 
             ## use normalized intensities
             iblref <- dplyr::mutate(iblref, value = afactor + value * sfactor)
             
             ## compute quantile reference for alternative baseline (mean)
-            iblref <- dplyr::group_by(iblref, Group, sample)
+            iblref <- dplyr::group_by(iblref, Group, Stratify, sample)
             iblref <- dplyr::summarize(iblref, value = list(value))
             iblref <- dplyr::ungroup(iblref)
             
             iblref <- dplyr::mutate(iblref, vsort = lapply(value, sort), vsortn = sapply(vsort, length))
+            iblref <- dplyr::group_by(iblref, Stratify)
             iblref <- dplyr::mutate(iblref, nmin = min(vsortn, na.rm = TRUE))
-
+            iblref <- dplyr::ungroup(iblref)
+            
             iblref <- dplyr::mutate(iblref, vapprox = mapply(function(x, n1, n2) {
                 stats::approx(1L:n1, x, n = n2)$y },
                 x = vsort, n1 = vsortn, n2 = nmin, SIMPLIFY = FALSE))
 
-            iblref <- dplyr::select(iblref, Group, sample, vapprox)
+            iblref <- dplyr::select(iblref, Group, Stratify, sample, vapprox)
+            iblref <- dplyr::group_by(iblref, Stratify)
             iblref <- dplyr::summarize(iblref, vapprox = list(rowMeans(do.call(cbind, vapprox))))
             iblref <- dplyr::mutate(iblref, vapprox = lapply(vapprox, function(x) { tibble(value = x) }))
-            iblref <- dplyr::mutate(iblref, Stratify = !!ibl)
-
+            ##iblref <- dplyr::mutate(iblref, Stratify = !!ibl)
+            
             ## compute scaling factors based on qq plot against references
-            itab <- dplyr::filter(ablref, is.na(sfactor), Stratify == !!ibl)
+            itab <- dplyr::filter(ablref, is.na(sfactor))
             itab <- tidyr::nest(itab, value)
             itab <- dplyr::left_join(itab, iblref, by = "Stratify")
 
-            ##return(itab)
             ## (do the actual computing)
             itab <- dplyr::mutate(itab, sfactor = mapply(qqslope, x = vapprox, y = data))
-            itab <- dplyr::select(itab, Group, sfactor)
 
+            ## take geometric mean across conditions for each group
+            itab <- dplyr::group_by(itab, Group)
+            itab <- dplyr::summarize(itab, sfactor = 2^mean(log2(sfactor)))
+            
             ## merge with old 
             tab <- dplyr::left_join(tab, itab, by = "Group", suffix = c("", ".i"))
 
             ## determine additive scaling factors
-            imed_mean <- mean(dplyr::filter(tab, Stratify == !!ibl, !is.na(sfactor))$med_new)
-            tab <- dplyr::mutate(tab, afactor.i = imed_mean - sfactor.i * med)
+            imed_mean <- dplyr::filter(tab, Stratify %in% altBaselines, !is.na(sfactor))
+            imed_mean <- dplyr::group_by(imed_mean, Stratify)
+            imed_mean <- dplyr::summarize(imed_mean, med.i = mean(med_new))
+
+            tab <- dplyr::left_join(tab, imed_mean, by = "Stratify")
+            tab <- dplyr::mutate(tab, afactor.i = med.i - sfactor.i * med)
 
             ## replace NAs with new values
             tab <- dplyr::mutate(tab,
                                  sfactor = ifelse(is.na(sfactor), sfactor.i, sfactor),
                                  afactor = ifelse(is.na(afactor), afactor.i, afactor))
-            tab <- dplyr::select(tab, -sfactor.i, -afactor.i)
+            tab <- dplyr::select(tab, -sfactor.i, -afactor.i, -med.i)
 
-            ## stop if we don't 
+            ## stop if we don't need to try more times
             if (!any(is.na(tab$sfactor)))
                 break
         }
@@ -250,7 +265,7 @@ normalizeAcrossReplicates <- function(pe, assay = SummarizedExperiment::assayNam
     if (any(is.na(tab$afactor) | is.na(tab$sfactor))) {
         warning("Cross-replicate normalization factors could not be estimated for some groups.\n",
                 "This is likely due to the group not containing a baseline scan \n",
-                "and not sharing any conditions with any other groups containing a baseline scan.\n",
+                "and not sharing any conditions with any other groups containing a baseline scan (within", max_try, "steps).\n",
                 "In this case, the scans in the group cannot be normalized relative to other groups.\n",
                 "Scans in following groups will have NA values: ",
                 paste0(tab$Group[is.na(tab$afactor) | is.na(tab$sfactor)], collapse = ", "), ".")
