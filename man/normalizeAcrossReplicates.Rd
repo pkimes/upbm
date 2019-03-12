@@ -6,7 +6,7 @@
 \usage{
 normalizeAcrossReplicates(pe,
   assay = SummarizedExperiment::assayNames(pe)[1], group = "id",
-  stratify = "condition", baseline = NULL, verbose = FALSE, ...)
+  stratify = "condition", baseline = NULL, verbose = FALSE)
 }
 \arguments{
 \item{pe}{SummarizedExperiment object containing GPR intensity information.}
@@ -28,9 +28,6 @@ matching values are found, a warning is thrown and the first matching sample is 
 (default = NULL)}
 
 \item{verbose}{a logical value whether to print verbose output during analysis. (default = FALSE)}
-
-\item{...}{additional parameters to be passed to \code{qqslope} to compute
-scaling factors.}
 }
 \value{
 Original PBMExperiment object with assay containing cross-replicate normalized intensities
@@ -40,9 +37,8 @@ If an assay with the same name is already included in the object, it will be ove
 }
 \description{
 Universal PBM experiments are often performed with several conditions of interest,
-e.g. various allelic variants of the same transcription factor, assayed on arrays of
-the same plate, with few replicate plates (commonly 2 or 3). Within individual replicates (plates,
-observed probe intensities can vary greatly across conditions for biologically
+e.g. allelic variants, assayed on separate arrays of the same plate with few replicates.
+Within and across plates, probe intensities can vary for biologically
 uninteresting reasons, such as concentration differences. To explicitly correct for these
 differences, normalization is performed in two steps.
 
@@ -52,22 +48,20 @@ can be found in the \code{\link{normalizeWithinReplicates}} documentation.
 Second, normalization is performed across replicates (plates) with the assumption that
 biologically uninteresting differences between replicates affect probe intensities
 both multiplicatively and additively on the log-scale. A single log-scale multiplicative normalization
-factor is first estimated for all samples within a replicate. Then, an log-scale additive normalization
+factor is first estimated for all samples within a replicate. Then, a log-scale additive normalization
 is estimated such that the median intensities of the \code{baseline} samples in each replicate
 are equal. More details on this calculation are provided below.
 }
 \details{
 The following procedure is used to estimate the log-scale multiplicative factor
-for each replicate. First, a cross-replicate reference is computed for each condition
-(specified in the \code{stratify} column) by taking the cross-replicate mean quantiles 
-of the observed log2 intensities. Next, a \emph{per-sample} log multiplicative scaling factor is
+for each replicate. First, a cross-replicate reference is computed for each baseline condition
+(specified by \code{stratify=} and \code{baseline=}) by taking the cross-replicate mean quantiles 
+of the observed log2 intensities. Next, a \emph{per-replicate} log multiplicative scaling factor is
 computed by taking the median ratio of the rank-ordered and median-centered log-probe intensities
-between the sample and the corresponding reference distribution. Visually,
+between the baseline samples in each replicate and the reference distribution. Visually,
 this can be interpreted as the approximate slope of the quantile-quantile (QQ) plot generated
-using the log-scale intensities. The \emph{per-replicate} scaling factor is then computed
-by taking the geometric mean of the per-sample factors across all samples
-in the replicate (specified in the \code{group} column). To reduce the impact of outlier
-probes, per-sample scaling factors are estimated using only the middle 80% of probe intensities.
+using log-scale intensities. To reduce the impact of outlier probes, scaling factors are estimated
+using only the middle 80% of probe intensities.
 
 After log-scale multiplicative factors have been estimated to correct for differences in
 log-scale variance across replicates, a second log-scale additive factor is estimated
@@ -79,6 +73,10 @@ The log-scale additive factor estimated as the difference between the median nor
 intensity of the \code{baseline} sample in each replicate and the "global median".
 While the log-scale additive factor is estimated using only \code{baseline} samples, the normalization
 is applied to all samples in the replicate.
+
+Cross-replicate normalization is first carried out for replicates containing a baseline sample as
+described above. Replicates without a baseline sample are then normalized to already normalized
+replicates using overlapping conditions in the \code{stratify=} column.
 }
 \author{
 Patrick Kimes
