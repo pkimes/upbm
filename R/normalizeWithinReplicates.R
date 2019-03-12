@@ -2,9 +2,8 @@
 #'
 #' @description
 #' Universal PBM experiments are often performed with several conditions of interest,
-#' e.g. various allelic variants of the same transcription factor, assayed on arrays of
-#' the same plate, with few replicate plates (commonly 2 or 3). Within individual replicates (plates,
-#' observed probe intensities can vary greatly across conditions for biologically
+#' e.g. allelic variants, assayed on separate arrays of the same plate with few replicates.
+#' Within and across plates, probe intensities can vary for biologically
 #' uninteresting reasons, such as concentration differences. To explicitly correct for these
 #' differences, normalization is performed in two steps.
 #'
@@ -12,7 +11,7 @@
 #' biologically uninteresting differences only affect probe intensities multiplicatively.
 #' Normalization factors are estimated for each sample relative to a baseline condition on each
 #' plate. The baseline should ideally be a replicate wild type or other natural reference condition
-#' included on each plate. This function includes approaches for performing this step of
+#' included in each replicate (plate). This function includes approaches for performing this step of
 #' normalization.
 #'
 #' Second, normalization is performed across replicates (plates). More detail on this procedure 
