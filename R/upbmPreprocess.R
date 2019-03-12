@@ -100,12 +100,14 @@ upbmPreprocess <- function(pe, cy3pe, cy3refpe, assay = SummarizedExperiment::as
             cat("|| -", ncol(cy3pe), "Cy3 PBM scans.\n")
         }
     }
+
+    npe <- pe
     
     ## background subtract
     if ("backgroundSubtract" %in% skip) {
         if (verbose > 0L) {
             cat("||\n") 
-            cat("|| Skipping background intensity subtraction.")
+            cat("|| Skipping background intensity subtraction. \n")
         }
     } else {
         if (verbose > 0L) {
@@ -113,13 +115,13 @@ upbmPreprocess <- function(pe, cy3pe, cy3refpe, assay = SummarizedExperiment::as
             cat("|| Background intensity subtraction ... \n")
         }
 
-        p <- list(pe = pe, assay = assay, verbose = (verbose > 1L))
+        p <- list(pe = npe, assay = assay, verbose = (verbose > 1L))
         if (!is.null(params[["backgroundSubtract"]])) {
             p <- replace(p, names(params[["backgroundSubtract"]]), params[["backgroundSubtract"]])
         }
         npe <- do.call(backgroundSubtract, p)
         if (!is.null(cy3pe)) {
-            cy3pe <- do.call(backgroundSubtract, replace(p, "pe", cy3pe))
+            cy3pe <- do.call(backgroundSubtract, replace(p, "pe", list(cy3pe)))
         }
 
         if (verbose > 0L) {
