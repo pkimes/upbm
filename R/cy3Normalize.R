@@ -19,7 +19,7 @@
 #'        (default = \code{SummarizedExperiment::assayNames(pe)[1]})
 #' @param match_by a string column name in colData of \code{pe} and \code{cy3pe}
 #'        to use for matching scans across the two objects; values of
-#'        column must be unique for each scan in each object. (default = \code{"uid"})
+#'        column must be unique for each scan in each object. (default = \code{"id_idx"})
 #' @param filter a logical value whether to filter "low quality" flagged probes by setting to NA.
 #'        (default = TRUE)
 #' @param scale a logical value whether to perform scaling by ratio of observed vs. expected
@@ -38,7 +38,7 @@
 #' @export
 #' @author Patrick Kimes
 cy3Normalize <- function(pe, cy3pe, assay = SummarizedExperiment::assayNames(pe)[1],
-                         match_by = "uid", filter = TRUE, scale = TRUE, verbose = FALSE) {
+                         match_by = "id_idx", filter = TRUE, scale = TRUE, verbose = FALSE) {
 
     stopifnot(is(pe, "PBMExperiment")) 
     stopifnot(is(cy3pe, "PBMExperiment")) 
