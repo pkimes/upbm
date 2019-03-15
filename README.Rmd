@@ -4,15 +4,6 @@ output: github_document
 
 # upbm <img src="man/figures/upbm.png" align="right" alt="" width="160"/>
 
-**This package is still under development.** To give it a try, please use the
-[latest stable release](https://github.com/pkimes/upbm/tree/stable-pre-cleanup).
-
-```{r install-stable, eval = FALSE}
-devtools::install_github("pkimes/upbm", ref = "stable-pre-cleanup")
-```
-
----
-
 *upbm* provides functions for loading, organizing, and analyzing protein binding microarray (PBM) data
 in *R* using standard [*Bioconductor*](https://bioconductor.org/) classes. The pacakage was developed
 with a particular focus on [universal PBMs (uPBMs)](https://www.ncbi.nlm.nih.gov/pubmed/16998473) and
@@ -28,8 +19,10 @@ If you have any suggestions on how we can improve the package,
 e.g. standard uPBM probe designs, and example uPBM data used throughout examples and vignettes to
 illustrate the functions in the package.
 
+Development versions of the packages are hosted on GitHub.
+
 ```{r installation, eval = FALSE}
-# Install from GitHub along with suggested packages
+## install from GitHub along with suggested packages
 BiocManager::install("pkimes/upbm")
 BiocManager::install("pkimes/upbmAux")
 BiocManager::install("pkimes/upbmData")
