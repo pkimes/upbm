@@ -4,7 +4,7 @@ author: Patrick K. Kimes
 date: "`r BiocStyle::doc_date()`"
 package: "`r BiocStyle::pkg_ver('upbm')`"
 abstract: >
-  "Protein binding microarrays (PBMs) allow for the high-throughput quantification of DNA binding specificities of proteins, such as transcription factors, in vitro. While several probe designs have been proposed for PBMs, universal PBMs (uPBMs) designed to cover all 10-mer DNA sequences, have enjoyed the most wide-spread adoption. The *upbm* package provides tools and methods for organizing probe-level PBM data from raw GPR scan files, summarizing PBM data at k-mer resolution, and performing statistical inference when replicate experiments are available. The package was developed for the analysis of uPBMs, but should be appropriate for many other PBM designs as well. upbm package version: `r packageVersion("upbm")`"
+  "Protein binding microarrays (PBMs) allow for the high-throughput quantification of DNA binding specificities of proteins, such as transcription factors, in vitro. While several probe designs have been proposed for PBMs, universal PBMs (uPBMs) designed to cover all 10-mer DNA sequences, have enjoyed the most wide-spread adoption. The *upbm* package provides tools and methods for organizing probe-level PBM data from raw GPR scan files, summarizing PBM data at K-mer resolution, and performing statistical inference when replicate experiments are available. The package was developed for the analysis of uPBMs, but should be appropriate for many other PBM designs as well. upbm package version: `r packageVersion("upbm")`"
 output:
   BiocStyle::html_document:
     highlight: pygments
@@ -29,28 +29,17 @@ knitr::opts_chunk$set(tidy = FALSE, cache = TRUE, dev = "png",
 
 While a large collection of methods and software packages have been developed for the processing and analysis of traditional DNA microarrays, the development of tools for protein binding microarrays (PBMs) has been limited. Due to the substantial difference of what is being measured by PBMs (protein-DNA binding) and DNA microarrays (nucleic acid hybridization), blindly applying DNA microarray tools to PBM data can lead to unexpected problems. 
 
-This package provides tools and methods for reading, plotting, and analyzing protein binding microarray (PBM) data in *R* using standard [*Bioconductor*](https://www.bioconductor.org/) [data structures](http://bioconductor.org/developers/how-to/commonMethodsAndClasses/). The primary focus is on universal-design PBMs (uPBMs) which provide approximately uniform coverage of all 8-mer DNA sequences across probes on the array [@berger2006].
-
-# Installation
-
-To install the latest version of *upbm* along with two dependencies, *upbmAux* and *upbmData*, use the following command from the [`BiocManager`](https://CRAN.R-project.org/package=BiocManager) package:
-
-```{r, eval = FALSE}
-BiocManager::install("pkimes/upbm")
-BiocManager::install("pkimes/upbmAux")
-BiocManager::install("pkimes/upbmData")
-```
-
-After installing, the package can be loaded to make the functions available in *R*.
+This package provides tools and methods for reading, plotting, and analyzing PBM data in *R* using standard [*Bioconductor*](https://www.bioconductor.org/) [data structures](http://bioconductor.org/developers/how-to/commonMethodsAndClasses/). The primary focus is on universal-design PBMs (uPBMs) which provide approximately uniform coverage of all 8-mer DNA sequences across probes on the array [@berger2006].
 
 ```{r}
-##suppressPackageStartupMessages(library("upbm"))
-devtools::load_all()
+suppressPackageStartupMessages(library("upbm"))
 ```
+
+In this vignette we demonstrate the typical analysis steps with the *upbm* package. Here, and in other vignettes, data from a triplicate series of PBM experiments are used to illustrate the features of the package. While this vignette covers only the basics of the *upbm* package, more details on the object classes (*PBMExperiment* and *PBMDesign*) and pre-processing functions are also provided in separate vignettes.
 
 # HOXC9 Dataset
 
-Data from a triplicate series of PBM experiments are used to illustrate the features of the *upbm* package in this vignette. The dataset includes GenePix Results (GPR) data from Alexa488 scans for wild type human transcription factor (TF) HOXC9 and three allelic variants (K195R, R193K, R222W). Corresponding Cy3 scans are also included for all arrays. Each array was scanned for Alexa488 fluorescence at multiple PMT gains and Cy3 at a single PMT gain. The series comes from a larger set of experiments studying the effect of allelic variants on human transcription factor binding (manuscript in preparation). The HOXC9 data objects are stored in a separate *upbmData* package for convenience and include a table of sample metadata (`hoxc9table`), a *PBMExperiment* of Alexa488 scan data (`hoxc9alexa`), and a *PBMExperiment* of Cy3 scan data (`hoxc9cy3`).
+The dataset includes GenePix Results (GPR) data from Alexa488 scans for wild type human transcription factor (TF) HOXC9 and three allelic variants (K195R, R193K, R222W). Corresponding Cy3 scans are also included for all arrays. Each array was scanned for Alexa488 fluorescence at multiple PMT gains and Cy3 at a single PMT gain. The series comes from a larger set of experiments studying the effect of allelic variants on human transcription factor binding (manuscript in preparation). The HOXC9 data objects are stored in a separate *upbmData* package for convenience and include a table of sample metadata (`hoxc9table`), a *PBMExperiment* of Alexa488 scan data (`hoxc9alexa`), and a *PBMExperiment* of Cy3 scan data (`hoxc9cy3`). 
 
 ```{r load-hoxc9data}
 data(hoxc9table, package = "upbmData")
@@ -71,95 +60,113 @@ Several important metadata variables are recorded in the table - notably, `type`
 The HOXC9 example data includes multiple Alexa488 scans of each array at different PMT gains. Since we only require a single scan for each array, we pick a high PMT gain value for each replicate with no probe intensities reaching saturation (intensity = 2^16). In this case, since all samples were scanned at PMT gain 450, we will use these. Since probe log intensities scale linearly with PMT gain, any differences will be corrected during normalization steps, and the exact choice of PMT gain value is largely unimportant. 
 
 ```{r quick-subset-pmt}
-hoxc9a450 <- hoxc9alexa[, colData(hoxc9alexa)$lp == 450]
+alexa_subset <- hoxc9alexa[, colData(hoxc9alexa)$pmt == 450]
 ```
 
 In the interest of keeping the run time of this vignette manageable, we also reduce the dataset from the wild type and three allelic variants to just the wild type allele and a single variant allele (`HOXC9-R222W`).
 
 ```{r quick-subset-conditions}
-hoxc9a450 <- hoxc9a450[, colData(hoxc9a450)$condition %in%
-                                           c("HOXC9-REF", "HOXC9-R222W")]
+alexa_subset <- alexa_subset[, colData(alexa_subset)$condition %in%
+                                                    c("HOXC9-REF", "HOXC9-R222W")]
+
+cy3_subset <- hoxc9cy3[, colData(hoxc9cy3)$id_idx %in%
+                                          colData(alexa_subset)$id_idx]
 ```
 
 # Quickstart
 
-Using the example data included in the *upbmData* package, we first demonstrate how GPR data can be analyzed to obtain 8-mer-level affinity summaries and used to perform differential affinity analysis without going in to detail.
+Using the example data included in the *upbmData* package, we first quickly demonstrate how GPR data can be analyzed to obtain 8-mer-level affinity summaries and used to perform differential affinity analysis. Data analysis proceeds in the following steps:
 
-First, input data should ideally be available as GenePix Results (GPR) files, with each GPR file corresponding to a single scan of a sample. Metadata for the GPR files, including paths to the files, should be organized in a data.frame or tibble with each row corresponding to a scan. The path to the GPR file **must** be specified in a column named `gpr`. The table should also include any relevant metadata about the scan and sample (e.g. scan parameters or the name of the transcription factor). Scan information for the example dataset in _upbmData_ is provided in the `hoxc9table` table shown above. The process of loading GPR data is covered in more detail in a later section of this vignette.
+1. load GPR data as *PBMExperiment* object,
+2. perform data pre-processing, including normalization and filtering,
+3. perform probe-level summarization across replicates,
+4. perform K-mer-level summarization across probes,
+5. perform K-mer-level inference.
 
-First, we perform basic pre-processing on the probe intensities of each assay in `hoxc9a450`, including background subtraction, Cy3 normalization, and spatial adjustment. 
+First, input data should be available as GenePix Results (GPR) files, with each GPR file corresponding to a single sample scan. Metadata for the GPR files, including paths to the files, must be organized in a data.frame with each row corresponding to a scan (see `hoxc9table` above). The path to the GPR file **must** be specified in a column named `gpr`. The data.frame should also include any relevant metadata about the scan and sample (e.g. scan parameters or properties of the assayed protein). Both Alexa488 and Cy3 scans for the example dataset in the *upbmData* package are provided in `hoxc9table`.
 
-```{r quick-bsi}
-hoxc9a450 <- backgroundSubtract(hoxc9a450, assay = "fore", assayb = "back")
+GPR files listed in the data.frame are read in using `gpr2PBMExperiment(..)`. If possible, a corresponding probe design should also be specified. The probe design should be a _PBMDesign_ object. _PBMDesign_ objects for standard uPBM designs have been made available in the *upbmAux* package, including the standard 8x60k design used for this dataset.
+
+```{r quick-load-design}
+data(pbm_8x60k_v1, package = "upbmAux")
+head(pbm_8x60k_v1@design)
 ```
 
-Cy3 normalization requires comparing the observed Cy3 intensities against a empirical reference of Cy3 scans. We use the `refcy3_8x60k_v1` empirical reference for the 8x60k design included with the _upbmAux_ package.
+We split the data.frame by scan type to create separate Alexa488 and Cy3 *PBMExperiment* objects. Note that the following lines of code are not evaluated in this vignette since the corresponding GPR files are not included in this package.
 
-```{r quick-loadcy3ref}
+```{r quick-noeval-gpr2pbme, eval = FALSE}
+hoxc9alexa <- gpr2PBMExperiment(scans = dplyr::filter(hoxc9table, type == "Alexa"),
+                                probes = pbm_8x60k_v1)
+hoxc9cy3 <- gpr2PBMExperiment(scans = dplyr::filter(hoxc9table, type == "Cy3"),
+                                probes = pbm_8x60k_v1)
+```
+
+After the Alexa488 and Cy3 GPR files have been read in as *PBMExperiment* objects, we perform basic pre-processing on the probe intensities of each assay. Preprocessing includes [1] background subtraction, [2] Cy3 normalization, [3] spatial adjustment, [4] within and [5] across replicate (plate) normalization. To illustrate these steps, we use the subsetted *PBMExperiment* objects, `alexa_subset` and `cy3_subset`. While each pre-processing step can be run separately, a single wrapper function, `upbmPreprocess(..)` is provided to quickly perform all pre-processing steps on properly formatted PBM data. Details on each step is provided in a separate vignette. Here, we run all steps with the default parameters.
+
+To perform Cy3 normalization, in addition to the Cy3 scan data, we need a reference distribution of expected Cy3 intensities (generated by `cy3GenerateRef(..)`). A reference set generated using 90 Cy3 scans is included in the *upbmAux* package. 
+
+```{r quick-load-refcy3}
 data(refcy3_8x60k_v1, package = "upbmAux")
-hoxc9cy3e <- cy3FitEmpirical(hoxc9cy3, refcy3_8x60k_v1)
 ```
 
-After comparing the observed Cy3 intensities against the empirical reference, we normalize the Alexa488 scans according to the relative over or under abundance of dsDNA as measured by Cy3. We use information in `id_idx`, a colData column which specifies the plate ID and array position of each scan in `hoxc9a450` and `hoxc9cy3e` to uniquely match Alexa488 and Cy3 scans.
+Using this reference distribution, we perform pre-processing. By default, Alexa488 and Cy3 scans specified to `upbmPreprocess(..)` are expected to contain colData columns named `id_idx` which can be used to map scans across the two *PBMExperiment* objects. While the `id_idx` column may include repeated values in the Alexa488 data, the values must be unique for the Cy3 data. Additionally, the colData of the Alexa488 *PBMExperiment* is expected to have two additional columns, `id` and `condition`, corresponding to replicate (plate) and condition IDs, respectively. These labels are needed to perform within and between replicate normalization. Additionally, a reference condition is expected to exist in the `condition` colData column. The reference condition is identified by checking for conditions ending in `-REF`. These parameters may all be modified to specify different reference conditions and colData columns.
 
-```{r quick-cy3norm}
-hoxc9a450 <- cy3Normalize(hoxc9a450, hoxc9cy3e, match_by = "id_idx")
+By default `upbmPreprocess(..)` will provide a weakly verbose log of the normalization steps.
+
+```{r quick-normalize}
+alexa_normed <- upbmPreprocess(alexa_subset, cy3_subset, cy3refpe = refcy3_8x60k_v1)
 ```
 
-Next, we perform spatial adjustment to correct for bias due to the physical position of probes on the array. This step requires row and column coordinates be specified for all probes as `Row` and `Column` in the rowData. Probe coordinates are specified for all standard uPBM designs included in the _upbmAux_ package.
+The returned object is a *PBMExperiment* with the same name number of columns as the original Alexa488 *PBMExperiment* object. The number of rows is decreased to only include probes designated as signal probes based on filtering criteria specified as part of the corresponding *PBMDesign*. In this case, this includes all probes with probe IDs prefixed by `dBr_`.
 
-```{r quick-spatial-adjust}
-hoxc9a450 <- spatiallyAdjust(hoxc9a450)
+After normalization, probe-level intensities are aggregated across replicates by fitting a probe-level model. Again, a `condition` column is expected to exist in the colData of the *PBMExperiment* object.
+
+```{r quick-probeFit}
+alexa_pfit <- probeFit(alexa_normed)
 ```
 
-All previous pre-processing steps considered arrays separately. We next normalize across arrays in two steps - first within replicates, i.e. across arrays multiplexed on the same plate, and second across replicates using matched conditions. Plate and condition information should be specified in the colData of the _PBMExperiment_ object. By default, the functions expect plate and condition labels to be included in columns named `id` and `condition`.
+A *PBExperiment* object is returned with columns corresponding to the unique values of the colData `condition` column (here, `r paste0(colnames(alexa_pfit), collapse = ", ")`).
 
-```{r quick-cross-sample-norm}
-hoxc9a450 <- normalizeWithinReplicates(hoxc9a450)
-hoxc9a450 <- normalizeAcrossReplicates(hoxc9a450)
-```
+Next, the probe-level summaries aggregated across replicates are used to obtain K-mer-level summaries. A helper function, `uniqueKmers(..)` is provided for generating the full set of K-mers of a specified length (unique to reverse complementation, i.e. only one of `AAAACCCC` and `GGGGTTTT` is included). Performing K-mer inference on the full set of 8-mers can take close to a minute for each condition. While this is not a large amount of time, it is too long for the purpose of illustrating the function in this vignette. Therefore, **while not recommended in practice**, we fit the K-mer-level summaries for only a subset of randomly selected K-mers. 
 
-Now that arrays have been properly pre-processed and normalized, we aggregate across replicates for each condition by fitting probe-level models to the data. Again, condition labels are assumed to be colData column named `condition`.
-
-```{r quick-probefit}
-hoxc9pfit <- probeFit(hoxc9a450)
-```
-
-These probe-level quantities are then used to obtain the final k-mer affinity estimates. By default, k-mer affinities are estimated for all unique 8-mers (including reverse complementation). In the interest of time, we fit the model for only a subset of randomly chosen 8-mers (**this is not recommended in practice**).
-
-```{r quick-kmerfit}
+```{r quick-kmerFit}
 set.seed(1L)
 kmer_subset <- sample(uniqueKmers(8L), 1e4)
 
-hoxc9kfit <- kmerFit(hoxc9pfit, kmers = kmer_subset)
+alexa_kfit <- kmerFit(alexa_pfit, kmers = kmer_subset) ## for illustration only, see above
 ```
 
-Finally, these k-mer affinities can be used to perform k-mer inference. To test for differential 8-mer affinity across conditions, between a baseline condition (e.g. the wild type HOXC9 TF) and all other conditions, we make a call to `kmerTestContrast`. Note, if a different baseline condition should be used, this should be specified to the earlier `kmerFit` function. 
+The result is a *SummarizedExperiment* with K-mer-level affinity and variance estimates for each condition, with rows now corresponding to K-mers rather than probes. 
+
+```{r quick-show-kfit}
+alexa_kfit
+```
+
+Finally, these k-mer affinities can be used to perform K-mer-level inference. To test for differential 8-mer affinity across conditions, between a baseline condition (e.g. the wild type HOXC9 TF) and all other conditions, we make a call to `kmerTestContrast(..)`. This step should be relatively quick since estimates of affinity and variance have already been computed in the previous step. Note, if a different baseline condition should be used, this should be specified to the earlier `kmerFit` function. Other methods for inference are also defined in `kmerTestAffinity(..)` and `kmerTestSpecificity(..)`.
 
 ```{r quick-test-contrasts}
-hoxc9kdiff <- kmerTestContrast(hoxc9kfit)
+alexa_kdiff <- kmerTestContrast(alexa_kfit)
 ```
 
-The resulting object is a _SummarizedExperiment_ with assays containing the results of differential affinity testing.
+The resulting object is again a _SummarizedExperiment_ with assays containing the results of differential affinity testing.
 
 ```{r quick-show-res}
-hoxc9kdiff
+alexa_kdiff
 ```
 
 K-mer level averages and differences across conditions are included in the `contrastAverage` and `contrastDifference` assays. FDR-controlling adjusted p-values are included in the `contrastQ` assay. We can tidy these assay results up using `broom::tidy`, and plot the results of differential testing.
 
-```{r quick-plot-res, fig.width = 6, fig.height = 3}
-diffdat <- dplyr::left_join(broom::tidy(hoxc9kdiff, "contrastAverage", long = TRUE),
-                            broom::tidy(hoxc9kdiff, "contrastDifference", long = TRUE),
+```{r quick-plot-res, fig.width = 6, fig.height = 3.5}
+diffdat <- dplyr::left_join(broom::tidy(alexa_kdiff, "contrastAverage", long = TRUE),
+                            broom::tidy(alexa_kdiff, "contrastDifference", long = TRUE),
                             by = c("seq", "cname"), suffix = c(".A", ".M"))
 diffdat <- dplyr::left_join(diffdat,
-                            broom::tidy(hoxc9kdiff, "contrastQ", long = TRUE),
+                            broom::tidy(alexa_kdiff, "contrastQ", long = TRUE),
                             by = c("seq", "cname"))
+diffdat <- dplyr::filter(diffdat, !is.na(value))
+diffdat <- dplyr::rename(diffdat, adj.pval = value)
 
-diffdat %>%
-    dplyr::filter(!is.na(value)) %>%
-    dplyr::rename(adj.pval = value) %>%
-    ggplot(aes(x = value.A, y = value.M, color = adj.pval < 0.001)) +
+ggplot(diffdat, aes(x = value.A, y = value.M, color = adj.pval < 0.001)) +
     geom_point(alpha = 1/10) +
     geom_hline(yintercept = 0) + 
     scale_color_brewer(palette = "Set1", direction = -1) +
@@ -169,72 +176,15 @@ diffdat %>%
     ggtitle("HOXC9 differential 8-mer affinity MA plot")
 ```
 
-More details on the available plotting and analysis functions are provided in the sections below.
-
-The _PBMExperiment_ class is an extension of the Bioconductor _SummarizedExperiment_ class with additional slots to support working with _PBMDesign_ objects. 
-
-# Overview
-
-The quick start example given above covers the basic steps of pre-processing, normalization, and model fitting using the _upbm_ package. However, much of the details were skipped. Here, we cover how data should be loaded, the metadata needed for each analysis step, and how data can be analyzed at intermediate steps along the way.
-
-## Reading GPR Data
-
-The scan files listed in the GPR table (e.g. `hoxc9table`) are read in using the `gpr2PBMExperiment(..)` function. If possible, a corresponding probe design should also be specified as a _PBMDesign_ object. _PBMDesign_ objects for standard uPBM designs have been made available in the *upbmAux* package. The standard 8x60k design was used to generate this example dataset.
-
-```{r quick-load-design}
-data(pbm_8x60k_v1, package = "upbmAux")
-head(pbm_8x60k_v1@design)
-```
-
-The following code is only included for illustration and is not actually run. The data is read in as a single *PBMExperiment* object, with scans as columns and probes as rows. Scan information from `hoxc9table` is included in colData, and probe information is included in rowData. We split the *PBMExperiment* by scan type to create separate Alexa488 and Cy3 *PBMExperiment* objects.
-
-```{r quick-noeval-gpr2pbme, eval = FALSE}
-hoxc9data <- gpr2PBMExperiment(scans = hoxc9table, probes = pbm_8x60k_v1)
-hoxc9alexa <- hoxc9data[, colData(hoxc9data)$type == "Alexa"]
-hoxc9cy3 <- hoxc9data[, colData(hoxc9data)$type == "Cy3"]
-```
-
-## Plotting GPR Data
-
-## Pre-Processing GPR Data
-
-## Filtering GPR Data
-
-## Quantifying GPR Data
-
-## Testing GPR Data
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # Related Work
 
 A separate set of tools developed in Perl for the analysis of universal-design PBMs (uPBMs) is available for download at the [*Universal PBM Analysis Suite* site](the_brain.bwh.harvard.edu/PBMAnalysisSuite/indexSep2017.html) [@berger2009]. The *upbm* package builds on the work of the *Universal PBM Analysis Suite*, and provides alternative summaries of uPBM data not developed as part of the original suite of tools.
 
 A primary purpose of both software packages is the summarization of DNA binding affinities at the level of individual K-mers. To this end, the *Universal PBM Analysis Suite* summarizes K-mer binding affinity for individual PBM samples with two metrics: a non-parametric rank-based enrichment score (E-score), and the cross-probe median intensity (calculated across all probes containing the corresponding K-mer). In contrast, with *upbm*, K-mer binding affinities are estimated using a mixed effects model, with affinities effectively estimated as the weighted average log-transformed probe intensity across all probes containing the corresponding K-mer. This differs from the cross-probe median intensity in serveral important ways. First, the relative contribution of individual probes to the K-mer summary is inversely related to the variance of the probe across samples, downweighting highly variable probes. Second, to estimate probe-level variability, replicate samples are necessary. Third, because the variance structure is explicitly modeled, statistical testing and inference is possible at the level of K-mers.
 
-In addition to the summarization of DNA binding affinities at the level of individual K-mers, the *upbm* package also allows for testing for differential affinity between groups, e.g. to contrast binding affinity across allelic variants of the same transcription factor. Additionally, the package also allows for identifying preferentially bound K-mers for each groups of replicate samples. The *Universal PBM Analysis Suite* provides the ability to construct mononucleotide position weight matrices (PWMs), again, for individual PBM samples. Approaches for testing differential affinity between samples using the output of the *Universal PBM Analysis Suite* have also been previously described [@barrera2016].
+In addition to the summarization of DNA binding affinities at the level of individual K-mers, the *upbm* package also allows for testing for differential affinity between groups, e.g. to contrast binding affinity across allelic variants of the same transcription factor. Additionally, the package also allows for identifying preferentially bound K-mers for each groups of replicate samples. The *Universal PBM Analysis Suite* provides the ability to construct mononucleotide position weight matrices (PWMs), again, for individual PBM samples. Approaches for testing differential affinity between samples using the output of the *Universal PBM Analysis Suite* have also been previously described [@jiang2013;@barrera2016].
 
 Many of the PBM pre-processing steps of the *Universal PBM Analysis Suite* are maintained in the *upbm* package. These steps have been re-implemented, with some modifications, e.g. in the process of Cy3 normalization, to enable and streamline the complete analysis of PBM data in *R*.
-
-# Alternative Inputs
-
-While PBM data are commonly stored as GPR scan files, several similar probe-level summaries files have been generated and made publicly available on platforms include [UniPROBE](http://the_brain.bwh.harvard.edu/uniprobe/) [@hume2014]. In addition to raw GPR data, the *upbm* software can be used to read in alternative sources of extrapolated or processed probe-level intensity data, e.g. from [Masliner](http://arep.med.harvard.edu/masliner/supplement.htm) or the *Universal PBM Analysis Suite*. We recommend using original GPR data files when possible.
 
 # References
 
