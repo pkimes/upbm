@@ -86,7 +86,7 @@ broom::tidy(alexa_subset, assay = "fore", long = FALSE)
 broom::tidy(alexa_subset, assay = "fore", long = TRUE)
 ```
 
-Notice that when `long = FALSE`, the output contains only rowData and the values of the assay as a *tibble* with dimensions matching the input *PBMExperiment*. Here, each row corresponds to a single probe. When `long = TRUE`, a longer *tibble* is returned with each row corresponding to a single probe and single sample (column) of the input *PBMExperiment*. In the longer format, colData is also included in the output. When the object is a *PBMExperiment* object, only probes passing the filtering criteria specified in the *PBMDesign* object are included in the output (for more details, see: *upbm: Class Details*). In this case, this includes all probes with probe IDs prefixed by `dBr_`, corresponding to the subset of deBruijn sequence probes on the array.
+Notice that when `long = FALSE`, the output contains only rowData and the values of the assay as a *tibble* with dimensions matching the input *PBMExperiment*. Here, each row corresponds to a single probe. When `long = TRUE`, a longer *tibble* is returned with each row corresponding to a single probe and single sample (column) of the input *PBMExperiment*. In the longer format, colData is also included in the output. When the object is a *PBMExperiment* object, only probes passing the filtering criteria specified in the *PBMDesign* object are included in the output (for more details, see: *upbm: Class Details*). In this case, this includes all probes with probe IDs prefixed by `dBr_`, corresponding to the subset of de Bruijn sequence probes on the array.
 
 # Quickstart
 
