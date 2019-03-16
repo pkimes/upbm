@@ -2,7 +2,7 @@ Package: upbm
 Type: Package
 Title: Tools for the analysis of universal protein binding microarrays
 Version: 0.99.0
-Authors@R: c(person("Patrick", "Kimes", email = "patrick.kimes@gmail.com", role = c("aut", "cre")),
+Authors@R: c(person("Patrick", "Kimes", email = "patrick.kimes@gmail.com", role = c("aut", "cre"), comment = c(ORCID = "0000-0001-6819-9077")),
              person("Dongyuan", "Song", email = "dsong@hsph.harvard.edu", role = "ctb"))
 BugReports: https://github.com/pkimes/upbm/issues
 URL: https://github.com/pkimes/upbm
