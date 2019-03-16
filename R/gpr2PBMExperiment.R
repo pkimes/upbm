@@ -46,8 +46,8 @@
 #'
 #' Additionally, GPR files are parsed differently depending on the file type which must be
 #' one of ``Alexa", ``Cy3", or ``Masliner". Both ``Alexa" and ``Cy3" scans
-#' are treated as untouched GPR files, while ``Masliner" files treated as Masliner-processed
-#' GPR files. If possible the scan type of each file should be
+#' are treated as untouched GPR files, while ``Masliner" files are treated as Masliner-processed
+#' GPR files. If possible, the scan type of each file should be
 #' specified in a \code{"type"} column of the \code{scans} data.frame.
 #' If a \code{"type"} column is not included, all GPR files are assumed to be Alexa488
 #' scans unless the file name in the \code{"gpr"} column contains ``Masliner".
