@@ -73,6 +73,21 @@ cy3_subset <- hoxc9cy3[, colData(hoxc9cy3)$id_idx %in%
                                           colData(alexa_subset)$id_idx]
 ```
 
+# Tidy Data
+
+"Tidy data" has become a popular and powerful framework for organizing data during interactive analysis. In the tidy data framework, data is organized as a data.frame with each row corresponding to an individual obervation or sample. Not only does the tidy data framework help keep data organized, but it also unlocks the powerful data parsing and visualization functions in the [Tidyverse](https://www.tidyverse.org/) collection of packages.
+
+To keep track of various probe and sample metadata compactly, uPBM data are not organized as tidy data. Instead, they are stored as *PBMExperiment* and *PBMDesign* objects which extend core Bioconductor data structures (see separate vignette: *upbm: Class Details*). However, when performing interactive analysis, it can be useful to extract tidy data from the *PBMExperiment* objects. This is made possible with the `broom::tidy` function originally defined in the [*broom*](https://cran.r-project.org/web/packages/broom/) package. 
+
+The data for a single assay in *PBMExperiment* and *SummarizedExperiment* objects can be returned in wide or long format by passing the objects to `broom::tidy`.
+
+```{r tidy}
+broom::tidy(alexa_subset, assay = "fore", long = FALSE)
+broom::tidy(alexa_subset, assay = "fore", long = TRUE)
+```
+
+Notice that when `long = FALSE`, the output contains only rowData and the values of the assay as a *tibble* with dimensions matching the input *PBMExperiment*. Here, each row corresponds to a single probe. When `long = TRUE`, a longer *tibble* is returned with each row corresponding to a single probe and single sample (column) of the input *PBMExperiment*. In the longer format, colData is also included in the output. When the object is a *PBMExperiment* object, only probes passing the filtering criteria specified in the *PBMDesign* object are included in the output (for more details, see: *upbm: Class Details*). In this case, this includes all probes with probe IDs prefixed by `dBr_`, corresponding to the subset of deBruijn sequence probes on the array.
+
 # Quickstart
 
 Using the example data included in the *upbmData* package, we first quickly demonstrate how GPR data can be analyzed to obtain 8-mer-level affinity summaries and used to perform differential affinity analysis. Data analysis proceeds in the following steps:
@@ -117,7 +132,7 @@ By default `upbmPreprocess(..)` will provide a weakly verbose log of the normali
 alexa_normed <- upbmPreprocess(alexa_subset, cy3_subset, cy3refpe = refcy3_8x60k_v1)
 ```
 
-The returned object is a *PBMExperiment* with the same name number of columns as the original Alexa488 *PBMExperiment* object. The number of rows is decreased to only include probes designated as signal probes based on filtering criteria specified as part of the corresponding *PBMDesign*. In this case, this includes all probes with probe IDs prefixed by `dBr_`.
+The returned object is a *PBMExperiment* with the same name number of columns as the original Alexa488 *PBMExperiment* object. The number of rows is decreased to only include probes designated as signal probes based on filtering criteria specified as part of the corresponding *PBMDesign*.
 
 After normalization, probe-level intensities are aggregated across replicates by fitting a probe-level model. Again, a `condition` column is expected to exist in the colData of the *PBMExperiment* object.
 
@@ -154,7 +169,7 @@ The resulting object is again a _SummarizedExperiment_ with assays containing th
 alexa_kdiff
 ```
 
-K-mer level averages and differences across conditions are included in the `contrastAverage` and `contrastDifference` assays. FDR-controlling adjusted p-values are included in the `contrastQ` assay. We can tidy these assay results up using `broom::tidy`, and plot the results of differential testing.
+K-mer level averages and differences across conditions are included in the `contrastAverage` and `contrastDifference` assays. FDR-controlling adjusted p-values are included in the `contrastQ` assay. We can tidy the results using `broom::tidy` as described above, and visualize the results as an MA plot.
 
 ```{r quick-plot-res, fig.width = 6, fig.height = 3.5}
 diffdat <- dplyr::left_join(broom::tidy(alexa_kdiff, "contrastAverage", long = TRUE),
