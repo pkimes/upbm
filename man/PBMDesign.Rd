@@ -8,16 +8,16 @@
 \alias{PBMDesign,PBMExperiment-method}
 \title{Create a new PBMDesign object}
 \usage{
-PBMDesign(x, ...)
+PBMDesign(object, ...)
 
-\S4method{PBMDesign}{data.frame}(x, ...)
+\S4method{PBMDesign}{data.frame}(object, ...)
 
-\S4method{PBMDesign}{DataFrame}(x, ...)
+\S4method{PBMDesign}{DataFrame}(object, ...)
 
-\S4method{PBMDesign}{PBMExperiment}(x)
+\S4method{PBMDesign}{PBMExperiment}(object)
 }
 \arguments{
-\item{x}{a data.frame with each row corresponding to a probe on the array.
+\item{object}{a data.frame with each row corresponding to a probe on the array.
 Must include `Sequence' and (unique) `probeID' columns, along with any
 other metadata for probes, e.g. array `Row' or `Column' spatial coordinates.
 Alternatively, a \code{\link[=PBMExperiment-class]{PBMExperiment}} object to

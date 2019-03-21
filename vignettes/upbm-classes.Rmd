@@ -1,0 +1,231 @@
+---
+title: "upbm: Class Details"
+author: Patrick K. Kimes
+date: "`r BiocStyle::doc_date()`"
+package: "`r BiocStyle::pkg_ver('upbm')`"
+output:
+  BiocStyle::html_document:
+    highlight: pygments
+    toc: true
+    fig_width: 12
+    fig_height: 4
+bibliography: library.bib
+vignette: >
+  %\VignetteIndexEntry{upbm: classes}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r echo=FALSE, include=FALSE}
+knitr::opts_chunk$set(tidy = FALSE, cache = TRUE, dev = "png",
+                      message = FALSE, error = FALSE, warning = TRUE)
+```
+
+# Introduction
+
+For an introduction to the *upbm* package, please see the quick start vignette (*upbm: Analysis of Protein Binding Microarrays in R*). Here, we provide details on the two classes introduced in the package, _PBMDesign_ and _PBMExperiment_. The _PBMDesign_ class acts as a container for protein binding microarray (PBM) array design information, while the _PBMExperiment_ class serves as the container for PBM experimental data. 
+
+```{r}
+##suppressPackageStartupMessages(library("upbm"))
+devtools::load_all()
+```
+
+_PBMDesign_ objects for standard universial PBM (uPBM) designs are included in the _upbmAux_ package. Additionally, example _PBMExperiment_ objects are included in the _upbmData_ package for a series of uPBM experiments with the HOXC9 transcription factor. We use these objects to help illustrate the simple structure of each class.
+
+```{r}
+suppressPackageStartupMessages(library("upbmAux"))
+suppressPackageStartupMessages(library("upbmData"))
+```
+
+# PBMDesign
+
+The _PBMDesign_ class is used to organize the probe design of PBM experiments. Objects are composed of 3 components:
+
+- `design`: a data.frame of probe IDs, sequences, and other metadata, 
+- `probeFilter`: an optional list of filtering rules to distinguish signal probes from control spots,
+- `probeTrim`: an optional pair of integers specifying the start and end of the probe sequences to use for analysis.
+
+We can take a look at the `pbm_8x60k_v1` design object from the _upbmAux_ package to get a better sense of these components.
+
+```{r pbmdesign-load-example}
+data(pbm_8x60k_v1, package = "upbmAux")
+pbm_8x60k_v1
+```
+
+From the object description, we can see that the design is a data.frame with `r nrow(design(pbm_8x60k_v1))` rows and `r ncol(design(pbm_8x60k_v1))` columns. Each row is a probe in the PBM array. Two columns, `"probeID"` and `"Sequence"` **must** be defined for the object to be a valid _PBMDesign_. The other two columns, `"Row"` and `"Column"` are optional information which are needed to perform spatial adjustment with `spatiallyAdjust(..)`. 
+
+```{r pbmdesign-show-design}
+head(design(pbm_8x60k_v1))
+```
+
+In addition to dsDNA probes which measure protein binding, PBMs typically include control probes designed by Agilent or the user. These probes should be excluded for certain normalization and downstream analysis steps (e.g. Cy3 normalization and spatial adjustment). The `probeFilter` slot is a list of functions which are used to distinguish dsDNA target probes from control probes.
+
+The `probeFilter` list must be a named list with names matching columns in the design shown above.
+
+```{r pbmdesign-show-probefilter}
+probeFilter(pbm_8x60k_v1)
+```
+
+Here, the _PBMDesign_ object includes a single probe filtering rule associated with the `"probeID"` column. The rule is a function which takes a column from the design and returns a logical vector of the same length. These rules are applied to the associated columns in the design to the target set of probes. In `pbm_8x60k_v1`, the single filter checks the probe IDs and returns `TRUE` for the subset prefixed with `dBr_`, corresponding to the subset of de Bruijn sequence probes on the array. Filtering can be performed using `pbmFilterProbes(..)`.
+
+```{r pbmdesign-pbmfilterprobes}
+pbm_8x60k_filtered <- pbmFilterProbes(pbm_8x60k_v1)
+pbm_8x60k_filtered
+```
+
+Notice that the returned _PBMDesign_ has fewer probes than the original design. We can explicitly verify that this smaller number of probes corresponds to the number of probes passing the filtering rule.
+
+```{r pbmdesign-checkfilter}
+table(grepl("^dBr", design(pbm_8x60k_v1)$probeID))
+```
+
+After filtering has been performed, the `probeFilter` slot of the returned _PBMDesign_ is cleared to prevent iterative application of the filtering critera. 
+
+Finally, the `probeTrim` slot is an optional numeric vector of length 2.
+
+```{r pbmdesign-show-probetrim}
+probeTrim(pbm_8x60k_filtered)
+```
+
+Revisiting the design of the probes, notice that the probe sequences all end in a common 24nt primer sequence.
+
+```{r, pbmdesign-show-seqs}
+head(design(pbm_8x60k_filtered))
+```
+
+The `probeTrim` slot specifies the start and end positions in the sequences that should be used to map K-mers to probes. By default, this is set to `(1, 36)` in the uPBM designs in _upbmAux_ to exclude the common 24nt primer sequence at the end of all probes. While the values may be modified to include some or all of the primer sequence, this has not been extensively evaluated. Probe trimming can be performed using `pbmTrimProbes(..)`.
+
+```{r pbmdesign-pbmtrimprobes}
+head(design(pbmTrimProbes(pbm_8x60k_filtered)))
+```
+
+## Modifying Objects
+
+All of the slots described above can be modified or updated. For example, we can add an additional (redundant) rule to the `probeFilter` list of the example *PBMDesign*.
+
+```{r pbmdesign-modify}
+probeFilter(pbm_8x60k_v1) <- c(probeFilter(pbm_8x60k_v1),
+                               Sequence = function(x) { x != "#N/A" })
+```
+
+We can also easy change the trimming boundaries.
+
+```{r pbmdesign-modify-trim}
+probeTrim(pbm_8x60k_filtered) <- c(1, 50)
+pbm_8x60k_filtered
+```
+
+## New Objects
+
+A new _PBMDesign_ object can be created by passing a data.frame of probe designs to the `PBMDesign(..)` constructor. 
+As stated above, at minimum, the data.frame must contain two columns, `"probeID"` and `"Sequence"`. 
+
+```{r pbmdesign-new}
+new_design <- data.frame(probeID = LETTERS[1:3],
+                         Sequence = rep("AAA", 3))
+pbmDesign <- PBMDesign(new_design)
+pbmDesign
+```
+
+The `probeFilter` and `probeTrim` slots can also be specified directly to the `PBMDesign(..)` constructor or modified after constructing the _PBMDesign_ object, as shown above.
+
+# PBMExperiment
+
+Probe-level PBM data is stored in the _PBMExperiment_ class, an extension of the [_SummarizedExperiment_](https://bioconductor.org/packages/release/bioc/html/SummarizedExperiment.html) class with additional slots to support working with _PBMDesign_ objects. An example _PBMExperiment_ object containing data from a series of HOXC9 experiments is included in the _upbmData_ package. We will only look at the _PBMExperiment_ containing Alexa488 scans. However, the probe-level  data from Cy3 scans are similarly stored as a separate _PBMExperiment_ object.
+
+```{r pbme-load-example}
+data(hoxc9alexa, package = "upbmData")
+hoxc9alexa
+```
+
+A _SummarizedExperiment_ object is made up of three parts: **1.** assays (primary data, e.g. probe intensities), **2.** column metadata, and **3.** row metadata. Here, rows correspond to probes and columns correspond to scans. For more details on the _SummarizedExperiment_ class, see the corresponding package [vignette](https://bioconductor.org/packages/release/bioc/vignettes/SummarizedExperiment/inst/doc/SummarizedExperiment.html).
+
+In addition to these three components, _PBMExperiment_ objects also include `probeFilter`, `probeTrim` and `probeCols` slots. The `probeFilter` and `probeTrim` slots of the _PBMExperiment_ class are identical to the slots described above as part of the _PBMDesign_ class. The final `probeCols` slot is a character vector specifying the columns in the row metadata corresponding to the `design` of a _PBMDesign_ object. Rather than storing the `design` as a separate slot in _PBMExperiment_ objects, the design is kept in the row metadata and the corresponding columnsare recorded in `probeCols`.
+
+As with _PBMDesign_ objects, these slots can be both accessed and modified. The `hoxc9alexa` object was constructed with the `pbm_8x60k_v1` probe design introduced above. We can see that the `probeTrim` and `probeFilter` values match what we see above.
+
+```{r pbme-access}
+probeFilter(hoxc9alexa)
+probeTrim(hoxc9alexa)
+```
+
+Additionally, we can see that the `probeCols` columns of the row metadata match the `design` slot of `pbm_8x60k_v1`.
+
+```{r pbme-probecols}
+probeCols(hoxc9alexa)
+head(rowData(hoxc9alexa)[, probeCols(hoxc9alexa)])
+```
+
+Finally, the corresponding _PBMDesign_ object of a _PBMExperiment_ can be extracted by passing the _PBMExperiment_ object to the `PBMDesign(..)` constructor.
+
+```{r pbme-pbmdesign}
+PBMDesign(hoxc9alexa)
+```
+
+The _PBMDesign_ associated values (`probeFilter`, `probeTrim`, `probeCols`, and row metadata) can be quickly modified or added using the associated setter function.
+
+```{r pbem-set-design}
+PBMDesign(hoxc9alexa) <- pbm_8x60k_v1
+```
+
+This can be useful when the design information needs to be added after the _PBMExperiment_ object has been already created. However, this should be performed with caution as all prior design associated values will be overwritten. 
+
+As with _PBMDesign_, calls to `pbmFilterProbes(..)` and `pbmTrimProbes(..)` can be used to filter and trim probes in the _PBMExperiment_ object.
+
+```{r pbme-filter}
+pbmFilterProbes(hoxc9alexa)
+```
+
+It is also important to note that whenever `broom::tidy(..)` is called to convert assay data to a tidy format, the returned tibble will only include probes passing the filtering rules.
+
+```{r pbme-tidy}
+nrow(broom::tidy(hoxc9alexa))
+```
+
+## gpr2PBMExperiment
+
+The easiest way to create a new _PBMExperiment_ object is by reading scan data from GPR files using `gpr2PBMExperiment(..)`, as described in the quick start vignette. In this case, the associated _PBMDesign_ should be specified at the same time.
+
+For _PBMExperiment_ objects created from GPR files, probe-level foreground intensities are stored in the `"fore"` assay. By default, (but optionally) a second assay, `"back"` (background) is also read in from the GPRs with the background intensities for each probe and sample.
+
+```{r}
+assay(hoxc9alexa, "fore")[1:5, 1:5]
+assay(hoxc9alexa, "back")[1:5, 1:5]
+```
+
+When `gpr2PBMExperiment(..)` is used, the original table used to specify the GPR files and associated metadata are stored in the column metadata.
+
+```{r}
+colData(hoxc9alexa)[1:5, ]
+```
+
+In the case of the example dataset, the table used to read the GPR files is also included in the _upbmData_ package.
+
+```{r}
+data(hoxc9table, package = "upbmData")
+head(hoxc9table, 5)
+```
+
+All columns, aside from the `gpr` column, are included in the column metadata.
+
+## New Objects
+
+Alternatively, a new _PBMExperiment_ object can be constructed from existing _SummarizedExperiment_ and _PBMDesign_ objects. To demonstrate this, we can coerce `hoxc9alexa` to a _SummarizedExperiment_ object, stripping away all _PBMExperiment_-specific information.
+
+```{r pbme-as-se}
+se <- SummarizedExperiment(hoxc9alexa)
+se
+```
+
+With the _SummarizedExperiment_ object, we can now create a new _PBMExperiment_ object using the `PBMExperiment(..)` constructor. As with `gpr2PBMExperiment(..)`, a _PBMDesign_ can be specified as an optional parameter.
+
+```{r pbme-constructor}
+PBMExperiment(se)
+
+PBMExperiment(se, pbmDesign = pbm_8x60k_v1)
+```
+
+# References
+

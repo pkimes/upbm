@@ -12,6 +12,7 @@ Depends: R (>= 3.5),
          SummarizedExperiment,
          ggplot2
 Imports: Rcpp,
+         BiocGenerics,
          methods,
          limma,
          S4Vectors,

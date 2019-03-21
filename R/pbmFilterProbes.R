@@ -34,9 +34,10 @@ pbmFilterProbes <- function(pe) {
 
     if (any(vapply(fres, length, numeric(1)) != nrow(pddata))) {
         stop("probeFilter functions should return logical vectors of length equal to number of probes.\n",
-             "number of probes = ", nrow(pddata), "\n",
-             "length of probeFilter output. \n",
-             paste0(paste0("    ", names(filters), " = ", vapply(fres, length, numeric(1))),
+             "number of probes:\n",
+             "    ", nrow(pddata), "\n",
+             "length of probeFilter output: \n",
+             paste0(paste0("    rule ", seq_len(length(filters)), " (", names(filters), "): ", vapply(fres, length, numeric(1))),
                     collapse = "\n"))
     }
     if (!all(vapply(fres, is, logical(1), class2 = "logical"))) {
@@ -57,5 +58,9 @@ pbmFilterProbes <- function(pe) {
     } else {
         pe@design <- pe@design[fres, , drop = FALSE]
     }
+
+    ## drop rules from object to prevent filtering multiple times
+    probeFilter(pe) <- list()
+
     return(pe)
 }

@@ -5,7 +5,7 @@
 #' Alternatively, the function can be called on a PBMExperiment to extract the
 #' probe design information associated with experimental data.
 #'
-#' @param x a data.frame with each row corresponding to a probe on the array.
+#' @param object a data.frame with each row corresponding to a probe on the array.
 #'        Must include `Sequence' and (unique) `probeID' columns, along with any
 #'        other metadata for probes, e.g. array `Row' or `Column' spatial coordinates.
 #'        Alternatively, a \code{\link[=PBMExperiment-class]{PBMExperiment}} object to
@@ -37,23 +37,23 @@
 #' @author Patrick Kimes
 NULL
 
-.PBMDesign.table <- function(x, ...) {
-    new("PBMDesign", design = x, ...)
+.PBMDesign.table <- function(object, ...) {
+    new("PBMDesign", design = object, ...)
 }
 
-.PBMDesign.PBMExperiment <- function(x) {
-    new("PBMDesign", design = as.data.frame(rowData(x)[, x@probeCols, drop = FALSE], optional = TRUE),
-        probeFilter = x@probeFilter, probeTrim = x@probeTrim)
+.PBMDesign.PBMExperiment <- function(object) {
+    new("PBMDesign", design = as.data.frame(rowData(object)[, object@probeCols, drop = FALSE], optional = TRUE),
+        probeFilter = object@probeFilter, probeTrim = object@probeTrim)
 }
 
 #' @rdname PBMDesign
 #' @exportMethod "PBMDesign"
-setMethod("PBMDesign", signature(x = "data.frame"), .PBMDesign.table)
+setMethod("PBMDesign", signature(object = "data.frame"), .PBMDesign.table)
 
 #' @rdname PBMDesign
 #' @exportMethod "PBMDesign"
-setMethod("PBMDesign", signature(x = "DataFrame"), .PBMDesign.table)
+setMethod("PBMDesign", signature(object = "DataFrame"), .PBMDesign.table)
 
 #' @rdname PBMDesign
 #' @exportMethod "PBMDesign"
-setMethod("PBMDesign", signature(x = "PBMExperiment"), .PBMDesign.PBMExperiment)
+setMethod("PBMDesign", signature(object = "PBMExperiment"), .PBMDesign.PBMExperiment)

@@ -4,10 +4,18 @@
 \alias{PBMExperiment}
 \title{Create a new PBMExperiment object}
 \usage{
-PBMExperiment(probeFilter = list(), probeTrim = numeric(),
-  probeCols = c("Sequence", "probeID"), ...)
+PBMExperiment(..., pbmDesign = NULL, probeFilter = list(),
+  probeTrim = numeric(), probeCols = c("Sequence", "probeID"))
 }
 \arguments{
+\item{...}{an optional SummarizedExperiment containing PBM probe intensity data and
+corresponding annotations or parameters to be passed to the SummarizedExperiment
+constructor.}
+
+\item{pbmDesign}{an optional PBMDesign containing design information. If specified,
+\code{probeFilter}, \code{probeTrim}, and \code{probeCols} parameters will be 
+ignored. Ignored if NULL. (default = NULL)}
+
 \item{probeFilter}{an optional named list of probe filters to be used to subset
 probes during data analysis steps. List names must correspond to columns in
 rowData. List entries must be single-parameter functions to be called on the
@@ -19,10 +27,6 @@ positions in probe `Sequence' to use in analysis steps. (default = \code{numeric
 
 \item{probeCols}{an optional character vector of rowData column names corresponding
 to probe design information. (default = \code{c("Sequence", "probeID")})}
-
-\item{...}{an optional SummarizedExperiment containing PBM probe intensity data and
-corresponding annotations or parameters to be passed to the SummarizedExperiment
-constructor.}
 }
 \value{
 \code{\link[=PBMExperiment-class]{PBMExperiment}} object.

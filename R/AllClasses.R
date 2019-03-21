@@ -17,6 +17,7 @@
 #' 
 #' @aliases PBMExperiment-class
 #' @import methods
+#' @importFrom stats na.omit
 #' @importClassesFrom SummarizedExperiment SummarizedExperiment
 #' @export
 #' @exportClass PBMExperiment
@@ -29,7 +30,7 @@
 setValidity2("PBMExperiment",
              function(object) {
                  ## check colnames is non-NULL and unique
-                 if (is.null(colnames(object)) | any(duplicated(colnames(object)))) {
+                 if ((ncol(object) > 0 && is.null(colnames(object))) | any(duplicated(colnames(object)))) {
                      stop("PBMExperiment must have non-NULL and unique column names.")
                  }
                  ## check rowData necessary columns (Sequence, probeID)
@@ -83,7 +84,7 @@ setValidity2("PBMExperiment",
                  ## check properties of filtered object
                  objf <- pbmFilterProbes(object)
                  ## check filtered probeIDs are unique
-                  if (any(duplicated(rowData(objf)$probeID))) {
+                  if (any(!is.na(rowData(objf)$probeID)) && any(duplicated(na.omit(rowData(objf)$probeID)))) {
                      stop("PBMExperiment probe IDs must be unique after filtering.\n",
                           "Please check 'probeID' rowData values.")
                  }
@@ -130,7 +131,7 @@ setValidity2("PBMDesign",
                      if (is.null(names(object@probeFilter)) | any(names(object@probeFilter) == "")) {
                          stop("PBMDesign 'probeFilter' must be a named list.")
                      }
-                     if (!all(names(object@probeFilter) %in% colnames(rd))) {
+                     if (!all(names(object@probeFilter) %in% colnames(object@design))) {
                          stop("PBMDesign 'probeFilter' must be a named list matching ",
                               "'design' data.frame columns.")
                      }
