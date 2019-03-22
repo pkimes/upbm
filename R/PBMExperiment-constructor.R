@@ -62,6 +62,7 @@ PBMExperiment <- function(...,
             warning("Existing 'probeID' column of SummarizedExperiment will be overwritten.")
             rowData(se)$probeID <- NULL
         }
+        rowData(se) <- rowData(se)[, setdiff(colnames(rowData(se)), colnames(design(pbmDesign)))]
         rowData(se) <- cbind(rowData(se), design(pbmDesign))
         probeCols <- probeCols(pbmDesign)
         probeTrim <- probeTrim(pbmDesign)

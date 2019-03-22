@@ -7,7 +7,7 @@ setGeneric("PBMDesign", valueClass = "PBMDesign",
                    warning("PBMDesign should be constructed by specifying table of probes with 'object ='.")
                } else {
                    warning("PBMDesign should be constructed by specifying table of probes with 'object ='.\n",
-                           "Ignoring specified 'object='.")
+                           "Ignoring specified 'object ='.")
                }
                .PBMDesign(design = data.frame(Sequence = character(),
                                               probeID = character()), ...)

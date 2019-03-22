@@ -84,9 +84,8 @@ setMethod("design", signature(object = "PBMDesign"),
 #' @exportMethod "SummarizedExperiment"
 setMethod("SummarizedExperiment", signature(assays = "PBMExperiment"),
           function(assays) {
-              pc <- probeCols(assays)
               se <- as(assays, "SummarizedExperiment")
-              rowData(se) <- rowData(se)[, setdiff(colnames(rowData(se)), pc)]
+              validObject(se)
               se
           })
 
