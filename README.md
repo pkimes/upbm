@@ -34,7 +34,7 @@ BiocManager::install("pkimes/upbmData")
 With *upbm*, PBM data is first read from GenePix Results (GPR) files and
 organized as a *SummarizedExperiment* object with rows corresponding to
 probes, and columns corresponding to individual array scans. Several
-functions are included for plotting, normalizing, and processing array
+functions are included for loading, normalizing, and processing array
 data to k-mer level summaries. Additionally, the package includes
 functions for testing and identifying both preferentially bound k-mers
 for proteins and differentially bound k-mers across proteins. To
