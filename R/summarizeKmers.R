@@ -84,8 +84,8 @@ summarizeKmers <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
 
     ## check whether row/column indices were available
     pdat <- cbind(pdat, pdest)
-    pdat <- dplyr::left_join(pdat, dplyr::select_at(kmermap, c(pe@probeCols, "seq")),
-                             by = pe@probeCols)
+    pdat <- dplyr::inner_join(pdat, dplyr::select_at(kmermap, c(pe@probeCols, "seq")),
+                              by = pe@probeCols)
     pdat <- dplyr::select(pdat, -(!! pe@probeCols))
     
     ## group by k-mer sequence
@@ -98,7 +98,7 @@ summarizeKmers <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
     pdatm <- dplyr::mutate(pdat_sets, m = lapply(data, nrow))
     n_vals <- unlist(pdatm$m)
     n_seqs <- pdatm$seq
-
+    
     ## store statistics in separate assays
     assay_list <- list()
     
