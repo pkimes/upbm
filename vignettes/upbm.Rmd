@@ -29,7 +29,7 @@ knitr::opts_chunk$set(tidy = FALSE, cache = TRUE, dev = "png",
 
 While a large collection of methods and software packages have been developed for the processing and analysis of traditional DNA microarrays, the development of tools for protein binding microarrays (PBMs) has been limited. Due to the substantial difference of what is being measured by PBMs (protein-DNA binding) and DNA microarrays (nucleic acid hybridization), blindly applying DNA microarray tools to PBM data can lead to unexpected problems. 
 
-This package provides tools and methods for reading, plotting, and analyzing PBM data in *R* using standard [*Bioconductor*](https://www.bioconductor.org/) [data structures](http://bioconductor.org/developers/how-to/commonMethodsAndClasses/). The primary focus is on universal-design PBMs (uPBMs) which provide approximately uniform coverage of all 8-mer DNA sequences across probes on the array [@berger2006].
+This package provides tools and methods for reading, processing, and analyzing PBM data in *R* using standard [*Bioconductor*](https://www.bioconductor.org/) [data structures](http://bioconductor.org/developers/how-to/commonMethodsAndClasses/). The primary focus is on universal-design PBMs (uPBMs) which provide approximately uniform coverage of all 8-mer DNA sequences across probes on the array [@berger2006].
 
 ```{r}
 suppressPackageStartupMessages(library("upbm"))

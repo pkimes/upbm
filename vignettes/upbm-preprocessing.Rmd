@@ -27,7 +27,7 @@ knitr::opts_chunk$set(tidy = FALSE, cache = TRUE, dev = "png",
 
 For an introduction to the *upbm* package, please see the quick start vignette (*upbm: Analysis of Protein Binding Microarrays in R*). Here, we provide details on the pre-processing steps briefly referenced in the quick start vignette and assume basic knowledge of the organization of PBM data in *R* using *upbm*. The same example HOXC9 dataset from the *upbmData* package is used in this vignette to illustrate the various functions.
 
-In the quick start vignette, the pre-processing steps of background subtraction, Cy3 normalization, spatial adjustment, within and across replicate normalization were performed using the `upbmPreprocess(..)` wrapper function. Here, we cover the individual pre-processing steps and underlying functions in more detail. Additionally, we cover basic plotting functions which can be used to visualize the results of pre-processing at each step.
+In the quick start vignette, the pre-processing steps of background subtraction, Cy3 normalization, spatial adjustment, within and across replicate normalization were performed using the `upbmPreprocess(..)` wrapper function. Here, we cover the individual pre-processing steps and underlying functions in more detail. Additionally, we introduce some plots which can be used to visualize the results of pre-processing at each step.
 
 ```{r}
 suppressPackageStartupMessages(library("upbm"))
