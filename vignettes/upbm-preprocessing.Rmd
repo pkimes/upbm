@@ -37,6 +37,7 @@ Throughout, we will be using `broom::tidy` to tidy data stored in *PBMExperiment
 
 ```{r}
 suppressPackageStartupMessages(library("dplyr"))
+suppressPackageStartupMessages(library("ggplot2"))
 ```
 
 # HOXC9 Dataset

@@ -35,7 +35,7 @@ This package provides tools and methods for reading, processing, and analyzing P
 suppressPackageStartupMessages(library("upbm"))
 ```
 
-In this vignette we demonstrate the typical analysis steps with the *upbm* package. Here, and in other vignettes, data from a triplicate series of PBM experiments are used to illustrate the features of the package. While this vignette covers only the basics of the *upbm* package, more details on the object classes (*PBMExperiment* and *PBMDesign*) and pre-processing functions are also provided in separate vignettes.
+In this vignette we demonstrate the typical analysis steps with the *upbm* package. Here, and in other vignettes, data from a triplicate series of PBM experiments are used to illustrate the features of the package. While this vignette covers only the basics of the *upbm* package, more details on the object classes (*PBMExperiment* and *PBMDesign*) and pre-processing functions are also provided in separate vignettes. 
 
 # HOXC9 Dataset
 
@@ -172,6 +172,8 @@ alexa_kdiff
 K-mer level averages and differences across conditions are included in the `contrastAverage` and `contrastDifference` assays. FDR-controlling adjusted p-values are included in the `contrastQ` assay. We can tidy the results using `broom::tidy` as described above, and visualize the results as an MA plot.
 
 ```{r quick-plot-res, fig.width = 6, fig.height = 3.5}
+suppressPackageStartupMessages(library("ggplot2"))
+
 diffdat <- dplyr::left_join(broom::tidy(alexa_kdiff, "contrastAverage", long = TRUE),
                             broom::tidy(alexa_kdiff, "contrastDifference", long = TRUE),
                             by = c("seq", "cname"), suffix = c(".A", ".M"))
