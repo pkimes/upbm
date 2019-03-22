@@ -5,8 +5,10 @@ r: bioc-devel
 
 cache: packages
 
-r_packages:
-  - covr
+r_github_packages:
+  - r-lib/covr
+  - pkimes/upbmData
+  - pkimes/upbmAux
 
 after_success:
   - Rscript -e 'library(covr); codecov()'
