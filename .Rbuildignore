@@ -2,7 +2,6 @@
 .gitignore
 .DS_Store
 .Rhistory
-vignettes/
 .*.html
 ^.*\.Rproj$
 ^\.Rproj\.user$
