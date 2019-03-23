@@ -52,6 +52,7 @@
 #' @importFrom SummarizedExperiment SummarizedExperiment assayNames assay
 #' @importFrom dplyr left_join distinct
 #' @importFrom limma lmFit eBayes
+#' @importFrom statmod gauss.quad.prob
 #' @importFrom purrr quietly
 #' @export
 #' @author Patrick Kimes

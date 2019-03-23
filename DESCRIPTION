@@ -26,7 +26,8 @@ Imports: Rcpp,
          stats,
          matrixStats,
          NormalGamma,
-         broom
+         broom,
+         statmod
 Suggests: BiocStyle,
           knitr,
           upbmAux,
