@@ -5,6 +5,9 @@ r: bioc-devel
 
 cache: packages
 
+r_packages:
+  - statmod
+
 r_github_packages:
   - r-lib/covr
   - pkimes/upbmData
