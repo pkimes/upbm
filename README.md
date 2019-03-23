@@ -1,5 +1,5 @@
 
-# upbm <img src="man/figures/upbm.png" align="right" alt="" width="160"/>
+# upbm [![Build Status](https://travis-ci.com/pkimes/upbm.svg?branch=master)](https://travis-ci.com/pkimes/upbm) [![codecov](https://codecov.io/gh/pkimes/upbm/branch/master/graph/badge.svg)](https://codecov.io/gh/pkimes/upbm) <img src="man/figures/upbm.png" align="right" alt="" width="160"/>
 
 *upbm* provides functions for loading, organizing, and analyzing protein
 binding microarray (PBM) data in *R* using standard
