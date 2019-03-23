@@ -30,10 +30,12 @@ Imports: Rcpp,
          statmod
 Suggests: BiocStyle,
           knitr,
+          rmarkdown,
           upbmAux,
           upbmData,
           testthat,
-          ggplot2
+          ggplot2,
+          scales
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true

@@ -1,6 +1,6 @@
 ---
 title: "upbm: Pre-Processing Details"
-author: Patrick K. Kimes
+author: "Patrick K. Kimes"
 date: "`r BiocStyle::doc_date()`"
 package: "`r BiocStyle::pkg_ver('upbm')`"
 output:
@@ -14,8 +14,6 @@ vignette: >
   %\VignetteIndexEntry{upbm: pre-processing}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
-editor_options: 
-  chunk_output_type: console
 ---
 
 ```{r echo=FALSE, include=FALSE}
