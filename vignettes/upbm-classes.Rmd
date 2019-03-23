@@ -28,8 +28,7 @@ knitr::opts_chunk$set(tidy = FALSE, cache = TRUE, dev = "png",
 For an introduction to the *upbm* package, please see the quick start vignette (*upbm: Analysis of Protein Binding Microarrays in R*). Here, we provide details on the two classes introduced in the package, _PBMDesign_ and _PBMExperiment_. The _PBMDesign_ class acts as a container for protein binding microarray (PBM) array design information, while the _PBMExperiment_ class serves as the container for PBM experimental data. 
 
 ```{r}
-##suppressPackageStartupMessages(library("upbm"))
-devtools::load_all()
+suppressPackageStartupMessages(library("upbm"))
 ```
 
 _PBMDesign_ objects for standard universial PBM (uPBM) designs are included in the _upbmAux_ package. Additionally, example _PBMExperiment_ objects are included in the _upbmData_ package for a series of uPBM experiments with the HOXC9 transcription factor. We use these objects to help illustrate the simple structure of each class.
@@ -216,6 +215,13 @@ Alternatively, a new _PBMExperiment_ object can be constructed from existing _Su
 
 ```{r pbme-as-se}
 se <- SummarizedExperiment(hoxc9alexa)
+se
+```
+
+Notice that the probe annotations are still kept in the row metadata. We can additionally remove this if we would like.
+
+```{r se-drop-rowdata}
+rowData(se) <- NULL
 se
 ```
 
