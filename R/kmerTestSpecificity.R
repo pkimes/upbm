@@ -59,11 +59,11 @@ kmerTestSpecificity <- function(se, span = 0.05, ...) {
     kmers <- rowData(se)$seq
 
     ## gather data
-    cmean <- broom::tidy(se, "contrastAverage", long = TRUE, .filter = 0L)
+    cmean <- broom::tidy(se, "contrastAverage", long = TRUE)
     cmean <- dplyr::select(cmean, seq, condition = cname, contrastAverage = value)
-    cdiff <- broom::tidy(se, "contrastDifference", long = TRUE, .filter = 0L)
+    cdiff <- broom::tidy(se, "contrastDifference", long = TRUE)
     cdiff <- dplyr::select(cdiff, seq, condition = cname, contrastDifference = value)
-    cvar <- broom::tidy(se, "contrastVariance", long = TRUE, .filter = 0L)
+    cvar <- broom::tidy(se, "contrastVariance", long = TRUE)
     cvar <- dplyr::select(cvar, seq, condition = cname, contrastVariance = value)
     
     cdat <- dplyr::left_join(cmean, cdiff, by = c("condition", "seq"))
