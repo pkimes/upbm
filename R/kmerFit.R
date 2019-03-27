@@ -363,6 +363,11 @@ kmerFit <- function(pe, kmers = uniqueKmers(8L), positionbias = TRUE,
     rdat <- rdat[match(kmers, rdat$seq), ]
 
     se <- SummarizedExperiment(assays = assaylist, rowData = rdat)
+
+    if (contrasts) {
+        metadata(se)$baseline <- baseline
+    }
+    
     if (verbose) {
         cat("|| - Finished k-mer probe set model fitting.\n")
         cat("|| - Returning SummarizedExperiment with", nrow(se), "rows and", ncol(se), "columns.\n")
