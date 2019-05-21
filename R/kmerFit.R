@@ -201,7 +201,8 @@ kmerFit <- function(pe, kmers = uniqueKmers(8L), positionbias = TRUE,
         ## create table of adjusted beta estimates, samples as cols (so slow..)
         bdat_beta <- dplyr::select(bdat, seq, pos, probeID, sample, value)
         bdat_beta <- tidyr::spread(bdat_beta, sample, value)
-
+        bdat_beta <- dplyr::select(bdat_beta, seq, pos, probeID, dplyr::one_of(colnames(pe)))
+        
         ## ## create table of adjusted beta estimates, samples as cols (so slow..)
         ## bdat_pbias <- dplyr::select(bdat, seq, pos, ID, sample, value)
         ## bdat_pbias <- tidyr::spread(bdat_pbias, sample, value)
@@ -217,11 +218,12 @@ kmerFit <- function(pe, kmers = uniqueKmers(8L), positionbias = TRUE,
 
     ## extract consistent table columns
     rowdat <- dplyr::select(bdat_beta, -dplyr::one_of(colnames(pe)))
-
+    
     ## create table of sd estimates, samples as cols
     bdat_sd <- broom::tidy(pe, "sd", long = FALSE)
     bdat_sd <- dplyr::select(bdat_sd, -dplyr::one_of(setdiff(names(rowData(pe)), "probeID")))
     bdat_sd <- dplyr::left_join(rowdat, bdat_sd, by = "probeID")
+    bdat_sd <- dplyr::select(bdat_sd, seq, pos, probeID, dplyr::one_of(colnames(pe)))
     bdat_sd <- dplyr::arrange(bdat_sd, seq, probeID, pos)
 
     ## turn beta, sd values into tall table and join
