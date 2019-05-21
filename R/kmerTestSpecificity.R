@@ -23,6 +23,9 @@
 #' @param se SummarizedExperiment of k-mer results from \code{kmerFit}.
 #' @param span span parameter to be passed to \code{limma::loessFit}.
 #'        (default = 0.05)
+#' @param useref logical value whether to fit specificity trend as function of
+#'        reference intensities rather than the average of reference and
+#'        variant intensities. (defualt = FALSE)
 #' @param ... other parameters to pass to \code{limma::loessFit}.
 #' 
 #' @return
@@ -47,7 +50,7 @@
 #' @importFrom tidyr nest unnest
 #' @export
 #' @author Patrick Kimes
-kmerTestSpecificity <- function(se, span = 0.05, ...) {
+kmerTestSpecificity <- function(se, span = 0.05, useref = FALSE, ...) {
 
     stopifnot(is(se, "SummarizedExperiment"))
     if (!all(c("contrastAverage", "contrastDifference", "contrastVariance") %in%
@@ -65,14 +68,29 @@ kmerTestSpecificity <- function(se, span = 0.05, ...) {
     cdiff <- dplyr::select(cdiff, seq, condition = cname, contrastDifference = value)
     cvar <- broom::tidy(se, "contrastVariance", long = TRUE)
     cvar <- dplyr::select(cvar, seq, condition = cname, contrastVariance = value)
-    
-    cdat <- dplyr::left_join(cmean, cdiff, by = c("condition", "seq"))
+
+    cdat <- dplyr::left_join(cdiff, cmean, by = c("condition", "seq"))
     cdat <- dplyr::left_join(cdat, cvar, by = c("condition", "seq"))
 
+    ## use either average between ref/var or just ref as x-axis of trend
+    if (useref) {
+        bl <- metadata(se)$baseline
+        if (is.null(bl)) {
+            bl <- grep("-REF$", colnames(se), value = TRUE)
+        }
+        
+        caxis <- broom::tidy(se, "affinityEstimate", long = TRUE)
+        caxis <- dplyr::filter(caxis, cname == bl)
+        caxis <- dplyr::select(caxis, seq, specificityAxis = value)
+        cdat <- dplyr::left_join(cdat, caxis, by = "seq")
+    } else {
+        cdat <- dplyr::mutate(cdat, specificityAxis = contrastAverage)
+    }
+        
     cdat <- tidyr::nest(cdat, -condition)
     cdat <- dplyr::mutate(cdat,
                           fit = lapply(data, function(x) {
-                              limma::loessFit(x$contrastDifference, x$contrastAverage,
+                              limma::loessFit(x$contrastDifference, x$specificityAxis,
                                               span = span, ...)
                           }),
                           data = mapply(function(x, y) {
@@ -98,7 +116,8 @@ kmerTestSpecificity <- function(se, span = 0.05, ...) {
                       contrastResidual = .tidycol2mat(cdat, "contrastResidual", kmers, colnames(se)),
                       specificityZ = .tidycol2mat(cdat, "specificityZ", kmers, colnames(se)),
                       specificityP = .tidycol2mat(cdat, "specificityP", kmers, colnames(se)),
-                      specificityQ = .tidycol2mat(cdat, "specificityQ", kmers, colnames(se)))
+                      specificityQ = .tidycol2mat(cdat, "specificityQ", kmers, colnames(se)),
+                      specificityAxis = .tidycol2mat(cdat, "specificityAxis", kmers, colnames(se)))
 
     rdat <- dplyr::select(cdat, seq)
     rdat <- rdat[match(kmers, rdat$seq), ]
