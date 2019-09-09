@@ -218,16 +218,16 @@ readGPR <- function(gpr_path, gpr_type, useMedian = TRUE, filterFlags = TRUE,
     colt <- rep("-", p)
     colt[c(2, 3)] <- 'i'
     if (filterFlags) {
-        colt[grep("\"Flags\"", header)] <- 'i'
+        colt[grep("^(\")?Flags(\")?$", header)] <- 'i'
     }
     
     ## column corresponding to intensities
     if (useMedian) {
-        fore_idx <- grep("^\"F.* Median\"$", header)
-        back_idx <- grep("^\"B.* Median\"$", header)
+        fore_idx <- grep("^(\")?F.* Median(\")?$", header)
+        back_idx <- grep("^(\")?B.* Median(\")?$", header)
     } else {
-        fore_idx <- grep("^\"F.* Mean\"$", header)
-        back_idx <- grep("^\"B.* Mean\"$", header)
+        fore_idx <- grep("^(\")?F.* Mean(\")?$", header)
+        back_idx <- grep("^(\")?B.* Mean(\")?$", header)
     }
     if (length(fore_idx) == 0) {
         stop("Foreground column could not be identified for the following file!\n",
