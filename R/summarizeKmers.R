@@ -37,7 +37,7 @@
 #' 
 #' @importFrom stats mad median
 #' @importFrom dplyr as_tibble mutate left_join select
-#' @importFrom tidyr nest
+#' @importFrom tidyr nest_legacy
 #' @importFrom matrixStats colMedians colMeans2 colSds colMads colQuantiles
 #' @export
 #' @author Patrick Kimes
@@ -89,7 +89,7 @@ summarizeKmers <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
     pdat <- dplyr::select(pdat, -(!! pe@probeCols))
     
     ## group by k-mer sequence
-    pdat_sets <- tidyr::nest(pdat, -seq)
+    pdat_sets <- tidyr::nest_legacy(pdat, -seq)
     pdat_samples <- names(pdat_sets$data[[1]])
     pdat_seqs <- pdat_sets$seq
     pdat_sets <- dplyr::mutate(pdat_sets, data = lapply(data, as.matrix))

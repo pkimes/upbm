@@ -66,7 +66,7 @@
 #'
 #' @importFrom SummarizedExperiment assay assayNames
 #' @importFrom dplyr filter left_join mutate as_tibble select summarize rename_all group_by ungroup funs desc
-#' @importFrom tidyr nest expand gather nesting
+#' @importFrom tidyr nest_legacy expand gather nesting
 #' @importFrom stats approx qqplot
 #' @export
 #' @author Patrick Kimes
@@ -157,7 +157,7 @@ normalizeAcrossReplicates <- function(pe, assay = SummarizedExperiment::assayNam
     
     ## compute scaling factors based on qq plot against references
     tab <- dplyr::filter(petidy, isBaseline)
-    tab <- tidyr::nest(tab, value)
+    tab <- tidyr::nest_legacy(tab, value)
     tab <- dplyr::left_join(tab, blref, by = "Stratify")
     
     ## (do the actual computing)
@@ -229,7 +229,7 @@ normalizeAcrossReplicates <- function(pe, assay = SummarizedExperiment::assayNam
             
             ## compute scaling factors based on qq plot against references
             itab <- dplyr::filter(ablref, is.na(sfactor))
-            itab <- tidyr::nest(itab, value)
+            itab <- tidyr::nest_legacy(itab, value)
             itab <- dplyr::left_join(itab, iblref, by = "Stratify")
 
             ## (do the actual computing)

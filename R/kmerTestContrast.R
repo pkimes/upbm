@@ -33,7 +33,6 @@
 #' @importFrom broom tidy
 #' @importFrom stats p.adjust pnorm
 #' @importFrom dplyr select group_by left_join ungroup mutate
-#' @importFrom tidyr nest unnest
 #' @export
 #' @author Patrick Kimes
 kmerTestContrast <- function(se) {

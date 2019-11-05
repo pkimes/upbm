@@ -78,7 +78,7 @@
 #' @seealso \code{\link{normalizeAcrossReplicates}}
 #' @importFrom stats quantile
 #' @importFrom dplyr as_tibble tibble mutate group_by filter do select ungroup left_join
-#' @importFrom tidyr gather spread nest
+#' @importFrom tidyr gather spread nest_legacy
 #' @importFrom rlang enquo quo_name
 #' @export
 #' @author Dongyuan Song, Patrick Kimes
@@ -186,7 +186,7 @@ normalizeWithinReplicates <- function(pe, assay = SummarizedExperiment::assayNam
         assay_fits <- dplyr::mutate(assay_fits,
                                     M.value = (log2(value) - log2(value.bl)),
                                     A.value = (log2(value) + log2(value.bl))/2)  
-        assay_fits <- tidyr::nest(assay_fits, -sample, -Stratify, -Group, -isBaseline)
+        assay_fits <- tidyr::nest_legacy(assay_fits, -sample, -Stratify, -Group, -isBaseline)
 
         assay_fits <- dplyr::mutate(assay_fits,
                                     withinRepScale = vapply(data, function(x) {

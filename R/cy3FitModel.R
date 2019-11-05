@@ -58,7 +58,7 @@
 #' @seealso \code{\link{cy3Normalize}}, \code{\link{cy3FitEmpirical}}
 #' @importFrom stats lm na.exclude predict
 #' @importFrom dplyr as_tibble select select_at bind_cols group_by do ungroup left_join mutate starts_with
-#' @importFrom tidyr gather spread
+#' @importFrom tidyr gather spread nest_legacy unnest_legacy
 #' @importFrom Biostrings DNAStringSet oligonucleotideFrequency
 #' @export
 #' @author Patrick Kimes
@@ -127,12 +127,12 @@ cy3FitModel <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
     pdat <- dplyr::ungroup(pdat)
 
     ## compute expected values
-    pexps <- dplyr::left_join(pfits, tidyr::nest(pdat, -condition), by = "condition")
+    pexps <- dplyr::left_join(pfits, tidyr::nest_legacy(pdat, -condition), by = "condition")
     pexps <- dplyr::mutate(pexps, preds = mapply(predict, object = fit, newdata = data,
                                                  SIMPLIFY = FALSE),
                            probecols = lapply(data, `[`, npe@probeCols))
     pexps <- dplyr::select(pexps, condition, preds, probecols)
-    pexps <- tidyr::unnest(pexps)
+    pexps <- tidyr::unnest_legacy(pexps)
     pexps <- tidyr::spread(pexps, condition, preds)
     
     ## compute ratios
@@ -172,12 +172,12 @@ cy3FitModel <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
         pdat <- dplyr::ungroup(pdat)
         
         ## re-compute expected values
-        pexps <- dplyr::left_join(pfits, tidyr::nest(pdat, -condition), by = "condition")
+        pexps <- dplyr::left_join(pfits, tidyr::nest_legacy(pdat, -condition), by = "condition")
         pexps <- dplyr::mutate(pexps, preds = mapply(predict, object = fit, newdata = data,
                                                      SIMPLIFY = FALSE),
                                probecols = lapply(data, `[`, npe@probeCols))
         pexps <- dplyr::select(pexps, condition, preds, probecols)
-        pexps <- tidyr::unnest(pexps)
+        pexps <- tidyr::unnest_legacy(pexps)
         pexps <- tidyr::spread(pexps, condition, preds)
 
         ## re-compute ratios

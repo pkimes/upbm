@@ -97,7 +97,7 @@
 #' 
 #' @seealso \code{\link{probeFit}}, \code{\link{uniqueKmers}}
 #' @importFrom dplyr select_ group_by left_join ungroup do mutate arrange one_of
-#' @importFrom tidyr unnest spread
+#' @importFrom tidyr unnest_legacy spread
 #' @importFrom stats qnorm
 #' @export
 #' @author Patrick Kimes
@@ -278,7 +278,7 @@ kmerFit <- function(pe, kmers = uniqueKmers(8L), positionbias = TRUE,
     }
 
     ## compute probe set mixed effects model for each k-mer and condition
-    adat <- tidyr::nest(adat, -condition, -seq)
+    adat <- tidyr::nest_legacy(adat, -condition, -seq)
     if (method == "dl") {
         if (verbose) {
             cat("|| - Estimating cross-probe variance using DerSimonian-Laird estimator.\n")

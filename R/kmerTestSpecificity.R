@@ -47,7 +47,7 @@
 #' @importFrom limma loessFit
 #' @importFrom stats p.adjust pnorm
 #' @importFrom dplyr select group_by left_join ungroup mutate
-#' @importFrom tidyr nest unnest
+#' @importFrom tidyr nest_legacy unnest_legacy
 #' @export
 #' @author Patrick Kimes
 kmerTestSpecificity <- function(se, span = 0.05, useref = FALSE, ...) {
@@ -87,7 +87,7 @@ kmerTestSpecificity <- function(se, span = 0.05, useref = FALSE, ...) {
         cdat <- dplyr::mutate(cdat, specificityAxis = contrastAverage)
     }
         
-    cdat <- tidyr::nest(cdat, -condition)
+    cdat <- tidyr::nest_legacy(cdat, -condition)
     cdat <- dplyr::mutate(cdat,
                           fit = lapply(data, function(x) {
                               limma::loessFit(x$contrastDifference, x$specificityAxis,
@@ -99,7 +99,7 @@ kmerTestSpecificity <- function(se, span = 0.05, useref = FALSE, ...) {
                               x
                           }, x = data, y = fit, SIMPLIFY = FALSE))
     cdat <- dplyr::select(cdat, -fit)
-    cdat <- tidyr::unnest(cdat)
+    cdat <- tidyr::unnest_legacy(cdat)
 
     ## compute z-scores, p-values, and adjusted p-values
     cdat <- dplyr::mutate(cdat, specificityZ = contrastResidual / sqrt(contrastVariance))

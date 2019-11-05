@@ -43,7 +43,7 @@
 #'
 #' @import SummarizedExperiment
 #' @importFrom tibble as_tibble
-#' @importFrom tidyr gather spread unnest
+#' @importFrom tidyr gather spread unnest_legacy
 #' @importFrom dplyr select mutate select_ do group_by left_join row_number
 #' @importFrom S4Vectors SimpleList
 #' @export
@@ -108,7 +108,7 @@ spatiallyAdjust <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
     
     ## finish unwrapping spatial adjustments
     med_intensity <- dplyr::mutate(med_intensity, spatialmedian = lapply(spatialmedian, `[[`, 1))
-    med_intensity <- tidyr::unnest(med_intensity)
+    med_intensity <- tidyr::unnest_legacy(med_intensity)
     
     ## join median deviations w/ original raw intensities, subtract
     sub_intensity <- dplyr::left_join(raw_intensity, med_intensity,

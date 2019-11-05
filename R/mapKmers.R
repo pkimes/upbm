@@ -20,7 +20,7 @@
 #' position (\code{pos}) of the k-mer in the probe. 
 #'
 #' @importFrom tibble tibble rownames_to_column
-#' @importFrom tidyr unnest
+#' @importFrom tidyr unnest_legacy
 #' @importFrom dplyr mutate filter bind_rows select left_join
 #' @importFrom Biostrings DNAStringSet reverseComplement
 #' @export
@@ -53,7 +53,7 @@ mapKmers <- function(pd, kmers) {
     rolls <- dplyr::mutate(rolls, pos = list(1:(seql - k + 1)))
 
     ## unnest and add reverse complement sequence
-    rolls <- tidyr::unnest(rolls)
+    rolls <- tidyr::unnest_legacy(rolls)
     rolls <- dplyr::mutate(rolls, rev_seq = as.character(Biostrings::reverseComplement(Biostrings::DNAStringSet(fwd_seq))))
     
     rolls_fwd <- dplyr::filter(rolls, fwd_seq %in% kmers)
