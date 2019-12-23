@@ -93,8 +93,8 @@ test_that("PBMExperiment constructor works", {
     ## - if PBMDesign specified, need to have non-empty assays
     expect_error(pe_pd <- PBMExperiment(pbmDesign = pbm_8x60k_v1))
 
-    ## test PBMExperiment -> SummarizedBechmark method
-    expect_silent(se_from_pe <- SummarizedExperiment(hoxc9alexa))
+    ## test coercion
+    expect_silent(se_from_pe <- as(hoxc9alexa, "SummarizedExperiment"))
     expect_is(se_from_pe, "SummarizedExperiment")
     expect_equal(assayNames(se_from_pe), assayNames(hoxc9alexa))
     expect_equal(dim(se_from_pe), dim(hoxc9alexa))
@@ -103,7 +103,7 @@ test_that("PBMExperiment constructor works", {
     expect_warning({pe_pd <- PBMExperiment(se_from_pe, pbmDesign = pbm_8x60k_v1)},
                    "will be overwritten")
     expect_is(pe_pd, "PBMExperiment")
-    expect_equal(pe_pd, hoxc9alexa)
+    expect_equivalent(pe_pd, hoxc9alexa)
 
     ## test behavior for constructing with SE and PBMDesign components
     expect_silent(pe_pdspecify <- PBMExperiment(se_from_pe,
@@ -111,7 +111,7 @@ test_that("PBMExperiment constructor works", {
                                                 probeTrim = pbm_8x60k_v1@probeTrim,
                                                 probeCols = colnames(pbm_8x60k_v1@design)))
     expect_is(pe_pdspecify, "PBMExperiment")
-    expect_equal(pe_pdspecify, hoxc9alexa)
+    expect_equivalent(pe_pdspecify, hoxc9alexa)
 
     ## test behavior for constructuing with SE components and PBMdesign
     expect_silent(pe_sespecifypd <- PBMExperiment(assays = assays(hoxc9alexa),

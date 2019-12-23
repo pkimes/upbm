@@ -10,7 +10,6 @@
 \alias{probeTrim<-}
 \alias{design<-,PBMDesign,data.frame-method}
 \alias{design,PBMDesign-method}
-\alias{SummarizedExperiment,PBMExperiment-method}
 \title{PBM slot accessors and setters}
 \usage{
 probeFilter(object)
@@ -26,8 +25,6 @@ probeTrim(object) <- value
 \S4method{design}{PBMDesign,data.frame}(object, ...) <- value
 
 \S4method{design}{PBMDesign}(object)
-
-\S4method{SummarizedExperiment}{PBMExperiment}(assays)
 }
 \arguments{
 \item{object}{a PBMDDesign or PBMExperiment object.}
@@ -36,9 +33,6 @@ probeTrim(object) <- value
 of object.}
 
 \item{...}{further arguments, perhaps used by methods.}
-
-\item{assays}{a PBMExperiment object. Only used for converting
-PBMExperiment to SummarizedExperiment object.}
 }
 \value{
 slot value for accessors, modified object for setters.

@@ -74,22 +74,6 @@ setMethod("design", signature(object = "PBMDesign"),
               object@design
           })
 
-
-#' @rdname PBMclass-accessors
-#'
-#' @param assays a PBMExperiment object. Only used for converting
-#'        PBMExperiment to SummarizedExperiment object.
-#' 
-#' @importMethodsFrom SummarizedExperiment SummarizedExperiment 
-#' @exportMethod "SummarizedExperiment"
-setMethod("SummarizedExperiment", signature(assays = "PBMExperiment"),
-          function(assays) {
-              se <- as(assays, "SummarizedExperiment")
-              validObject(se)
-              se
-          })
-
-
 #' @rdname PBMDesign-replace
 #' @exportMethod "PBMDesign<-"
 setReplaceMethod("PBMDesign",

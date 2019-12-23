@@ -212,7 +212,7 @@ All columns, aside from the `gpr` column, are included in the column metadata.
 Alternatively, a new _PBMExperiment_ object can be constructed from existing _SummarizedExperiment_ and _PBMDesign_ objects. To demonstrate this, we can coerce `hoxc9alexa` to a _SummarizedExperiment_ object, stripping away all _PBMExperiment_-specific information.
 
 ```{r pbme-as-se}
-se <- SummarizedExperiment(hoxc9alexa)
+se <- as(hoxc9alexa, "SummarizedExperiment")
 se
 ```
 
