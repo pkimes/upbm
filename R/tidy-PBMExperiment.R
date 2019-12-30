@@ -12,11 +12,14 @@
 #' 
 #' @param x a SummarizedExperiment object.
 #' @param assay a numeric index or string name specifying the assay to tidy.
+#'        If multiple assays are specified, assays will be combined
+#'        as separate columns.
 #'        (default = \code{SummarizedExperiment::assayNames(x)[1]})
 #' @param long a logical whether to transform data to long format and
 #'        include colData in output rather than default wide format with
 #'        dimension similar to original PBMExperiment object.
-#'        (default = FALSE)
+#'        Ignored and set to TRUE if \code{assay} specifies more than a
+#'        single assay. (default = FALSE)
 #' @param ... other parameters for the \code{tidy} generic function. 
 #'
 #' @return
@@ -24,7 +27,7 @@
 #' along with rowData and optionally colData.
 #'
 #' @name tidy-SummarizedExperiment
-#' @importFrom dplyr as_tibble bind_cols left_join
+#' @importFrom dplyr as_tibble bind_cols left_join n 
 #' @importFrom tibble rownames_to_column
 #' @importFrom tidyr gather
 #' @importFrom SummarizedExperiment assayNames assay
@@ -33,23 +36,38 @@
 #' @author Patrick Kimes
 tidy.SummarizedExperiment <- function(x, assay = SummarizedExperiment::assayNames(x)[1],
                                       long = FALSE, ...) {
+
+    assay <- match.arg(assay, SummarizedExperiment::assayNames(x),
+                       several.ok = TRUE)
+    
     ## extract row data
     rowdat <- as.data.frame(rowData(x), optional = TRUE)
     rowdat <- dplyr::as_tibble(rowdat)
     
     ## extract intensities
-    pdat <- SummarizedExperiment::assay(x, assay)
-    pdat <- as.data.frame(pdat, optional = TRUE)
-    pdat <- dplyr::as_tibble(pdat)
-    pdat <- dplyr::bind_cols(pdat, rowdat)
+    pdat <- lapply(assay, SummarizedExperiment::assay, x = x)
+    names(pdat) <- assay
+    pdat <- lapply(pdat, as.data.frame, optional = TRUE)
+    pdat <- lapply(pdat, dplyr::as_tibble)
+    pdat[[1]] <- dplyr::bind_cols(pdat[[1]], rowdat)
+    
+    if (long || length(assay) > 1) {
+        ## combine assays
+        pdat <- lapply(pdat, dplyr::mutate, `__rowid` = 1:dplyr::n())
+        pdat <- lapply(pdat, tidyr::gather, cname, value, colnames(x))
+        pdat <- mapply(function(tib, nam) {
+            dplyr::rename(tib, !! nam := value)
+        }, tib = pdat, nam = names(pdat), SIMPLIFY = FALSE) 
+        pdat <- purrr::reduce(pdat, dplyr::left_join,
+                              by = c("cname", "__rowid"))
+        pdat <- dplyr::select(pdat, -`__rowid`)
 
-    if (long) {
         ## extract column data
         coldat <- as.data.frame(colData(x), optional = TRUE)
         coldat <- tibble::rownames_to_column(coldat, "cname")
-
-        pdat <- tidyr::gather(pdat, cname, value, colnames(x))
         pdat <- dplyr::left_join(pdat, coldat, by = "cname")
+    } else {
+        pdat <- pdat[[1]]
     }
     
     return(pdat)
@@ -105,3 +123,4 @@ tidy.PBMExperiment <- function(x, assay = SummarizedExperiment::assayNames(x)[1]
     ## treat as regular SummarizedExperiment
     tidy.SummarizedExperiment(x, assay, long, ...)
 }
+

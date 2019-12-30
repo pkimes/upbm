@@ -12,12 +12,15 @@
 \item{x}{a SummarizedExperiment object.}
 
 \item{assay}{a numeric index or string name specifying the assay to tidy.
+If multiple assays are specified, assays will be combined
+as separate columns.
 (default = \code{SummarizedExperiment::assayNames(x)[1]})}
 
 \item{long}{a logical whether to transform data to long format and
 include colData in output rather than default wide format with
 dimension similar to original PBMExperiment object.
-(default = FALSE)}
+Ignored and set to TRUE if \code{assay} specifies more than a
+single assay. (default = FALSE)}
 
 \item{...}{other parameters for the \code{tidy} generic function.}
 }
