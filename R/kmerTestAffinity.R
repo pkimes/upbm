@@ -49,12 +49,8 @@ kmerTestAffinity <- function(se) {
     kmers <- rowData(se)$seq
 
     ## gather data
-    aest <- broom::tidy(se, "affinityEstimate", long = TRUE)
-    aest <- dplyr::select(aest, seq, condition = cname, affinityEstimate = value)
-    avar <- broom::tidy(se, "affinityVariance", long = TRUE)
-    avar <- dplyr::select(avar, seq, condition = cname, affinityVariance = value)
-
-    adat <- dplyr::left_join(aest, avar, by = c("condition", "seq"))
+    adat <- broom::tidy(se, c("affinityEstimate", "affinityVariance"))
+    adat <- dplyr::rename(cdat, condition = cname)
     
     adat <- tidyr::nest_legacy(adat, -condition)
     adat <- dplyr::mutate(adat,

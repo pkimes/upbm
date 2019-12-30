@@ -47,12 +47,8 @@ kmerTestContrast <- function(se) {
     kmers <- rowData(se)$seq
 
     ## gather data
-    cdiff <- broom::tidy(se, "contrastDifference", long = TRUE)
-    cdiff <- dplyr::select(cdiff, seq, condition = cname, contrastDifference = value)
-    cvar <- broom::tidy(se, "contrastVariance", long = TRUE)
-    cvar <- dplyr::select(cvar, seq, condition = cname, contrastVariance = value)
-    
-    cdat <- dplyr::left_join(cdiff, cvar, by = c("condition", "seq"))
+    cdat <- broom::tidy(se, c("contrastDifference", "contrastVariance"))
+    cdat <- dplyr::rename(cdat, condition = cname)
 
     ## compute z-scores, p-values, and adjusted p-values
     cdat <- dplyr::mutate(cdat, contrastZ = contrastDifference / sqrt(contrastVariance))

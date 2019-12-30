@@ -62,15 +62,8 @@ kmerTestSpecificity <- function(se, span = 0.05, useref = FALSE, ...) {
     kmers <- rowData(se)$seq
 
     ## gather data
-    cmean <- broom::tidy(se, "contrastAverage", long = TRUE)
-    cmean <- dplyr::select(cmean, seq, condition = cname, contrastAverage = value)
-    cdiff <- broom::tidy(se, "contrastDifference", long = TRUE)
-    cdiff <- dplyr::select(cdiff, seq, condition = cname, contrastDifference = value)
-    cvar <- broom::tidy(se, "contrastVariance", long = TRUE)
-    cvar <- dplyr::select(cvar, seq, condition = cname, contrastVariance = value)
-
-    cdat <- dplyr::left_join(cdiff, cmean, by = c("condition", "seq"))
-    cdat <- dplyr::left_join(cdat, cvar, by = c("condition", "seq"))
+    cdat <- broom::tidy(se, c("contrastAverage", "contrastDifference", "contrastVariance"))
+    cdat <- dplyr::rename(cdat, condition = cname)
 
     ## use either average between ref/var or just ref as x-axis of trend
     if (useref) {
