@@ -13,11 +13,14 @@
 #' @param assay a string name of the assay to use for fitting probe models.
 #'        (default = \code{SummarizedExperiment::assayNames(pe)[1]})
 #' @param stratify a character string specifying a column in \code{colData(pe)} to
-#'        use for grouping samples, e.g. into . (default = \code{"condition"})
+#'        use for grouping samples, e.g. into alleles. (default = \code{"condition"})
+#' @param guardrail a logical value whether to stop function if any sample appears
+#'        to be of clearly low quality. Currently, this only checks for whether
+#'        more than 20% of probes in any sample are NA. If any criteria is met,
+#'        an error will be returned. (default = TRUE)
 #' @param offset an integer offset to add to intensities before log2 scaling to
 #'        prevent errors with zero intensities. If set to 0, probes with
 #'        zero intensities are dropped/ignored in estimation. (default = 1)
-#'        reference samples. (default = FALSE)
 #' @param verbose a logical value whether to print verbose output during analysis. (default = FALSE)
 #' @param ... additional parameters to be passed to \code{limma::eBayes}. See
 #'        Details for default parameters used in this function as they differ from
@@ -57,7 +60,8 @@
 #' @export
 #' @author Patrick Kimes
 probeFit <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
-                     stratify = "condition", offset = 1L, verbose = FALSE, ...) {
+                     stratify = "condition", guardrail = TRUE,
+                     offset = 1L, verbose = FALSE, ...) {
 
     stopifnot(is(pe, "PBMExperiment"))
     stopifnot(assay %in% SummarizedExperiment::assayNames(pe))
@@ -90,6 +94,19 @@ probeFit <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
     datp <- SummarizedExperiment::assay(pe, assay)
     datp <- log2(as.matrix(datp) + offset)
     datp[is.infinite(datp)] <- NA
+
+    ## apply guardrails checks
+    if (guardrail) {
+        gr_nna <- colMeans(is.finite(datp))
+        n_nna <- sum(gr_nna < .80)
+        if (n_nna > 0L) {
+            stop(paste0(ifelse(verbose, "|| - ", ""), "Data includes ", n_nna,
+                        " samples with more than 20% of probes having non-finite",
+                        " values.\n",
+                        ifelse(verbose, "|| - ", ""), "columns: ",
+                        paset0(colnames(datp)[gr_nna < .80], collapse = ", "), "."))
+        }
+    }
     
     ## check if any probes have no non-NA values, drop from limma testing
     nProbes <- nrow(datp)

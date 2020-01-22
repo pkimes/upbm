@@ -5,7 +5,8 @@
 \title{Fit probe models}
 \usage{
 probeFit(pe, assay = SummarizedExperiment::assayNames(pe)[1],
-  stratify = "condition", offset = 1L, verbose = FALSE, ...)
+  stratify = "condition", guardrail = TRUE, offset = 1L,
+  verbose = FALSE, ...)
 }
 \arguments{
 \item{pe}{a PBMExperiment object containing PBM intensity data.}
@@ -14,12 +15,16 @@ probeFit(pe, assay = SummarizedExperiment::assayNames(pe)[1],
 (default = \code{SummarizedExperiment::assayNames(pe)[1]})}
 
 \item{stratify}{a character string specifying a column in \code{colData(pe)} to
-use for grouping samples, e.g. into . (default = \code{"condition"})}
+use for grouping samples, e.g. into alleles. (default = \code{"condition"})}
+
+\item{guardrail}{a logical value whether to stop function if any sample appears
+to be of clearly low quality. Currently, this only checks for whether
+more than 20% of probes in any sample are NA. If any criteria is met,
+an error will be returned. (default = TRUE)}
 
 \item{offset}{an integer offset to add to intensities before log2 scaling to
 prevent errors with zero intensities. If set to 0, probes with
-zero intensities are dropped/ignored in estimation. (default = 1)
-reference samples. (default = FALSE)}
+zero intensities are dropped/ignored in estimation. (default = 1)}
 
 \item{verbose}{a logical value whether to print verbose output during analysis. (default = FALSE)}
 
