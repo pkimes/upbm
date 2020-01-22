@@ -74,7 +74,7 @@ kmerTestSpecificity <- function(se, span = 0.05, useref = FALSE, ...) {
         
         caxis <- broom::tidy(se, "affinityEstimate", long = TRUE)
         caxis <- dplyr::filter(caxis, cname == bl)
-        caxis <- dplyr::select(caxis, seq, specificityAxis = value)
+        caxis <- dplyr::select(caxis, seq, specificityAxis = affinityEstimate)
         cdat <- dplyr::left_join(cdat, caxis, by = "seq")
     } else {
         cdat <- dplyr::mutate(cdat, specificityAxis = contrastAverage)

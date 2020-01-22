@@ -40,7 +40,7 @@
 #'
 #' @export
 #' @importFrom stats mad median sd
-#' @importFrom dplyr group_by group_by_at mutate ungroup summarize left_join select
+#' @importFrom dplyr group_by group_by_at mutate ungroup summarize left_join select rename
 #' @author Patrick Kimes
 cy3GenerateRef <- function(cy3pe, assay = SummarizedExperiment::assayNames(cy3pe)[1],
                            offset = 1L, register = TRUE) {
@@ -56,6 +56,7 @@ cy3GenerateRef <- function(cy3pe, assay = SummarizedExperiment::assayNames(cy3pe
     
     ## tidy scan data for parsing
     cy3vals <- broom::tidy(cy3pe, assay, long = TRUE)
+    cy3vals <- dplyr::rename(cy3vals, "value" = !! assay)
     
     ## scale scans
     if (register) {
