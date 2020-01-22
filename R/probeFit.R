@@ -100,11 +100,12 @@ probeFit <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
         gr_nna <- colMeans(is.finite(datp))
         n_nna <- sum(gr_nna < .80)
         if (n_nna > 0L) {
-            stop(paste0(ifelse(verbose, "|| - ", ""), "Data includes ", n_nna,
-                        " samples with more than 20% of probes having non-finite",
+            stop(paste0("- Data includes ", n_nna,
+                        " ", ifelse(n_nna > 1L, "samples", "sample"),
+                        " with more than 20% of probes having non-finite",
                         " values.\n",
-                        ifelse(verbose, "|| - ", ""), "columns: ",
-                        paset0(colnames(datp)[gr_nna < .80], collapse = ", "), "."))
+                        " - ", ielse(n_nna > 1L, "columns", "column"), ": ",
+                        paste0(colnames(datp)[gr_nna < .80], collapse = ", "), "."))
         }
     }
     
