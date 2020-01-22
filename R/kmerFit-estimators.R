@@ -36,6 +36,16 @@
 #' @keywords internal
 #' @author Patrick Kimes
 dl_estimator <- function(Y, vi, k) {
+    if (k == 0L) {
+        return(list(betaFE = NA, varFE = NA,
+                    betaME = NA, varME = NA,
+                    tau2 = NA))
+    } else if (k == 1L) {
+        return(list(betaFE = Y, varFE = vi,
+                    betaME = Y, varME = vi,
+                    tau2 = 0))
+    }
+    
     X     <- rep(1, k)
     p     <- 1
     
@@ -96,10 +106,20 @@ dl_estimator <- function(Y, vi, k) {
 #' @keywords internal
 #' @author Patrick Kimes
 dl2_estimator <- function(Y, vi, k) {
+    if (k == 0L) {
+        return(list(betaFE = NA, varFE = NA,
+                    betaME = NA, varME = NA,
+                    tau2 = NA))
+    } else if (k == 1L) {
+        return(list(betaFE = Y, varFE = vi,
+                    betaME = Y, varME = vi,
+                    tau2 = 0))
+    }
+    
     X   <- rep(1, k)
     p   <- 1
     res <- dl_estimator(Y, vi, k)
-    
+
     wi    <- 1 / (vi + res$tau2)
     W     <- diag(wi, nrow = k, ncol = k)
     stXWX <- .invcalc(X = X, W = W, k = k)
@@ -113,7 +133,7 @@ dl2_estimator <- function(Y, vi, k) {
 
     betaFE  <- as.numeric(stXWX_tXW %*% Y)
     varFE <- 1 / sum(wi)
-    
+
     if (tau2 > 0) {
         W_     <- diag(1 / (vi + tau2), nrow = k, ncol = k)
         M_     <- diag(vi + tau2, nrow = k, ncol = k)
