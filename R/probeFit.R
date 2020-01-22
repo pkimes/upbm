@@ -114,7 +114,7 @@ probeFit <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
     fit <- purrr::quietly(limma::lmFit)(datp, coldat)
     if (verbose && (length(fit$warnings) > 0L)) {
         for (i in seq_len(length(fit$warnings))) {
-            cat("|| -", fit$warnings[i], "\n")
+            cat("|| -[limma::lmFit]", fit$warnings[i], "\n")
         }
     }
     fit <- fit$result
