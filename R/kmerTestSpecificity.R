@@ -9,20 +9,22 @@
 #' assessing the statistical significance of deviations from a common trend
 #' of k-mer affinities observed between conditions.
 #'
-#' For each condition, the common trend is estimated by fitting a LOESS curve
-#' to the corresponding columns of the \code{"contrastAverage"} (x) and
-#' \code{"contrastDifference"} (y) assays of the input SummarizedExperiment object.
+#' For each condition, the common trend is estimated by fitting either a LOESS curve
+#' or B-spline smoother to the corresponding columns of the \code{"contrastAverage"} (x)
+#' and \code{"contrastDifference"} (y) assays of the input SummarizedExperiment object.
 #' Then, the difference between the observed differential affinity and the
-#' LOESS-estimated specificity trend is taken as the estimate of differential
-#' specificity.
+#' estimated trend is taken as the estimate of differential specificity.
 #'
 #' @description
 #' After estimating k-mer level affinities using probe-set aggregate, this
 #' function tests for differential specificity between conditions. 
 #'
 #' @param se SummarizedExperiment of k-mer results from \code{kmerFit}.
-#' @param span span parameter to be passed to \code{limma::loessFit}.
-#'        (default = 0.05)
+#' @param method string value specifying method to use for fitting
+#'        specificity trend. Must be one of \code{"bs"} or \code{"loess"}.
+#'        (default = "bs")
+#' @param span span parameter to be passed to \code{limma::loessFit}. Only
+#'        used when \code{method = "loess"}. (default = 0.05)
 #' @param useref logical value whether to fit specificity trend as function of
 #'        reference intensities rather than the average of reference and
 #'        variant intensities. (defualt = FALSE)
@@ -43,14 +45,15 @@
 #' \item \code{"specificityQ"}: FDR-controlling Benjamini-Hochberg adjusted p-values.
 #' }
 #'
+#' @importFrom splines bs
 #' @importFrom broom tidy
 #' @importFrom limma loessFit
 #' @importFrom stats p.adjust pnorm
-#' @importFrom dplyr select group_by left_join ungroup mutate
+#' @importFrom dplyr select group_by left_join ungroup mutate as_tibble
 #' @importFrom tidyr nest_legacy unnest_legacy
 #' @export
 #' @author Patrick Kimes
-kmerTestSpecificity <- function(se, span = 0.05, useref = FALSE, ...) {
+kmerTestSpecificity <- function(se, method = c("bs", "loess"), span = 0.05, useref = FALSE, ...) {
 
     stopifnot(is(se, "SummarizedExperiment"))
     if (!all(c("contrastAverage", "contrastDifference", "contrastVariance") %in%
@@ -58,7 +61,8 @@ kmerTestSpecificity <- function(se, span = 0.05, useref = FALSE, ...) {
         stop("Input SummarizedExperiment is missing k-mer contrast estimates.\n",
              "SummarizedExperiment should be created by calling kmerFit(..) with 'contrasts=TRUE'.")
     }
-
+    method <- match.arg(method)
+    
     kmers <- rowData(se)$seq
 
     ## gather data
@@ -79,19 +83,37 @@ kmerTestSpecificity <- function(se, span = 0.05, useref = FALSE, ...) {
     } else {
         cdat <- dplyr::mutate(cdat, specificityAxis = contrastAverage)
     }
-        
+    
     cdat <- tidyr::nest_legacy(cdat, -condition)
-    cdat <- dplyr::mutate(cdat,
-                          fit = lapply(data, function(x) {
-                              limma::loessFit(x$contrastDifference, x$specificityAxis,
-                                              span = span, ...)
-                          }),
-                          data = mapply(function(x, y) {
-                              x$contrastFit <- y$fitted
-                              x$contrastResidual <- y$residuals
-                              x
-                          }, x = data, y = fit, SIMPLIFY = FALSE))
-    cdat <- dplyr::select(cdat, -fit)
+
+    if (method == "loess") {
+        cdat <- dplyr::mutate(cdat,
+                              data = lapply(data, function(x) {
+                                  fit <- limma::loessFit(x$contrastDifference, x$specificityAxis,
+                                                         span = span, ...)
+                                  x$contrastFit <- fit$fitted
+                                  x$contrastResidual <- fit$residuals
+                                  x
+                              }))
+    } else if (method == "bs") {
+        cdat <- dplyr::mutate(cdat,
+                              data = lapply(data, function(x) {
+                                  if (all(is.na(x$contrastDifference))) {
+                                      x$contrastFit <- NA
+                                      x$contrastResidual <- NA
+                                  } else {
+                                      xknot <- min(x$specificityAxis, na.rm = TRUE) +
+                                          diff(range(x$specificityAxis, na.rm = TRUE)) / 2
+                                      xns <- splines::bs(x$specificityAxis, knots = xknot,
+                                                         degree = 3, intercept = FALSE)
+                                      fit <- lm.fit(x = xns, y = x$contrastDifference)
+                                      x$contrastFit <- fit$fitted.values
+                                      x$contrastResidual <- fit$residuals
+                                  }
+                                  x
+                              }))
+    }
+    
     cdat <- tidyr::unnest_legacy(cdat)
 
     ## compute z-scores, p-values, and adjusted p-values

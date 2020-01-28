@@ -4,13 +4,18 @@
 \alias{kmerTestSpecificity}
 \title{Test for k-mer differential specificities}
 \usage{
-kmerTestSpecificity(se, span = 0.05, useref = FALSE, ...)
+kmerTestSpecificity(se, method = c("bs", "loess"), span = 0.05,
+  useref = FALSE, ...)
 }
 \arguments{
 \item{se}{SummarizedExperiment of k-mer results from \code{kmerFit}.}
 
-\item{span}{span parameter to be passed to \code{limma::loessFit}.
-(default = 0.05)}
+\item{method}{string value specifying method to use for fitting
+specificity trend. Must be one of \code{"bs"} or \code{"loess"}.
+(default = "bs")}
+
+\item{span}{span parameter to be passed to \code{limma::loessFit}. Only
+used when \code{method = "loess"}. (default = 0.05)}
 
 \item{useref}{logical value whether to fit specificity trend as function of
 reference intensities rather than the average of reference and
@@ -42,12 +47,11 @@ k-mer affinities across conditions. Therefore, differential specificity is teste
 assessing the statistical significance of deviations from a common trend
 of k-mer affinities observed between conditions.
 
-For each condition, the common trend is estimated by fitting a LOESS curve
-to the corresponding columns of the \code{"contrastAverage"} (x) and
-\code{"contrastDifference"} (y) assays of the input SummarizedExperiment object.
+For each condition, the common trend is estimated by fitting either a LOESS curve
+or B-spline smoother to the corresponding columns of the \code{"contrastAverage"} (x)
+and \code{"contrastDifference"} (y) assays of the input SummarizedExperiment object.
 Then, the difference between the observed differential affinity and the
-LOESS-estimated specificity trend is taken as the estimate of differential
-specificity.
+estimated trend is taken as the estimate of differential specificity.
 
 After estimating k-mer level affinities using probe-set aggregate, this
 function tests for differential specificity between conditions.
