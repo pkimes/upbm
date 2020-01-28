@@ -50,7 +50,7 @@ kmerTestAffinity <- function(se) {
 
     ## gather data
     adat <- broom::tidy(se, c("affinityEstimate", "affinityVariance"))
-    adat <- dplyr::rename(cdat, condition = cname)
+    adat <- dplyr::rename(adat, condition = cname)
     
     adat <- tidyr::nest_legacy(adat, -condition)
     adat <- dplyr::mutate(adat,
