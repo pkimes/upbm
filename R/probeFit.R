@@ -16,7 +16,7 @@
 #'        use for grouping samples, e.g. into alleles. (default = \code{"condition"})
 #' @param guardrail a logical value whether to stop function if any sample appears
 #'        to be of clearly low quality. Currently, this only checks for whether
-#'        more than 20% of probes in any sample are NA. If any criteria is met,
+#'        more than 20\% of probes in any sample are NA. If any criteria is met,
 #'        an error will be returned. (default = TRUE)
 #' @param offset an integer offset to add to intensities before log2 scaling to
 #'        prevent errors with zero intensities. If set to 0, probes with
