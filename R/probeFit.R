@@ -104,7 +104,7 @@ probeFit <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
                         " ", ifelse(n_nna > 1L, "samples", "sample"),
                         " with more than 20% of probes having non-finite",
                         " values.\n",
-                        " - ", ielse(n_nna > 1L, "columns", "column"), ": ",
+                        " - ", ifelse(n_nna > 1L, "columns", "column"), ": ",
                         paste0(colnames(datp)[gr_nna < .80], collapse = ", "), "."))
         }
     }
