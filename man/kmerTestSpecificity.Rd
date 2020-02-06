@@ -5,7 +5,7 @@
 \title{Test for k-mer differential specificities}
 \usage{
 kmerTestSpecificity(se, method = c("bs", "loess"), span = 0.05,
-  useref = FALSE, ...)
+  useref = TRUE, ...)
 }
 \arguments{
 \item{se}{SummarizedExperiment of k-mer results from \code{kmerFit}.}
@@ -19,7 +19,7 @@ used when \code{method = "loess"}. (default = 0.05)}
 
 \item{useref}{logical value whether to fit specificity trend as function of
 reference intensities rather than the average of reference and
-variant intensities. (defualt = FALSE)}
+variant intensities. (defualt = TRUE)}
 
 \item{...}{other parameters to pass to \code{limma::loessFit}.}
 }

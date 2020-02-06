@@ -27,7 +27,7 @@
 #'        used when \code{method = "loess"}. (default = 0.05)
 #' @param useref logical value whether to fit specificity trend as function of
 #'        reference intensities rather than the average of reference and
-#'        variant intensities. (defualt = FALSE)
+#'        variant intensities. (defualt = TRUE)
 #' @param ... other parameters to pass to \code{limma::loessFit}.
 #' 
 #' @return
@@ -53,7 +53,7 @@
 #' @importFrom tidyr nest_legacy unnest_legacy
 #' @export
 #' @author Patrick Kimes
-kmerTestSpecificity <- function(se, method = c("bs", "loess"), span = 0.05, useref = FALSE, ...) {
+kmerTestSpecificity <- function(se, method = c("bs", "loess"), span = 0.05, useref = TRUE, ...) {
 
     stopifnot(is(se, "SummarizedExperiment"))
     if (!all(c("contrastAverage", "contrastDifference", "contrastVariance") %in%
