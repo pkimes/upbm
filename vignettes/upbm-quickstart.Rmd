@@ -33,7 +33,7 @@ This package provides tools and methods for reading, processing, and analyzing P
 suppressPackageStartupMessages(library("upbm"))
 ```
 
-In this quickstart guide, we demonstrate the basic functionality of the *upbm* package. More details on the individual steps for pre-processing and inference, as well as the specialized classes (*PBMExperiment* and *PBMDesign*) are provided in other vignettes.
+In this quickstart guide, we demonstrate the basic functionality of the *upbm* package. More details on the individual steps for pre-processing and inference, as well as the specialized classes (*PBMExperiment* and *PBMDesign*) are provided in other vignettes (`vignette("upbm-classes")`).
 
 # HOXC9 Dataset
 
@@ -51,33 +51,28 @@ alexa_subset <- alexa_subset[, colData(alexa_subset)$condition %in%
                                                     c("HOXC9-REF", "HOXC9-R222W")]
 ```
 
-The data is stored as a *PBMExperiment* object, which extends the standard Bioconductor *SummarizedExperiment* class. Each array is stored as a column, with rows corresponding to probes on the array.
+The data is stored as a *PBMExperiment* object, which extends the standard Bioconductor *SummarizedExperiment* class. Each sample is stored as a column, with rows corresponding to probes on the array.
 
 ```{r quick-show-hoxc9}
 alexa_subset
 ```
 
-# Quickstart
+# Sample Pre-processing
 
-Analysis of uPBM data is performed in three steps: sample pre-processing, 8-mer summarization, and 8-mer inference.
-
-## Sample Pre-processing
-
-First, samples are preprocessed using `upbm::upbmPreprocess`. This wrapper functions performs various pre-processing steps, including Cy3 normalization. In this quickstart, we will not be using Cy3 scans and instead set the `cy3pe=` option to `NULL`. 
+Analysis of uPBM data is performed in three steps: sample pre-processing, 8-mer summarization, and 8-mer inference. First, samples are preprocessed using `upbm::upbmPreprocess`. This wrapper functions performs various pre-processing steps, including Cy3 normalization. In this quickstart, we will not be using Cy3 scans and instead set the `cy3pe=` option to `NULL`.  We also silence verbose output here.
 
 ```{r quick-normalize}
-alexa_normed <- upbmPreprocess(pe = alexa_subset, cy3pe = NULL)
+alexa_normed <- upbmPreprocess(pe = alexa_subset, cy3pe = NULL,
+                               verbose = FALSE)
 ```
 
-The verbose output above can be toggled with the `verbose=` parameter. Notice that Cy3 normalization was skipped.
+The returned object is a *PBMExperiment* object with the same number of columns as the original *PBMExperiment*, with normalized probe intensities now stored in the `normalized` assay. Rows have been filtered to remove background and control probes.
 
 ```{r quick-normalize-show}
 alexa_normed
 ```
 
-The returned object is a *PBMExperiment* object with the same number of columns as the original *PBMExperiment*, with normalized probe intensities now stored in the `normalized` assay. Rows have been filtered to remove background and control probes.
-
-## 8-mer Summarization
+# 8-mer Summarization
 
 After normalization, probe-level intensities are aggregated across replicates by fitting a probe-level model to the data. Since the dataset includes samples for different conditions, this must be specified. In our dataset, this information is included in the `"condition"` column of the `colData` of the *PBMExperiment*. This is passed to the `stratify=` parameter.
 
@@ -85,13 +80,13 @@ After normalization, probe-level intensities are aggregated across replicates by
 alexa_pfit <- probeFit(alexa_normed, stratify = "condition")
 ```
 
-The resulting object is a *PBMExperiment* with the same number of rows, but only one column for each unique value in the column specified by `stratify=`, in this case two. Aggregated probe summaries are stored in the `beta` assay.
+The resulting object is a *PBMExperiment* with the same number of rows, but only one column for each unique value in the column specified by `stratify=`. In this case, we have two conditions, `HOXC9-REF` and `HOXC9-R222W`. Aggregated probe summaries are stored in the `beta` assay.
 
 ```{r quick-show-pfit}
 alexa_pfit
 ```
 
-Next, probe-level summaries are used to obtain 8-mer-level summaries. A helper function, `uniqueKmers(..)` is provided for generating the full set of K-mers of a specified length (unique to reverse complementation). During this step, parameters are also estimated for downstream differential testing and inference. The baseline condition must be specified to the `baseline=` parameter.
+Next, probe-level summaries are used to obtain 8-mer-level summaries. A helper function, `upbm::uniqueKmers` is provided for generating the full set of K-mers of a specified length (unique to reverse complementation). During this step, parameters are also estimated for downstream differential testing and inference. The baseline condition must be specified to the `baseline=` parameter.
 
 ```{r quick-kmerFit}
 alexa_kfit <- kmerFit(alexa_pfit, kmers = uniqueKmers(8L),
@@ -104,9 +99,9 @@ The result is a *SummarizedExperiment* with K-mer-level affinity and variance es
 alexa_kfit
 ```
 
-## 8-mer Inference
+# 8-mer Inference
 
-To test for differential 8-mer affinity across conditions between a baseline condition (e.g. the wild type HOXC9 TF) and all other conditions, we make a call to `kmerTestContrast(..)`. Other methods for inference are also defined in `kmerTestAffinity(..)` and `kmerTestSpecificity(..)`. Note that all differential affinity and specificity calls are relative to the baseline condition specified above.
+To test for differential 8-mer affinity across conditions between a baseline condition (e.g. the wild type HOXC9 TF) and all other conditions, we make a call to `upbm::kmerTestContrast`. Other methods for inference are also defined in `upbm::kmerTestAffinity` and `upbm::kmerTestSpecificity`. Note that all differential affinity and specificity calls are relative to the baseline condition specified above.
 
 ```{r quick-test-contrasts}
 alexa_kdiff <- kmerTestContrast(alexa_kfit)
@@ -128,9 +123,9 @@ diffdat <- dplyr::filter(diffdat, !is.na(contrastAverage))
 diffdat
 ```
 
-Assays are now contained in columns with each row corresponding to a single sample and row from the *PBMExperiment*. The `tidy` function can be used with any of the *PBMExperiment* objects above. More details are provided in `vignette("other-tidydata")`. Using the tidy data, plot the results of differential testing is now relatively straightforward.
+Assays are now contained in columns with rows corresponding to single samples and rows from the *PBMExperiment*. The `tidy` function can be used with any of the *PBMExperiment* objects above. More details are provided in `vignette("other-tidydata")`. Using the tidy data, plot the results of differential testing is now relatively straightforward. We can create a standard MA plot by plotting the `contrastAverage` and `contrastDifference` columns as the X and Y axes.
 
-```{r quick-plot-res, fig.width = 6, fig.height = 3.5}
+```{r quick-plot-ma, fig.width = 6, fig.height = 3.5}
 suppressPackageStartupMessages(library("ggplot2"))
 
 ggplot(diffdat, aes(x = contrastAverage,
@@ -143,7 +138,11 @@ ggplot(diffdat, aes(x = contrastAverage,
     guides(color = guide_legend(override.aes = list(alpha = 1))) +
     facet_grid(. ~ cname) +
     ggtitle("HOXC9 differential 8-mer affinity MA plot")
+```
 
+Additionally, we can also take a look at the distribution of 8-mer-level differential affinities between conditions.
+
+```{r quick-plot-dist, fig.width = 6, fig.height = 3.5}
 ggplot(diffdat, aes(x = contrastDifference,
                     fill = contrastQ < 0.001)) +
     geom_histogram(color = 'black', binwidth = .05, boundary = 0) +
@@ -152,7 +151,18 @@ ggplot(diffdat, aes(x = contrastDifference,
     theme_bw() +
     guides(color = guide_legend(override.aes = list(alpha = 1))) +
     facet_grid(. ~ cname) +
-    ggtitle("HOXC9 differential 8-mer distribution")
+    ggtitle("HOXC9 differential 8-mer-level affinity")
+```
+
+Using the tabular data, we can also identify the set of 8-mers with largest differences between the two conditions.
+
+```{r quick-top-kmers}
+suppressPackageStartupMessages(library("dplyr"))
+
+diffdat %>%
+    dplyr::top_n(10, abs(contrastDifference)) %>%
+    dplyr::arrange(contrastDifference) %>%
+    dplyr::select(cname, seq, contrastDifference, contrastQ)
 ```
 
 # Other Vignettes
