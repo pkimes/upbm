@@ -60,7 +60,7 @@ upbmPreprocess <- function(pe, cy3pe, cy3refpe, assay = SummarizedExperiment::as
 
     stopifnot(is(pe, "PBMExperiment"))
     stopifnot(is.null(cy3pe) || is(cy3pe, "PBMExperiment"))
-    stopifnot(is.null(cy3refpe) || is(cy3refpe, "PBMExperiment"))
+    stopifnot(is.null(cy3pe) || (is.null(cy3refpe) || is(cy3refpe, "PBMExperiment")))
     stopifnot(is(params, "list"))
     stopifnot(verbose %in% c(0L, 1L, 2L))
     stopifnot(assay %in% SummarizedExperiment::assayNames(pe))
