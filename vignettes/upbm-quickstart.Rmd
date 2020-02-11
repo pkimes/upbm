@@ -13,7 +13,7 @@ output:
     fig_height: 4
 bibliography: library.bib
 vignette: >
-  %\VignetteIndexEntry{upbm: introduction}
+  %\VignetteIndexEntry{1. upbm: introduction}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
 ---
@@ -37,7 +37,7 @@ In this quickstart guide, we demonstrate the basic functionality of the *upbm* p
 
 # HOXC9 Dataset
 
-The input to the _upbm_ package is raw GenePix Results (GPR) data for Alexa488 and Cy3 scans. Functions for reading GPR data into R are included with this package (see `vignette("upbm-details")`). For this quickstart guide, we will use just the Alexa488 scans for a PBM dataset included in the _upbmData_ package. Details on how Cy3 scans can also be used provided in a separate vignette (see `vignette("upbm-preprocessing")`).
+The input to the _upbm_ package is raw GenePix Results (GPR) data for Alexa488 and Cy3 scans. Functions for reading GPR data into R are included with this package (see `vignette("upbm-classes")`). For this quickstart guide, we will use just the Alexa488 scans for a PBM dataset included in the _upbmData_ package. Details on how Cy3 scans can also be used provided in a separate vignette (see `vignette("upbm-preprocessing")`).
 
 ```{r load-hoxc9data}
 data(hoxc9alexa, package = "upbmData")
@@ -57,7 +57,7 @@ The data is stored as a *PBMExperiment* object, which extends the standard Bioco
 alexa_subset
 ```
 
-# Sample Pre-processing
+# Sample Pre-Processing
 
 Analysis of uPBM data is performed in three steps: sample pre-processing, 8-mer summarization, and 8-mer inference. First, samples are preprocessed using `upbm::upbmPreprocess`. This wrapper functions performs various pre-processing steps, including Cy3 normalization. In this quickstart, we will not be using Cy3 scans and instead set the `cy3pe=` option to `NULL`.  We also silence verbose output here.
 
@@ -169,12 +169,10 @@ diffdat %>%
 
 More details on various components of the package are provided in several other vignettes included with the package. 
 
-- `vignette("upbm-details")`: General overview of package similar to quickstart but providing more details at each step.  
 - `vignette("upbm-classes")`: Details on the two uPBM classes defined in the package.
 - `vignette("analysis-preprocessing")`: Details on the pre-processing procedures.
-- `vignette("analysis-normalization")`: Details on the cross-sample and cross-replicate normalization procedures. 
+- `vignette("analysis-summarization")`: Details on the steps for summarizing probes to 8-mers.
 - `vignette("analysis-inference")`: Details on the various K-mer-level inference procedures.
-- `vignette("other-hoxc9")`: Details on the HOXC9 example dataset.
 - `vignette("other-qcplots")`: Details on various QC plots useful when evaluating the quality of PBM data.
 - `vignette("other-tidydata")`: Details on how data can be tidied from *PBMExperiment* to *tibble* format.
 
