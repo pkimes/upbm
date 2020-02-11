@@ -8,3 +8,4 @@
 ^src/*.dll$
 ^\.travis\.yml$
 README.Rmd
+docs
