@@ -1,0 +1,179 @@
+---
+title: "upbm: Summarization Details"
+author: "Patrick K. Kimes"
+date: "`r BiocStyle::doc_date()`"
+package: "`r BiocStyle::pkg_ver('upbm')`"
+output:
+  BiocStyle::html_document:
+    highlight: pygments
+    toc: true
+    fig_width: 12
+    fig_height: 4
+bibliography: library.bib
+vignette: >
+  %\VignetteIndexEntry{4. upbm: summarization}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+---
+
+```{r echo=FALSE, include=FALSE}
+knitr::opts_chunk$set(tidy = FALSE, cache = TRUE, dev = "png",
+                      message = FALSE, error = FALSE, warning = TRUE)
+```
+
+# Introduction
+
+For an introduction to the *upbm* package, please see the quick start vignette (`vignette("upbm-quickstart")`). Here, we provide details on the summarization procedures implemented in the package for converting probe-level intensities to approximate 8-mer-level affinity estimates. In this vignette, we assume basic knowledge of the _PBMExperiment_ class (see `vignette("upbm-classes")`). The same example HOXC9 dataset from the *upbmData* package is used in this vignette to illustrate the various functions.
+
+To perform inference, the _upbm_ pipeline aggregates normalized probe-level intensities to the 8-mer level across samples. **These procedures require replicate data.** When replicate samples are not available for conditions of interest, simple K-mer summary statistics can be computed using the `upbm::summarizeKmers` function. However, these simple summary statistics cannot be used with downstream inference procedures implemented in the package (see `vignette("analysis-inference")`) and should be treated as exploratory statistics. 
+
+```{r}
+suppressPackageStartupMessages(library("upbm"))
+```
+
+Throughout, we will be using `broom::tidy` to tidy data stored in *PBMExperiment* and *SummarizedExperiment* objects for interactive analysis and plotting (see `vignette("other-tidydata")`). We load the *dplyr* package to help with interactive analysis.
+
+```{r}
+suppressPackageStartupMessages(library("dplyr"))
+suppressPackageStartupMessages(library("ggplot2"))
+```
+
+# HOXC9 Dataset
+
+For details on the example HOXC9 dataset, see the quick start vignette in this package or the *upbmData* package vignette. Here, we will use both Alexa488 and Cy3 scans. 
+
+```{r load-hoxc9}
+data(hoxc9alexa, package = "upbmData")
+data(hoxc9cy3, package = "upbmData")
+```
+
+Here, we again use just single PMT gain scan for the Alexa488 scans.
+
+```{r subset-pmt}
+alexa_subset <- hoxc9alexa[, colData(hoxc9alexa)$pmt == 450]
+```
+
+We also load the reference Cy3 dataset.
+
+```{r load-cy3ref}
+data(refcy3_8x60k_v1, package = "upbmAux")
+```
+
+# Sample Pre-Processing 
+
+We will perform the earlier steps of pre-processing using the `upbm::pmbPreprocess` wrapper.
+
+```{r preprocess}
+alexa_subset <- upbmPreprocess(pe = alexa_subset,
+                               cy3pe = hoxc9cy3,
+                               cy3refpe = refcy3_8x60k_v1,
+                               verbose = FALSE)
+```
+
+# Probe Aggregation
+
+The first step of summarization is to aggregate across replicate samples in the dataset. This is performed using the `upbm::probeFit` function. Given a set of samples, the function returned cross-replicate estimate probe-level affinity summaries as well as variance and degrees of freedom estimates. 
+
+As described in the quick start vignette, we must specify the column in the _colData_ of the *PBMExperiment* containing replicate information. In our example dataset, this information in stored in the `"condition"` column.
+
+```{r}
+table(colData(alexa_subset)$condition)
+```
+
+For each allelic variants, we only have 2 or 3 replicates. In PBM experiments, we often have access to only a few replicates of each condition. To obtain cross-replicate affinity and variance estimates, the `upbm::probeFit` internally calls _limma_, a popular package for the analysis of microarray data with features for handling analyses with low numbers of samples [@ritchie2015].
+
+```{r pfit}
+alexa_pfit <- probeFit(alexa_subset, stratify = "condition")
+alexa_pfit
+```
+
+The returned _PBMExperiment_ now only includes one column for each condition (`HOXC9-K195R`, `HOXC9-R193K`, `HOXC0-R222W`, `HOXC9-REF`). The cross-replicate summarized probe intensities are included in the `beta` assay.
+
+```{r pfit-tidy}
+pfit_dat <- broom::tidy(alexa_pfit, assay = c("beta", "sd"))
+pfit_dat
+```
+
+While raw probe intensities ranged from 0 to 2^16, the cross-sample summaries are computed after log2 transforming intensities. As a result, the `beta` values are mostly bounded between 0 and 16. The log2 transformation is performed with a pseudocount of 1 added to probe intensities to prevent `NA`s for zero intensity probes. This can be changed by modifying the `offset=` parameter in the call.
+
+We can plot the distribution of `beta` estimates across conditions.
+
+```{r pfit-plot, fig.height = 3.5, fig.width = 5}
+ggplot(pfit_dat, aes(x = beta, color = cname)) +
+    geom_density() +
+    scale_color_brewer("condition", palette = "Set1") +
+    theme_bw() +
+    ggtitle("HOXC9 cross-replicate summarized probe intensities")
+```
+
+We see that most alleles have similar distributions with the exception of the R222W variant.
+
+# K-mer Aggregation
+
+Next, we take the cross-replicate aggregated probe intensities and further aggregate them to the 8-mer level using the `upbm::kmerFit` function. The function takes the output from `upbm::probeFit` above along with a list of k-mers, usually all 8-mers, as the primary input. Mathematically, this is accomplished by framing the analysis as a meta-analysis across probes for each K-mer. K-mer-level estimates are computed by pooling the probe-level estimates for all probes containing the K-mer using the two-step DerSimonian and Laird estimator [@dersimonian2007]. Additional steps are also performed to adjust for position bias of K-mers along the probe sequence and to filter out outlier probes from each K-mer probe set. More details on this procedure can be found in the forthcoming manuscript describing the method.
+
+To generate the full set of 8-mers, the package includes a helper function, `upbm::uniqueKmers`. The function can be used to generate the complete set of K-mers of a specified length, unique to reverse complementation. We demonstrate this function by returning all unique 3-mers. 
+
+```{r unique3}
+uniqueKmers(3)
+```
+
+As stated in the quick start, the function additionally computes statistics needed for downstream differential testing. More specifically, unless `contrasts = FALSE` is specified, the covariance between the baseline condition (column) and all other conditions is estimated during this step. 
+
+By default, if a single column is found containing the `REF` suffix, this will be used as the baseline condition. If no column includes the `REF` suffix or a different condition should be used as the baseline condition for computing contrasts, this should be specified to the `baseline=` parameter. In this analysis, we use the standard `HOXC9-REF` (wild type) allele as our baseline condition.
+
+```{r kift}
+alexa_kfit <- kmerFit(alexa_pfit, kmers = uniqueKmers(8L),
+                      baseline = "HOXC9-REF")
+alexa_kfit
+```
+
+The returned _PBMExperiment_ includes the same number of columns corresponding to the four conditions. The number of rows is equal to the number of K-mers specified to `kmers=` above. 
+
+```{r uniq8-len}
+length(uniqueKmers(8L))
+```
+
+For each condition, an 8-mer `affinityEstimate` and `affinityVariance` is computed. For all conditions other than the baseline, `contrastDifference` (`baseline - condition`), `contrastAverage` (`(baseline + condition)/2`) and `contrastVariance` (`var(baseline - condition)`) values are also computed.
+
+```{r kift-show}
+kfit_dat <- broom::tidy(alexa_kfit, c("affinityEstimate", "affinityVariance",
+                                      "contrastDifference", "contrastAverage",
+                                      "contrastVariance"))
+kfit_dat
+```
+
+All the values of the `contrast` columns are `NA` for the `HOXC9-REF` condition.
+
+```{r kfit-check-na}
+kfit_dat %>%
+    dplyr::select(cname, starts_with("contrast")) %>%
+    dplyr::group_by(cname) %>%
+    dplyr::summarize_if(is.numeric, ~mean(is.na(.)))
+```
+
+We can plot the 8-mer affinity distributions across conditions.
+
+```{r kfit-plot, fig.height = 3.5, fig.width = 5}
+ggplot(kfit_dat, aes(x = affinityEstimate, color = cname)) +
+    geom_density() +
+    scale_color_brewer("condition", palette = "Set1") +
+    theme_bw() +
+    ggtitle("HOXC9 cross-replicate summarized 8-mer affinities")
+```
+
+Again, affinities appear similar for all alleles with the exception of the R222W variant.
+
+We can also create MA plots using the `contrastDifference` and `contrastAverage` columns to compare each allelic variant against the baseline wild type condition. When generating this plot, we need to remember to filter out the `NA`s corresponding to the baseline condition's values in the table.
+
+```{r kfit-plot-ma, fig.width = 9, fig.height = 3.5}
+kfit_dat %>%
+    dplyr::filter(!is.na(contrastDifference)) %>%
+    ggplot(aes(x = contrastAverage, y = contrastDifference)) +
+    geom_point(alpha = 1/5) +
+    facet_grid(. ~ cname) + 
+    theme_bw() +
+    ggtitle("HOXC9 8-mer affinity MA plot")
+```
+
+# References
