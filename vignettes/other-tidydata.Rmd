@@ -1,0 +1,97 @@
+---
+title: "upbm: Tidying PBM Data"
+author: "Patrick K. Kimes"
+date: "`r BiocStyle::doc_date()`"
+package: "`r BiocStyle::pkg_ver('upbm')`"
+abstract: >
+  "Tidying PBM data. upbm package version: `r packageVersion("upbm")`"
+output:
+  BiocStyle::html_document:
+    highlight: pygments
+    toc: true
+    fig_width: 12
+    fig_height: 4
+bibliography: library.bib
+vignette: >
+  %\VignetteIndexEntry{99. upbm: tidy data}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+---
+
+```{r echo=FALSE, include=FALSE}
+knitr::opts_chunk$set(tidy = FALSE, cache = TRUE, dev = "png",
+                      message = FALSE, error = FALSE, warning = TRUE)
+```
+
+# Introduction
+
+The _PBMExperiment_ class is the core structure defined in the _upbm_ package for storing raw and normalized universal PBM data (see `vignette("upbm-classes")`). While the structure is useful for analysis and organization, often tabular data is much easier for computing quick summary statistics and performing exploratory analysis. 
+
+```{r}
+suppressPackageStartupMessages(library("upbm"))
+```
+
+Since performing exploratory analysis with data stored in _PBMExperiment_ objects is a fairly common task, we have defined a method for converting  _PBMExperiment_ assay data to tabular format. This is implemented as n extension to the `broom::tidy` function originally defined in the [*broom*](https://cran.r-project.org/web/packages/broom/) package. 
+
+In this vignette, we demonstrate the various uses of the `broom::tidy` function with _PBMExperiment_ objects using the example HOXC9 dataset from the _upbmData_ package.
+
+# HOXC9 Dataset
+
+For details on the example HOXC9 dataset, see the quick start vignette in this package or the *upbmData* package vignette. Here, we will just use Alexa488 scans. 
+
+```{r load-hoxc9}
+data(hoxc9alexa, package = "upbmData")
+hoxc9alexa
+```
+
+# Tidy Data
+
+"Tidy data" has become a popular and powerful framework for organizing data during interactive analysis. In the tidy data framework, data is organized as a data.frame with each row corresponding to an individual obervation or sample. Not only does the tidy data framework help keep data organized, but it also unlocks the powerful data parsing and visualization functions in the [Tidyverse](https://www.tidyverse.org/) collection of packages.
+
+To keep track of various probe and sample metadata compactly, uPBM data are not organized as tidy data. Instead, they are stored as *PBMExperiment* and *PBMDesign* objects which extend core Bioconductor data structures (see `vignette("upbm-classes")`). However, when performing interactive analysis, it can be useful to extract tidy data from the *PBMExperiment* objects. 
+
+The data for a single assay in *PBMExperiment* and *SummarizedExperiment* objects can be returned by passing the objects to `broom::tidy`.
+
+```{r tidy}
+broom::tidy(hoxc9alexa)
+```
+
+By default, the first assay in the object is returned as a wide _tibble_ with columns corresponding to individual samples. Notice that the rowData are also included as columns in the _tibble_. Additionally, note that the number of rows is much smaller than the original _PBMExperiment_ object. 
+
+The default behavior of `broom::tidy` is to perform any probe filtering and sequence trimming defined in the _PBMDesign_ associated with the _PBMExperiment_ object. In this case, probe sequences were trimmed to 36 nucleotides and all background and control probes were excluded. This filtering and trimming can be turned off by specifying `process = FALSE`.
+
+```{r}
+broom::tidy(hoxc9alexa, process = FALSE)
+```
+
+The assay can also be specified.
+
+```{r}
+broom::tidy(hoxc9alexa, assay = "back")
+```
+
+While returning a wide _tibble_ maintains the original shape of the assay data, with tidy data, we often prefer each row to correspond to an single observation in "long" format. We can return a long _tibble_ by specifying `long = TRUE`.
+
+```{r}
+broom::tidy(hoxc9alexa, assay = "back", long = TRUE)
+```
+
+When `long = TRUE`, the column names are placed in a `cname` column of the _tibble_ and the assay values are included in a column matching the assay name (here, `back`). In addition to the column name, assay values, and rowData, in long format, colData is also included in the output.
+
+Tidying of multiple assays is also supported.
+
+```{r}
+broom::tidy(hoxc9alexa, assay = c("fore", "back"))
+```
+
+When mutliple assays are specified, the data will be returned as a long _tibble_. 
+
+While we have described how to call `broom::tidy` with _PBMExperiment_ objects, more generally, the function can also be applied to any _SummarizedExperiment_ object.
+
+```{r}
+se <- as(hoxc9alexa, "SummarizedExperiment")
+broom::tidy(se, long = TRUE)
+```
+
+Notice that when calling `broom::tidy` on the _SummarizedExperiment_ object, background probes are not filtered. Similarly, probe sequences are not trimmed. These features are unique to _PBMExperiment_ objects and are lost when converting the data to a _SummarizedExperiment_ object. 
+
