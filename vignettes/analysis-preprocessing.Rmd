@@ -11,7 +11,7 @@ output:
     fig_height: 4
 bibliography: library.bib
 vignette: >
-  %\VignetteIndexEntry{upbm: pre-processing}
+  %\VignetteIndexEntry{3. upbm: pre-processing}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
 ---
@@ -23,15 +23,15 @@ knitr::opts_chunk$set(tidy = FALSE, cache = TRUE, dev = "png",
 
 # Introduction
 
-For an introduction to the *upbm* package, please see the quick start vignette (*upbm: Analysis of Protein Binding Microarrays in R*). Here, we provide details on the pre-processing steps briefly referenced in the quick start vignette and assume basic knowledge of the organization of PBM data in *R* using *upbm*. The same example HOXC9 dataset from the *upbmData* package is used in this vignette to illustrate the various functions.
+For an introduction to the *upbm* package, please see the quick start vignette (`vignette("upbm-quickstart")`). Here, we provide details on the pre-processing steps briefly referenced in the quick start vignette. We assume basic knowledge of the _PBMExperiment_ class (see `vignette("upbm-classes")`). The same example HOXC9 dataset from the *upbmData* package is used in this vignette to illustrate the various functions.
 
-In the quick start vignette, the pre-processing steps of background subtraction, Cy3 normalization, spatial adjustment, within and across replicate normalization were performed using the `upbmPreprocess(..)` wrapper function. Here, we cover the individual pre-processing steps and underlying functions in more detail. Additionally, we introduce some plots which can be used to visualize the results of pre-processing at each step.
+In the quick start vignette, the pre-processing steps were performed using the `upbm::upbmPreprocess` wrapper function. Here, we cover the individual pre-processing steps and underlying functions in more detail. Additionally, we introduce some plots which can be used to visualize the results of pre-processing at each step. The steps covered in this vignette include: background subtraction, Cy3 normalization, spatial adjustment, as well as within and across replicate normalization.
 
 ```{r}
 suppressPackageStartupMessages(library("upbm"))
 ```
 
-Throughout, we will be using `broom::tidy` to tidy data stored in *PBMExperiment* and *SummarizedExperiment* objects for interactive analysis and plotting. We load the *dplyr* package to help with interactive analysis.
+Throughout, we will be using `broom::tidy` to tidy data stored in *PBMExperiment* and *SummarizedExperiment* objects for interactive analysis and plotting (see `vignette("other-tidydata")`). We load the *dplyr* package to help with interactive analysis.
 
 ```{r}
 suppressPackageStartupMessages(library("dplyr"))
@@ -40,7 +40,7 @@ suppressPackageStartupMessages(library("ggplot2"))
 
 # HOXC9 Dataset
 
-For details on the example HOXC9 dataset, see the quick start vignette in this package or the *upbmData* package vignette.
+For details on the example HOXC9 dataset, see the quick start vignette in this package or the *upbmData* package vignette. Here, we will use both Alexa488 and Cy3 scans. 
 
 ```{r load-hoxc9}
 data(hoxc9alexa, package = "upbmData")
@@ -82,7 +82,7 @@ tdat
 The column names from the *PBMExperiment* are stored in the `"cname"` column, along with allele information in `"condition"`, and plate IDs in `"id"`. We will use these annotations to stratify samples by plate and color by condition.
 
 ```{r bsi-density, fig.width = 6, fig.height = 5}
-ggplot(tdat, aes(x = value, group = cname, color = condition)) +
+ggplot(tdat, aes(x = fore, group = cname, color = condition)) +
     geom_density() +
     scale_x_continuous("BSI (log2-scale)", trans = "log2") + 
     facet_grid(id ~ ., labeller = label_both) + 
@@ -95,8 +95,8 @@ We can also take a look at the number of NA BSIs in each sample.
 ```{r bsi-nna}
 tdat %>%
     dplyr::group_by(cname, id, condition) %>%
-    dplyr::summarize(nNA = sum(is.na(value)),
-                     pNA = mean(is.na(value))) %>%
+    dplyr::summarize(nNA = sum(is.na(fore)),
+                     pNA = mean(is.na(fore))) %>%
     dplyr::arrange(nNA)
 ```
 
@@ -132,7 +132,7 @@ tdat <- broom::tidy(hoxc9cy3e, assay = "lowq", long = TRUE)
 
 tdat %>%
     dplyr::group_by(cname, id, idx) %>%
-    dplyr::summarize(nFilter = sum(value)) %>%
+    dplyr::summarize(nFilter = sum(lowq)) %>%
     dplyr::arrange(nFilter)
 ```
 
@@ -147,9 +147,9 @@ Since the tidy data includes probe position information (row and column indices)
 ```{r cy3-plot-ratios, fig.width = 7, fig.height = 5}
 tdat %>%
     dplyr::filter(id == 264) %>%
-    ggplot(aes(x = Column, y = Row, fill = log2(value))) +
+    ggplot(aes(x = Column, y = Row, fill = log2(ratio))) +
     geom_tile() +
-    scale_fill_gradient2("log2 ratio", limits = c(-1/2, 1/2), oob = scales::squish) +
+    scale_fill_gradient2(limits = c(-1/2, 1/2), oob = scales::squish) +
     theme_bw() +
     scale_x_continuous(expand = c(0, 0)) +
     scale_y_continuous(expand = c(0, 0)) +
@@ -195,7 +195,7 @@ The spatial bias is stored as the local-to-global ratio, and can be plotted as b
 tdat <- broom::tidy(alexa_subset, assay = "spatialbias", long = TRUE)
 
 tdat %>%
-    ggplot(aes(x = Column, y = Row, fill = log2(value))) +
+    ggplot(aes(x = Column, y = Row, fill = log2(spatialbias))) +
     geom_tile() +
     scale_fill_gradient2("log2 ratio", limits = c(-1, 1), oob = scales::squish) +
     theme_bw() +
@@ -227,7 +227,7 @@ We now replot the normalized probe intensities and see that within each replicat
 
 ```{r norm-within-density, fig.width = 6, fig.height = 5}
 broom::tidy(alexa_subset, long = TRUE) %>%
-    ggplot(aes(x = value, group = cname, color = condition)) +
+    ggplot(aes(x = normalized, group = cname, color = condition)) +
     geom_density() +
     scale_x_continuous("normalized intensity (log2-scale)", trans = "log2") + 
     facet_grid(id ~ ., labeller = label_both) + 
@@ -245,7 +245,7 @@ Again, we can replot the normalized probe intensities after cross-replicate norm
 
 ```{r norm-across-density, fig.width = 6, fig.height = 5}
 broom::tidy(alexa_subset, long = TRUE) %>%
-    ggplot(aes(x = value, group = cname, color = condition)) +
+    ggplot(aes(x = normalized, group = cname, color = condition)) +
     geom_density() +
     scale_x_continuous("normalized intensity (log2-scale)", trans = "log2") + 
     facet_grid(id ~ ., labeller = label_both) + 
@@ -255,7 +255,7 @@ broom::tidy(alexa_subset, long = TRUE) %>%
 
 Normalized intensities are now roughly comparable across replicates and can now be passed to downstream modeling and inference steps.
 
-# upbmPreprocess Wrapper
+# Wrapper Function
 
 In general, the default normalization parameters should be sufficient for most analyses. In this case, the `upbmPreprocess(..)` wrapper can be used to quickly run all of the above steps with a single command.
 
