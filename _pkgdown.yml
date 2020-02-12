@@ -1,0 +1,112 @@
+authors:
+  Patrick Kimes:
+    href: https://www.pkimes.com
+  Dongyuan Song:
+
+development:
+  version_label: "info"
+  version_tooltip: "GitHub pre-release"
+
+navbar:
+  structure:
+    left:
+    - home
+    - intro
+    right:
+    - reference
+    - vignettes
+    - news
+    - search
+    - github
+  components:
+    intro: 
+      text: Quick Start
+      href: articles/upbm-quickstart.html
+    articles: ~
+    vignettes:
+      text: Articles
+      menu:
+      - text: General
+      - text: Quickstart Guide
+        href: articles/upbm-quickstart.html
+      - text: PBM Class Details
+        href: articles/upbm-classes.html
+      - text: --------
+      - text: Analysis 
+      - text: Sample Pre-Processing
+        href: articles/analysis-preprocessing.html
+      - text: Probe and K-mer Summarization
+        href: articles/analysis-summarization.html
+      - text: K-mer-Level Inference
+        href: articles/analysis-inference.html
+      - text: --------
+      - text: Other
+      - text: Quality Control Plots
+        href: articles/other-qcplots.html
+      - text: Tidy PBM Data
+        href: articles/other-tidydata.html
+
+toc:
+  depth: 1
+
+reference:
+  - title: Creating PBM Objects
+    desc: >
+      Two core classes, [PBMExperiment](pbmexperiment-class.html) and [PBMDesign](pbmdesign-class.html), are have been constructed for organizing and analyzing PBM data in R. The following set of functions can be used to construct both PBMExperiment and PBMDesign objects from GPR files or data already loaded in R. For more details, see [class definitions](#section-pbm-class-definitions) below.
+    contents:
+      - gpr2PBMExperiment
+      - PBMExperiment
+      - PBMDesign
+  - title: Sample Pre-Processing
+    desc: >
+      Before any downstream inference can be performed, individual samples should be pre-processed. A single wrapper function, [upbmPreprocess](upbmPreprocess.html) is provided for performing all standard pre-processing steps, as well as individual functions for handling the steps of background subtraction, Cy3 normalization, and within and across replicate normalization. (See [Pre-Processing vignette](../articles/analysis-preprocessing.html) for more details.)
+    contents:
+      - upbmPreprocess
+      - backgroundSubtract
+      - cy3FitEmpirical
+      - cy3FitModel
+      - cy3GenerateRef
+      - cy3Normalize
+      - spatiallyAdjust
+      - normalizeWithinReplicates
+      - normalizeAcrossReplicates
+  - title: Probe/K-mer Summarization 
+    desc: >
+      Pre-processed and normalized samples can be aggregated across replicates to obtain probe-level and K-mer-level affinity estimates. Additionally, a simple summarization function is provided for computing K-mer summary statistics for individual samples in the absence of replicate data. (See [Summarization vignette](../articles/analysis-summarization.html) for more details.)
+    contents:
+      - probeFit
+      - kmerFit
+      - summarizeKmers
+  - title: K-mer-Level Testing 
+    desc: >
+      Finally, K-mer-level affinity estimates can be used to perform various inference procedures both for individual conditions and for testing across conditions. Three functions to perform different itesting procedures are listed below. (See [K-mer-Level Inference vignette](../articles/analysis-inference.html) for more details.)
+    contents:
+      - kmerTestAffinity
+      - kmerTestContrast
+      - kmerTestSpecificity
+  - title: PBM Class Definitions
+    desc: >
+      The package defines two new classes, [PBMExperiment](pbmexperiment-class.html) and [PBMDesign](pbmdesign-class.html) which buildon existing Bioconductor infrastructure. (See [Class Details vignette](../articles/upbm-classes.html) for more details.)
+    contents:
+      - PBMExperiment-class
+      - PBMDesign-class
+  - title: PBM Class Methods and Setters
+    desc: >
+      The two PBM classes include special slots specifying probe filtering and trimming criteria. Functions are provided for accessing and applying these filtering and trimming procedures on both PBMExperiment and PBMDesign objects. These and additional slots can be accessed and modified using getter and setting functions.
+    contents:
+      - pbmFilterProbes
+      - pbmTrimProbes
+      - probeTrim
+      - probeCols
+      - probeFilter<-
+      - probeTrim<-
+      - PBMDesign-replace
+  - title: Helper Functions
+    desc: >
+      The package also includes several helper functions for working with PBM data. This includes, most importantly, functions for extracting assay data stored in PBMExperiment objects as tidy tables (see [Tidy Data vignette](../articles/analysis-inference.html) for more details). 
+    contents:
+      - tidy-PBMExperiment
+      - tidy-SummarizedExperiment
+      - mapKmers
+      - uniqueKmers
+
