@@ -1,0 +1,389 @@
+---
+title: "upbm: QC Plots"
+author: "Patrick K. Kimes"
+date: "`r BiocStyle::doc_date()`"
+package: "`r BiocStyle::pkg_ver('upbm')`"
+output:
+  BiocStyle::html_document:
+    highlight: pygments
+    toc: true
+    fig_width: 12
+    fig_height: 4
+bibliography: library.bib
+vignette: >
+  %\VignetteIndexEntry{99. upbm: QC plots}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+---
+
+```{r echo=FALSE, include=FALSE}
+knitr::opts_chunk$set(tidy = FALSE, cache = TRUE, dev = "png",
+                      message = FALSE, error = FALSE, warning = TRUE)
+```
+
+# Introduction
+
+For an introduction to the *upbm* package, please see the quick start vignette (`vignette("upbm-quickstart")`). Here, we cover a few plots which can be used to QC PBM data. Several other these plots are also introduced in a separate vignette covering pre-processing steps in detail ( `vignette("upbm-preprocessing")`). 
+
+
+```{r}
+suppressPackageStartupMessages(library("upbm"))
+```
+
+**This vignette will be sparse in discription of how data is being processed and parsed and expects the reader has already worked through previous vignettes covering these details.** If any step appears unclear, we recommend revisiting the complete list of vignettes included with the package. 
+
+Throughout, we will be using `broom::tidy` to tidy data stored in *PBMExperiment* and *SummarizedExperiment* objects for interactive analysis and plotting (see `vignette("other-tidydata")`). We load the *dplyr* and *ggplot2* packages to help with interactive analysis.
+
+```{r}
+suppressPackageStartupMessages(library("dplyr"))
+suppressPackageStartupMessages(library("ggplot2"))
+```
+
+# HOXC9 Dataset
+
+For details on the example HOXC9 dataset, see the quick start vignette in this package or the *upbmData* package vignette. Here, we will use both Alexa488 and Cy3 scans. 
+
+```{r load-hoxc9}
+data(hoxc9alexa, package = "upbmData")
+data(hoxc9cy3, package = "upbmData")
+```
+
+Here, we again use just single PMT gain scan for the Alexa488 scans.
+
+```{r subset-pmt}
+alexa_subset <- hoxc9alexa[, colData(hoxc9alexa)$pmt == 450]
+```
+
+# QC: Raw Alexa488 Data
+
+For exploratory analysis, we tidy both the foreground and background intensities from Alexa488 scans.
+
+```{r}
+alexa_dat <- broom::tidy(alexa_subset, c("fore", "back"))
+alexa_dat
+```
+
+## Intensity Distributions
+
+We check to verify that probe intensities are not saturated. We plot the intensities on the log2-scale since these distributions are heavy-tailed. We split this plot by slide ID. 
+
+```{r, fig.width = 7, fig.height = 3.5}
+alexa_dat %>%
+    ggplot(aes(x = log2(fore), group = cname)) +
+    geom_density(fill = 'black', alpha = 1/4) +
+    theme_bw() +
+    facet_grid(. ~ id, labeller = label_both) +
+    ggtitle("Alexa488 foreground probe intensities")
+```
+
+We can see that a few of the arrays on slide 226 are close to the upper limit of 2^16. We can explicitly count the number of probes that hit the boundary.
+
+```{r}
+alexa_dat %>%
+    dplyr::group_by(cname, id, idx) %>%
+    dplyr::summarize(nSat = sum(fore > 2^15.99, na.rm = TRUE))
+```
+
+We see that this is less than 100 probes. While this is not ideal, since we have replicate data, we are not particularly worried. 
+
+We also count the number of probes filtered in the GenePix software and flagged in the GPR file. These are set to NA in our data.
+
+```{r}
+alexa_dat %>%
+    dplyr::group_by(cname, id, idx) %>%
+    dplyr::summarize(nFlag = sum(is.na(fore)))
+```
+
+Interestingly, we see that one sample has 500 probes flagged. We will want to keep this in mind as we continue exploring this data. It is possible that these 500 probes are spatially clustered on the array.
+
+We next check the background intensities of the Alexa488 scans.
+
+```{r, fig.width = 7, fig.height = 3.5}
+alexa_dat %>%
+    ggplot(aes(x = log2(back), group = cname)) +
+    geom_density(fill = 'black', alpha = 1/4) +
+    theme_bw() +
+    facet_grid(. ~ id, labeller = label_both) +
+    ggtitle("Alexa488 background probe intensities")
+```
+
+This distributions are much more varied. We will want to see how these are spatially organized.
+
+Finally, since foreground probe intensities should be corrected for background intensities, we need to check how many probes have lower foreground than background intensities.
+
+```{r}
+alexa_dat %>%
+    dplyr::group_by(cname, id, idx) %>%
+    dplyr::summarize(nOverflow = sum(fore < back, na.rm = TRUE))
+```
+
+This is only occurs at a fairly small number of probes.
+
+## Spatial Trends
+
+Following up on the analysis above, we also check the spatial distribution of the probe intensities in the Alexa488 scans.
+
+```{r, fig.width = 9, fig.height = 5}
+alexa_dat %>%
+    ggplot(aes(x = Column, y = Row, fill = log2(fore))) +
+    geom_tile() +
+    theme_bw() +
+    scale_x_continuous(expand = c(0, 0)) +
+    scale_y_continuous(expand = c(0, 0)) +
+    scale_fill_distiller(palette = "Spectral") + 
+    facet_wrap(~ id_idx, labeller = label_both, nrow = 2) +
+    ggtitle("Alexa488 foreground probe intensities")
+```
+
+We can see that clear spot where probes were filtered on the single array on slide 264.
+
+```{r, fig.width = 9, fig.height = 5}
+alexa_dat %>%
+    ggplot(aes(x = Column, y = Row, fill = log2(back))) +
+    geom_tile() +
+    theme_bw() +
+    scale_x_continuous(expand = c(0, 0)) +
+    scale_y_continuous(expand = c(0, 0)) +
+    scale_fill_distiller(palette = "Spectral") + 
+    facet_wrap(~ id_idx, labeller = label_both, nrow = 2) +
+    ggtitle("Alexa488 background probe intensities")
+```
+
+We see that background intensities unsurprisingly higher at the center of arrays.
+
+# QC: Raw Cy3 Data
+
+Again, we tidy both the foreground and background intensities from Cy3 scans.
+
+```{r}
+cy3_dat <- broom::tidy(hoxc9cy3, c("fore", "back"))
+cy3_dat
+```
+
+## Intensity Distributions
+
+We can similarly take a look at the distribution of intensities for our Cy3 data. 
+
+```{r, fig.width = 7, fig.height = 3.5}
+cy3_dat %>%
+    ggplot(aes(x = log2(fore), group = cname)) +
+    geom_density(fill = 'black', alpha = 1/4) +
+    theme_bw() +
+    facet_grid(. ~ id, labeller = label_both) +
+    ggtitle("Cy3 foreground probe intensities")
+```
+
+We see that the foreground Cy3 intensities are generally consistent across arrays and slides.
+We next check the background intensities of the Cy3 scans.
+
+```{r, fig.width = 7, fig.height = 3.5}
+cy3_dat %>%
+    ggplot(aes(x = log2(back), group = cname)) +
+    geom_density(fill = 'black', alpha = 1/4) +
+    theme_bw() +
+    facet_grid(. ~ id, labeller = label_both) +
+    ggtitle("Cy3 background probe intensities")
+```
+
+We see a single Cy3 scan with higher background intensities. However, since background correction is performed on the non-log scale, the effect will be relatively minor.
+
+```{r}
+cy3_dat %>%
+    dplyr::summarize(nOverflow = sum(fore < back, na.rm = TRUE))
+```
+
+No probes have foreground intensity lower than background.
+
+## Spatial Trends
+
+While we don't expect anything particularly alarming in the Cy3 scan foreground intensities based on the distribution plots above, we will still plot the intensities with spatial information. 
+
+```{r, fig.width = 9, fig.height = 5}
+cy3_dat %>%
+    ggplot(aes(x = Column, y = Row, fill = log2(fore))) +
+    geom_tile() +
+    theme_bw() +
+    scale_x_continuous(expand = c(0, 0)) +
+    scale_y_continuous(expand = c(0, 0)) +
+    scale_fill_distiller(palette = "Spectral") + 
+    facet_wrap(~ id_idx, labeller = label_both, nrow = 2) +
+    ggtitle("Cy3 foreground probe intensities")
+```
+
+Not surprisingly, we see nothing striking in this plot.
+
+```{r, fig.width = 9, fig.height = 5}
+cy3_dat %>%
+    ggplot(aes(x = Column, y = Row, fill = log2(back))) +
+    geom_tile() +
+    theme_bw() +
+    scale_x_continuous(expand = c(0, 0)) +
+    scale_y_continuous(expand = c(0, 0)) +
+    scale_fill_distiller(palette = "Spectral") + 
+    facet_wrap(~ id_idx, labeller = label_both, nrow = 2) +
+    ggtitle("Cy3 background probe intensities")
+```
+
+While we see a bit of unusual background Cy3 behavior in array 7 of slide 226, again, because the scale is much lower than the measured foreground intensities, we are not particularly worried. 
+
+## Observed/Expected Ratios
+
+Importantly, Cy3 scans are used to adjusting for differences in double-stranding across arrays. This is done by computing an observed-to-expected ratio and scaling by this factor. We will take a look at the distribution and spatial trends of these ratios.
+
+```{r}
+data("refcy3_8x60k_v1", package = "upbmAux")
+cy3_fit <- cy3FitEmpirical(pe = hoxc9cy3,
+                           refpe = refcy3_8x60k_v1)
+```
+
+We also tidy up this data to look at the ratios. 
+
+```{r}
+cy3fit_dat <- broom::tidy(cy3_fit, c("ratio", "scores", "lowq"))
+```
+
+We can now look at the distribution of ratios.
+
+```{r, fig.width = 7, fig.height = 3.5}
+cy3fit_dat %>%
+    ggplot(aes(x = log2(ratio), group = id_idx)) +
+    geom_density(color = 'black', fill = 'black', alpha = 1/4) +
+    facet_grid(. ~ id, labeller = label_both) +
+    geom_vline(xintercept = 0) +
+    theme_bw() + 
+    ggtitle("Cy3 observed-to-expected ratios")
+```
+
+In general, ratios appear to be relatively small for most arrays, with clear slide-level differences. Additionally, we can also check the "scores" computed by scaling observed-to-expected ratios to account for observed empirical differences in variability of Cy3 intensities across probes. While not used for scaling, these values are used for filtering Cy3 outlier probes.
+
+```{r, fig.width = 7, fig.height = 3.5}
+cy3fit_dat %>%
+    ggplot(aes(x = (scores), group = id_idx)) +
+    geom_density(color = 'black', fill = 'black', alpha = 1/4) +
+    facet_grid(. ~ id, labeller = label_both) +
+    geom_vline(xintercept = 0) +
+    geom_vline(xintercept = c(-1/2, 1/2), lty = 2, alpha = 1/2) + 
+    theme_bw() + 
+    ggtitle("Cy3 observed-to-expected scores")
+```
+
+Vertical lines are drawn at the default limits for filtering. Very few probes appear to be filtered. We can also count how many are filtered.
+
+```{r}
+cy3fit_dat %>%
+    dplyr::group_by(id, idx) %>%
+    dplyr::summarize(nFilter = sum(lowq, na.rm = TRUE),
+                     pFilter = round(mean(lowq, na.rm = TRUE), 3))
+```
+
+Some probes are filtered at this cutoff from slide 264. However, since this accounts for less than 5\% of probes, we are again not too worried.
+
+# QC: Spatial Bias
+
+More formally, we also take a look at the spatial bias after background subtraction and Cy3 normalization across Alexa488 scans.
+
+```{r}
+alexa_bsi <- backgroundSubtract(alexa_subset)
+alexa_cyn <- cy3Normalize(alexa_bsi, cy3_fit)
+alexa_spa <- spatiallyAdjust(alexa_cyn)
+
+spa_dat <- broom::tidy(alexa_spa, c("normalized", "spatialbias"))
+```
+
+We can now take a look at the spatial bias.
+
+```{r, fig.width = 7, fig.height = 3.5}
+spa_dat %>%
+    ggplot(aes(x = log2(spatialbias), group = id_idx)) +
+    geom_density(color = 'black', fill = 'black', alpha = 1/4) +
+    facet_grid(. ~ id, labeller = label_both) +
+    geom_vline(xintercept = 0) +
+    theme_bw() + 
+    ggtitle("Alexa488 spatial bias")
+```
+
+While spatial bias is generally noisy, we don't see any large deviations outside a single fold change from the global median. We can also plot this to see how biases are positioned across the arrays.
+
+```{r, fig.width = 9, fig.height = 5}
+spa_dat %>%
+    ggplot(aes(x = Column, y = Row, fill = log2(spatialbias))) +
+    geom_tile() +
+    theme_bw() +
+    scale_x_continuous(expand = c(0, 0)) +
+    scale_y_continuous(expand = c(0, 0)) +
+    scale_fill_gradient2() + 
+    facet_wrap(~ id_idx, labeller = label_both, nrow = 2) +
+    ggtitle("Alexa488 spatial bias")
+```
+
+This looks reasonable.
+
+# QC: Across Replicates
+
+All previous plots examined probe-level biases for individual samples. Next, we perform cross-sample normalization.
+
+```{r}
+alexa_nwr <- normalizeWithinReplicates(alexa_spa)
+alexa_nar <- normalizeAcrossReplicates(alexa_nwr)
+
+norm_dat <- broom::tidy(alexa_nar, "normalized", long = TRUE)
+```
+
+Given fully normalized data, we can also take a look at the distribution of intensities across replicates of the same condition.
+
+## Intensity Distributions
+
+We plot the distributions across replicates.
+
+```{r, fig.width = 8, fig.height = 3.5}
+norm_dat %>%
+    ggplot(aes(x = log2(normalized), group = id_idx)) +
+    geom_density(color = 'black', fill = 'black', alpha = 1/4) +
+    facet_grid(. ~ condition, labeller = label_both) +
+    theme_bw() + 
+    ggtitle("Alexa488 normalized intensities")
+```
+
+Distributions appear to generally agree, but we see some variability in the R222W allele. This may be due to the generally lower binding affinity compared to other alleles. Plotting all together, this becomes clear.
+
+```{r, fig.width = 8, fig.height = 3.5}
+norm_dat %>%
+    ggplot(aes(x = log2(normalized), group = id_idx, color = condition)) +
+    geom_density() +
+    scale_color_brewer(palette = "Set1") + 
+    theme_bw() + 
+    ggtitle("Alexa488 normalized intensities")
+```
+
+All samples are identical with the exception of the R222W replicates.
+
+## Agreement
+
+We can also create scatterplots to compare probe-level agreement across replicates. First, we compare the replicate conditions across slides.
+
+```{r, fig.width = 8, fig.height = 9}
+norm_dat %>%
+    dplyr::filter(condition == "HOXC9-REF") %>%
+    dplyr::mutate(normalized = log2(normalized)) %>%
+    dplyr::select(id, probeID, normalized) %>%
+    tidyr::spread(id, normalized) %>%
+    dplyr::select(-probeID) %>%
+    as.matrix() %>%
+    pairs(col = rgb(0, 0, 0, 1/10), cex = .4,
+          main = "Alex488 normalized intensities; HOXC9-REF reps")
+```
+
+These appear to agree incredibly well. We can also check the R222W replicates.
+
+```{r, fig.width = 8, fig.height = 9}
+norm_dat %>%
+    dplyr::filter(condition == "HOXC9-R222W") %>%
+    dplyr::mutate(normalized = log2(normalized)) %>%
+    dplyr::select(id, probeID, normalized) %>%
+    tidyr::spread(id, normalized) %>%
+    dplyr::select(-probeID) %>%
+    as.matrix() %>%
+    pairs(col = rgb(0, 0, 0, 1/10), cex = .4,
+          main = "Alex488 normalized intensities; HOXC9-R222W reps")
+```
+
