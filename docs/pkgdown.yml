@@ -1,0 +1,12 @@
+pandoc: '2.9'
+pkgdown: 1.4.1
+pkgdown_sha: ~
+articles:
+  analysis-inference: analysis-inference.html
+  analysis-preprocessing: analysis-preprocessing.html
+  analysis-summarization: analysis-summarization.html
+  other-qcplots: other-qcplots.html
+  other-tidydata: other-tidydata.html
+  upbm-classes: upbm-classes.html
+  upbm-quickstart: upbm-quickstart.html
+
