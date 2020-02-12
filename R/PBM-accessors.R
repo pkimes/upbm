@@ -59,6 +59,7 @@ probeCols <- function(object) {
 #' @rdname PBMclass-accessors
 #' @importMethodsFrom BiocGenerics "design<-"
 #' @exportMethod "design<-"
+#' @export "design<-"
 setReplaceMethod("design",
                  signature(object = "PBMDesign", value = "data.frame"),
                  function (object, ..., value) {
@@ -69,6 +70,7 @@ setReplaceMethod("design",
 #' @rdname PBMclass-accessors
 #' @importMethodsFrom BiocGenerics design 
 #' @exportMethod "design"
+#' @export design
 setMethod("design", signature(object = "PBMDesign"),
           function(object) {
               object@design
