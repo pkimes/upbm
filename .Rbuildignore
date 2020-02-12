@@ -7,5 +7,13 @@
 ^src/*.so$
 ^src/*.dll$
 ^\.travis\.yml$
-README.Rmd
-docs
+^vignettes/analysis-inference_cache$
+^vignettes/analysis-preprocessing_cache$
+^vignettes/analysis-summarization_cache$
+^vignettes/other-qcplots_cache$
+^vignettes/other-tidydata_cache$
+^vignettes/upbm-classes_cache$
+^vignettes/upbm-quickstart_cache$
+^src/*_cache$
+^README.Rmd$
+^docs$
