@@ -67,7 +67,7 @@ alexa_dat
 
 We check to verify that probe intensities are not saturated. We plot the intensities on the log2-scale since these distributions are heavy-tailed. We split this plot by slide ID. 
 
-```{r, fig.width = 7, fig.height = 3.5}
+```{r, fig.width = 8, fig.height = 3.5}
 alexa_dat %>%
     ggplot(aes(x = log2(fore), group = cname)) +
     geom_density(fill = 'black', alpha = 1/4) +
@@ -98,7 +98,7 @@ Interestingly, we see that one sample has 500 probes flagged. We will want to ke
 
 We next check the background intensities of the Alexa488 scans.
 
-```{r, fig.width = 7, fig.height = 3.5}
+```{r, fig.width = 8, fig.height = 3.5}
 alexa_dat %>%
     ggplot(aes(x = log2(back), group = cname)) +
     geom_density(fill = 'black', alpha = 1/4) +
@@ -107,7 +107,7 @@ alexa_dat %>%
     ggtitle("Alexa488 background probe intensities")
 ```
 
-This distributions are much more varied. We will want to see how these are spatially organized.
+Thes distributions are much more varied. We will want to see how these are spatially organized.
 
 Finally, since foreground probe intensities should be corrected for background intensities, we need to check how many probes have lower foreground than background intensities.
 
@@ -164,7 +164,7 @@ cy3_dat
 
 We can similarly take a look at the distribution of intensities for our Cy3 data. 
 
-```{r, fig.width = 7, fig.height = 3.5}
+```{r, fig.width = 8, fig.height = 3.5}
 cy3_dat %>%
     ggplot(aes(x = log2(fore), group = cname)) +
     geom_density(fill = 'black', alpha = 1/4) +
@@ -176,7 +176,7 @@ cy3_dat %>%
 We see that the foreground Cy3 intensities are generally consistent across arrays and slides.
 We next check the background intensities of the Cy3 scans.
 
-```{r, fig.width = 7, fig.height = 3.5}
+```{r, fig.width = 8, fig.height = 3.5}
 cy3_dat %>%
     ggplot(aes(x = log2(back), group = cname)) +
     geom_density(fill = 'black', alpha = 1/4) +
@@ -244,7 +244,7 @@ cy3fit_dat <- broom::tidy(cy3_fit, c("ratio", "scores", "lowq"))
 
 We can now look at the distribution of ratios.
 
-```{r, fig.width = 7, fig.height = 3.5}
+```{r, fig.width = 8, fig.height = 3.5}
 cy3fit_dat %>%
     ggplot(aes(x = log2(ratio), group = id_idx)) +
     geom_density(color = 'black', fill = 'black', alpha = 1/4) +
@@ -256,7 +256,7 @@ cy3fit_dat %>%
 
 In general, ratios appear to be relatively small for most arrays, with clear slide-level differences. Additionally, we can also check the "scores" computed by scaling observed-to-expected ratios to account for observed empirical differences in variability of Cy3 intensities across probes. While not used for scaling, these values are used for filtering Cy3 outlier probes.
 
-```{r, fig.width = 7, fig.height = 3.5}
+```{r, fig.width = 8, fig.height = 3.5}
 cy3fit_dat %>%
     ggplot(aes(x = (scores), group = id_idx)) +
     geom_density(color = 'black', fill = 'black', alpha = 1/4) +
@@ -292,7 +292,7 @@ spa_dat <- broom::tidy(alexa_spa, c("normalized", "spatialbias"))
 
 We can now take a look at the spatial bias.
 
-```{r, fig.width = 7, fig.height = 3.5}
+```{r, fig.width = 8, fig.height = 3.5}
 spa_dat %>%
     ggplot(aes(x = log2(spatialbias), group = id_idx)) +
     geom_density(color = 'black', fill = 'black', alpha = 1/4) +
@@ -361,7 +361,7 @@ All samples are identical with the exception of the R222W replicates.
 
 We can also create scatterplots to compare probe-level agreement across replicates. First, we compare the replicate conditions across slides.
 
-```{r, fig.width = 8, fig.height = 9}
+```{r, fig.width = 9, fig.height = 8}
 norm_dat %>%
     dplyr::filter(condition == "HOXC9-REF") %>%
     dplyr::mutate(normalized = log2(normalized)) %>%
@@ -375,7 +375,7 @@ norm_dat %>%
 
 These appear to agree incredibly well. We can also check the R222W replicates.
 
-```{r, fig.width = 8, fig.height = 9}
+```{r, fig.width = 9, fig.height = 8}
 norm_dat %>%
     dplyr::filter(condition == "HOXC9-R222W") %>%
     dplyr::mutate(normalized = log2(normalized)) %>%
