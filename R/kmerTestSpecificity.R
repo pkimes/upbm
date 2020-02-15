@@ -60,7 +60,7 @@
 #' \item \code{"specificityQ"}: FDR-controlling Benjamini-Hochberg adjusted p-values.
 #' }
 #'
-#' @importFrom mclust Mclust
+#' @import mclust
 #' @importFrom splines bs
 #' @importFrom broom tidy
 #' @importFrom limma loessFit
@@ -155,8 +155,8 @@ kmerTestSpecificity <- function(se, method = c("subset", "bs", "loess"), span = 
                                       x <- dplyr::mutate(x,
                                                          mcl = lapply(data, function(z) {
                                                              if (nrow(z) > 1L) {
-                                                                 Mclust(z$contrastDifference, G = 2,
-                                                                        modelNames = "E", verbose = FALSE)
+                                                                 mclust::Mclust(z$contrastDifference, G = 2,
+                                                                                modelNames = "E", verbose = FALSE)
                                                              } else {
                                                                  NA
                                                              }
