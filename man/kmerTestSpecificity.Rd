@@ -4,22 +4,23 @@
 \alias{kmerTestSpecificity}
 \title{Test for k-mer differential specificities}
 \usage{
-kmerTestSpecificity(se, method = c("bs", "loess"), span = 0.05,
-  useref = TRUE, ...)
+kmerTestSpecificity(se, method = c("subset", "bs", "loess"),
+  span = 0.05, useref = TRUE, ...)
 }
 \arguments{
 \item{se}{SummarizedExperiment of k-mer results from \code{kmerFit}.}
 
 \item{method}{string value specifying method to use for fitting
-specificity trend. Must be one of \code{"bs"} or \code{"loess"}.
-(default = "bs")}
+specificity trend. Must be one of \code{"subset"}, \code{"bs"},
+or \code{"loess"}. (default = "subset")}
 
 \item{span}{span parameter to be passed to \code{limma::loessFit}. Only
 used when \code{method = "loess"}. (default = 0.05)}
 
 \item{useref}{logical value whether to fit specificity trend as function of
 reference intensities rather than the average of reference and
-variant intensities. (defualt = TRUE)}
+variant intensities. Must be TRUE if \code{method = "subset"}.
+(defualt = TRUE)}
 
 \item{...}{other parameters to pass to \code{limma::loessFit}.}
 }
@@ -50,8 +51,22 @@ of k-mer affinities observed between conditions.
 For each condition, the common trend is estimated by fitting either a LOESS curve
 or B-spline smoother to the corresponding columns of the \code{"contrastAverage"} (x)
 and \code{"contrastDifference"} (y) assays of the input SummarizedExperiment object.
-Then, the difference between the observed differential affinity and the
+If \code{useref = TRUE}, instead of the \code{"contrastAverage"}, the
+\code{"affinityEstimate"} values of the reference condition are used as the x-axis.
+The difference between the observed differential affinity and the
 estimated trend is taken as the estimate of differential specificity.
+
+When \code{method = "subset"} (default), two trends are fit using weighted
+orinary linear regression and a B-spline basis. The two trends are meant to capture
+any differential specificities that may be smoothed out by fitting a single trend
+to the data. The two trends are identified by first splitting the data along
+the x-axis into 20 equal-width bins and fitting a
+two-component normal mixture to the \code{"contrastDifference"} values of k-mers
+in each bin. The upper and lower components in each cluster are grouped across
+the bins. The two trends are fit separately by weighing each k-mer based
+on the likelihood of belonging to either the upper or lower clusters. Finally,
+a single trend is selected to be used for testing by taking the trend which
+minimizes the mean residual across the top 50\% of k-mers.
 
 After estimating k-mer level affinities using probe-set aggregate, this
 function tests for differential specificity between conditions.
