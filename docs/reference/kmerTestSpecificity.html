@@ -46,8 +46,21 @@ of k-mer affinities observed between conditions.
 For each condition, the common trend is estimated by fitting either a LOESS curve
 or B-spline smoother to the corresponding columns of the &quot;contrastAverage&quot; (x)
 and &quot;contrastDifference&quot; (y) assays of the input SummarizedExperiment object.
-Then, the difference between the observed differential affinity and the
+If useref = TRUE, instead of the &quot;contrastAverage&quot;, the
+&quot;affinityEstimate&quot; values of the reference condition are used as the x-axis.
+The difference between the observed differential affinity and the
 estimated trend is taken as the estimate of differential specificity.
+When method = &quot;subset&quot; (default), two trends are fit using weighted
+orinary linear regression and a B-spline basis. The two trends are meant to capture
+any differential specificities that may be smoothed out by fitting a single trend
+to the data. The two trends are identified by first splitting the data along
+the x-axis into 20 equal-width bins and fitting a
+two-component normal mixture to the &quot;contrastDifference&quot; values of k-mers
+in each bin. The upper and lower components in each cluster are grouped across
+the bins. The two trends are fit separately by weighing each k-mer based
+on the likelihood of belonging to either the upper or lower clusters. Finally,
+a single trend is selected to be used for testing by taking the trend which
+minimizes the mean residual across the top 50% of k-mers.
 After estimating k-mer level affinities using probe-set aggregate, this
 function tests for differential specificity between conditions." />
 <meta name="twitter:card" content="summary" />
@@ -172,14 +185,27 @@ of k-mer affinities observed between conditions.</p>
 <p>For each condition, the common trend is estimated by fitting either a LOESS curve
 or B-spline smoother to the corresponding columns of the <code>"contrastAverage"</code> (x)
 and <code>"contrastDifference"</code> (y) assays of the input SummarizedExperiment object.
-Then, the difference between the observed differential affinity and the
+If <code>useref = TRUE</code>, instead of the <code>"contrastAverage"</code>, the
+<code>"affinityEstimate"</code> values of the reference condition are used as the x-axis.
+The difference between the observed differential affinity and the
 estimated trend is taken as the estimate of differential specificity.</p>
+<p>When <code>method = "subset"</code> (default), two trends are fit using weighted
+orinary linear regression and a B-spline basis. The two trends are meant to capture
+any differential specificities that may be smoothed out by fitting a single trend
+to the data. The two trends are identified by first splitting the data along
+the x-axis into 20 equal-width bins and fitting a
+two-component normal mixture to the <code>"contrastDifference"</code> values of k-mers
+in each bin. The upper and lower components in each cluster are grouped across
+the bins. The two trends are fit separately by weighing each k-mer based
+on the likelihood of belonging to either the upper or lower clusters. Finally,
+a single trend is selected to be used for testing by taking the trend which
+minimizes the mean residual across the top 50% of k-mers.</p>
 <p>After estimating k-mer level affinities using probe-set aggregate, this
 function tests for differential specificity between conditions.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>kmerTestSpecificity</span>(<span class='no'>se</span>, <span class='kw'>method</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"bs"</span>, <span class='st'>"loess"</span>), <span class='kw'>span</span> <span class='kw'>=</span> <span class='fl'>0.05</span>,
-  <span class='kw'>useref</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='no'>...</span>)</pre>
+    <pre class="usage"><span class='fu'>kmerTestSpecificity</span>(<span class='no'>se</span>, <span class='kw'>method</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"subset"</span>, <span class='st'>"bs"</span>, <span class='st'>"loess"</span>),
+  <span class='kw'>span</span> <span class='kw'>=</span> <span class='fl'>0.05</span>, <span class='kw'>useref</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='no'>...</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -191,8 +217,8 @@ function tests for differential specificity between conditions.</p>
     <tr>
       <th>method</th>
       <td><p>string value specifying method to use for fitting
-specificity trend. Must be one of <code>"bs"</code> or <code>"loess"</code>.
-(default = "bs")</p></td>
+specificity trend. Must be one of <code>"subset"</code>, <code>"bs"</code>,
+or <code>"loess"</code>. (default = "subset")</p></td>
     </tr>
     <tr>
       <th>span</th>
@@ -203,7 +229,8 @@ used when <code>method = "loess"</code>. (default = 0.05)</p></td>
       <th>useref</th>
       <td><p>logical value whether to fit specificity trend as function of
 reference intensities rather than the average of reference and
-variant intensities. (defualt = TRUE)</p></td>
+variant intensities. Must be TRUE if <code>method = "subset"</code>.
+(defualt = TRUE)</p></td>
     </tr>
     <tr>
       <th>...</th>

@@ -108,7 +108,7 @@
       <h1>upbm: Class Details</h1>
                         <h4 class="author">Patrick K. Kimes</h4>
             
-            <h4 class="date">11 February 2020</h4>
+            <h4 class="date">15 February 2020</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/pkimes/upbm/blob/master/vignettes/upbm-classes.Rmd"><code>vignettes/upbm-classes.Rmd</code></a></small>
       <div class="hidden name"><code>upbm-classes.Rmd</code></div>
@@ -169,7 +169,7 @@
 <p>Here, the <em>PBMDesign</em> object includes a single probe filtering rule associated with the <code>"probeID"</code> column.</p>
 <div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a><span class="kw"><a href="../reference/PBMclass-accessors.html">probeFilter</a></span>(pbm_8x60k_v1)<span class="op">$</span>probeID</span></code></pre></div>
 <pre><code>## function(x) { grepl("^dBr", x) }
-## &lt;bytecode: 0x7fe367bb36f0&gt;</code></pre>
+## &lt;bytecode: 0x7fc402f1a898&gt;</code></pre>
 <p>The rule must be a function that takes the specified column (<code>"probeID"</code>) as input and returns a logical vector of the same length. Only rows which return <code>TRUE</code> for all rules are kept for downstream analysis. In the <code>pbm_8x60k_v1</code> design, the single filter checks the probe IDs and returns <code>TRUE</code> for the subset prefixed with <code>dBr_</code>, corresponding to the subset of de Bruijn sequence probes on the array. Filtering can be performed using <code><a href="../reference/pbmFilterProbes.html">upbm::pbmFilterProbes</a></code>.</p>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1"></a>pbm_8x60k_filtered &lt;-<span class="st"> </span><span class="kw"><a href="../reference/pbmFilterProbes.html">pbmFilterProbes</a></span>(pbm_8x60k_v1)</span>
 <span id="cb11-2"><a href="#cb11-2"></a>pbm_8x60k_filtered</span></code></pre></div>
@@ -260,7 +260,7 @@
 <div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1"></a><span class="kw"><a href="../reference/PBMclass-accessors.html">probeFilter</a></span>(hoxc9alexa)</span></code></pre></div>
 <pre><code>## $probeID
 ## function(x) { grepl("^dBr", x) }
-## &lt;bytecode: 0x7fe3717f4078&gt;</code></pre>
+## &lt;bytecode: 0x7fc3f0784878&gt;</code></pre>
 <div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1"></a><span class="kw"><a href="../reference/PBMclass-accessors.html">probeTrim</a></span>(hoxc9alexa)</span></code></pre></div>
 <pre><code>## [1]  1 36</code></pre>
 <p>Additionally, we can see that the <code>probeCols</code> columns of the row metadata match the <code>design</code> slot of <code>pbm_8x60k_v1</code>.</p>

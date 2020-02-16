@@ -108,7 +108,7 @@
       <h1>upbm: Inference Details</h1>
                         <h4 class="author">Patrick K. Kimes</h4>
             
-            <h4 class="date">11 February 2020</h4>
+            <h4 class="date">15 February 2020</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/pkimes/upbm/blob/master/vignettes/analysis-inference.Rmd"><code>vignettes/analysis-inference.Rmd</code></a></small>
       <div class="hidden name"><code>analysis-inference.Rmd</code></div>
@@ -299,9 +299,9 @@
 <pre><code>## # A tibble: 3 x 5
 ##   cname       `(0.01,1]` `(0.001,0.01]` `(1e-06,0.001]` `[0,1e-06]`
 ##   &lt;chr&gt;            &lt;dbl&gt;          &lt;dbl&gt;           &lt;dbl&gt;       &lt;dbl&gt;
-## 1 HOXC9-K195R      32883              6               6           1
-## 2 HOXC9-R193K      32894              0               2           0
-## 3 HOXC9-R222W      32854             24              17           1</code></pre>
+## 1 HOXC9-K195R      32837             36              22           1
+## 2 HOXC9-R193K      32896              0               0           0
+## 3 HOXC9-R222W      32825             31              34           6</code></pre>
 <p>We can similarly plot the residuals as well.</p>
 <div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1"></a>ds_dat <span class="op">%&gt;%</span></span>
 <span id="cb27-2"><a href="#cb27-2"></a><span class="st">    </span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span>(<span class="kw"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span>(<span class="dt">x =</span> specificityAxis)) <span class="op">+</span></span>
