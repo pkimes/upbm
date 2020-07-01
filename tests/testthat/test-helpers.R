@@ -22,7 +22,7 @@ test_that("tidy methods can be called on PBMExperiment objects", {
     expect_true(all(names(colData(hoxc9alexa)) %in% names(tpel)))
     
     expect_error({ broom::tidy(hoxc9alexa, "bad-assay-name", long = TRUE) },
-                 "invalid")
+                 "should be one of")
 })
 
 ## ---------------

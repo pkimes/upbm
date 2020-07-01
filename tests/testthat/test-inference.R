@@ -26,7 +26,7 @@ test_that("probe and kmer fits and tests return expected object types", {
     expect_equal(assayNames(pf), c("beta", "sd", "df"))
 
     ## test fit kmer models
-    nkmers <- 1000
+    nkmers <- 100
     expect_silent(kf <- kmerFit(pf, uniqueKmers(8)[1:nkmers], method = "dl2"))
     expect_s4_class(kf, "SummarizedExperiment")
     expect_equal(nrow(kf), nkmers)
