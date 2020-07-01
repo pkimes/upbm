@@ -4,10 +4,15 @@
 \alias{summarizeKmers}
 \title{Compute K-mer summary metrics from probe intensities}
 \usage{
-summarizeKmers(pe, assay = SummarizedExperiment::assayNames(pe)[1],
-  kmers = uniqueKmers(8L), metrics = c("median", "mean", "mad", "sd",
-  "log2mean", "log2mad", "log2sd", "na", "quantile"), offset = 1,
-  q = 0.25)
+summarizeKmers(
+  pe,
+  assay = SummarizedExperiment::assayNames(pe)[1],
+  kmers = uniqueKmers(8L),
+  metrics = c("median", "mean", "mad", "sd", "log2mean", "log2mad", "log2sd", "na",
+    "quantile"),
+  offset = 1,
+  q = 0.25
+)
 }
 \arguments{
 \item{pe}{a PBMExperiment object containing PBM intensity data.}

@@ -4,8 +4,13 @@
 \alias{kmerTestSpecificity}
 \title{Test for k-mer differential specificities}
 \usage{
-kmerTestSpecificity(se, method = c("subset", "bs", "loess"),
-  span = 0.05, useref = TRUE, ...)
+kmerTestSpecificity(
+  se,
+  method = c("subset", "bs", "loess"),
+  span = 0.05,
+  useref = TRUE,
+  ...
+)
 }
 \arguments{
 \item{se}{SummarizedExperiment of k-mer results from \code{kmerFit}.}

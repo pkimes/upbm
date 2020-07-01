@@ -4,8 +4,14 @@
 \alias{gpr2PBMExperiment}
 \title{Load raw PBM scan data as PBMExperiment}
 \usage{
-gpr2PBMExperiment(scans, useMedian = TRUE, filterFlags = TRUE,
-  readBackground = TRUE, probes = NULL, ...)
+gpr2PBMExperiment(
+  scans,
+  useMedian = TRUE,
+  filterFlags = TRUE,
+  readBackground = TRUE,
+  probes = NULL,
+  ...
+)
 }
 \arguments{
 \item{scans}{a data.frame of GPR scan information with at least a single `gpr'

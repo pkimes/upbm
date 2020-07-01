@@ -4,8 +4,13 @@
 \alias{readGPR}
 \title{Read GPR File}
 \usage{
-readGPR(gpr_path, gpr_type, useMedian = TRUE, filterFlags = TRUE,
-  readBackground = TRUE)
+readGPR(
+  gpr_path,
+  gpr_type,
+  useMedian = TRUE,
+  filterFlags = TRUE,
+  readBackground = TRUE
+)
 }
 \arguments{
 \item{gpr_path}{path to GPR file.}

@@ -4,8 +4,12 @@
 \alias{cy3GenerateRef}
 \title{Generate Cy3 empirical reference}
 \usage{
-cy3GenerateRef(cy3pe, assay = SummarizedExperiment::assayNames(cy3pe)[1],
-  offset = 1L, register = TRUE)
+cy3GenerateRef(
+  cy3pe,
+  assay = SummarizedExperiment::assayNames(cy3pe)[1],
+  offset = 1L,
+  register = TRUE
+)
 }
 \arguments{
 \item{cy3pe}{a PBMExperiment object containing Cy3 intensity data.}

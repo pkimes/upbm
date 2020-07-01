@@ -4,9 +4,15 @@
 \alias{cy3FitEmpirical}
 \title{Compute Cy3 scaling factors using emprical reference}
 \usage{
-cy3FitEmpirical(pe, refpe,
-  assay = SummarizedExperiment::assayNames(pe)[1], useMean = TRUE,
-  standardize = TRUE, threshold = 1/2, verbose = FALSE)
+cy3FitEmpirical(
+  pe,
+  refpe,
+  assay = SummarizedExperiment::assayNames(pe)[1],
+  useMean = TRUE,
+  standardize = TRUE,
+  threshold = 1/2,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{pe}{a PBMExperiment object containing Cy3 intensity data.}

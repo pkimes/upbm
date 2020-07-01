@@ -4,10 +4,18 @@
 \alias{normalizeWithinReplicates}
 \title{Normalize within replicates}
 \usage{
-normalizeWithinReplicates(pe,
-  assay = SummarizedExperiment::assayNames(pe)[1], method = c("tmm",
-  "quantile"), q = 0.6, qlower = 0, qdiff = 0.2, group = "id",
-  stratify = "condition", baseline = NULL, verbose = FALSE)
+normalizeWithinReplicates(
+  pe,
+  assay = SummarizedExperiment::assayNames(pe)[1],
+  method = c("tmm", "quantile"),
+  q = 0.6,
+  qlower = 0,
+  qdiff = 0.2,
+  group = "id",
+  stratify = "condition",
+  baseline = NULL,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{pe}{a SummarizedExperiment object containing GPR intensity information.}

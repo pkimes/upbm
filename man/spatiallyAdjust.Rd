@@ -4,8 +4,13 @@
 \alias{spatiallyAdjust}
 \title{Perform spatial adjustment}
 \usage{
-spatiallyAdjust(pe, assay = SummarizedExperiment::assayNames(pe)[1],
-  k = 15L, returnBias = TRUE, verbose = FALSE)
+spatiallyAdjust(
+  pe,
+  assay = SummarizedExperiment::assayNames(pe)[1],
+  k = 15L,
+  returnBias = TRUE,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{pe}{a PBMExperiment object containing PBM intensity data.}

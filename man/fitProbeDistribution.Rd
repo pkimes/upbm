@@ -4,8 +4,12 @@
 \alias{fitProbeDistribution}
 \title{Fit Probe-Level Convolution Distributions}
 \usage{
-fitProbeDistribution(pe, assay = SummarizedExperiment::assayNames(pe)[1],
-  model = c("NormGam", "NormExp"), method = "mle")
+fitProbeDistribution(
+  pe,
+  assay = SummarizedExperiment::assayNames(pe)[1],
+  model = c("NormGam", "NormExp"),
+  method = "mle"
+)
 }
 \arguments{
 \item{pe}{a PBMExperiment object containing GPR intensity information.}

@@ -5,8 +5,7 @@
 \alias{tidy.SummarizedExperiment}
 \title{Tidy SummarizedExperiment object}
 \usage{
-\method{tidy}{SummarizedExperiment}(x,
-  assay = SummarizedExperiment::assayNames(x)[1], long = FALSE, ...)
+\method{tidy}{SummarizedExperiment}(x, assay = SummarizedExperiment::assayNames(x)[1], long = FALSE, ...)
 }
 \arguments{
 \item{x}{a SummarizedExperiment object.}

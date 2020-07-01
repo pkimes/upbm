@@ -4,9 +4,15 @@
 \alias{upbmPreprocess}
 \title{PBM Preprocess}
 \usage{
-upbmPreprocess(pe, cy3pe, cy3refpe,
-  assay = SummarizedExperiment::assayNames(pe)[1], params = list(),
-  skip = vector("character", 0), verbose = 1L)
+upbmPreprocess(
+  pe,
+  cy3pe,
+  cy3refpe,
+  assay = SummarizedExperiment::assayNames(pe)[1],
+  params = list(),
+  skip = vector("character", 0),
+  verbose = 1L
+)
 }
 \arguments{
 \item{pe}{a PBMExperiment object containing Alexa488 intensity data.}

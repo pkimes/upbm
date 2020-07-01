@@ -4,8 +4,13 @@
 \alias{PBMExperiment}
 \title{Create a new PBMExperiment object}
 \usage{
-PBMExperiment(..., pbmDesign = NULL, probeFilter = list(),
-  probeTrim = numeric(), probeCols = c("Sequence", "probeID"))
+PBMExperiment(
+  ...,
+  pbmDesign = NULL,
+  probeFilter = list(),
+  probeTrim = numeric(),
+  probeCols = c("Sequence", "probeID")
+)
 }
 \arguments{
 \item{...}{an optional SummarizedExperiment containing PBM probe intensity data and

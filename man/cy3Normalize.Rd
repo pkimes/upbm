@@ -4,9 +4,15 @@
 \alias{cy3Normalize}
 \title{Perform Cy3 normalization}
 \usage{
-cy3Normalize(pe, cy3pe, assay = SummarizedExperiment::assayNames(pe)[1],
-  match_by = "id_idx", filter = TRUE, scale = TRUE,
-  verbose = FALSE)
+cy3Normalize(
+  pe,
+  cy3pe,
+  assay = SummarizedExperiment::assayNames(pe)[1],
+  match_by = "id_idx",
+  filter = TRUE,
+  scale = TRUE,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{pe}{a PBMExperiment object containing Alexa488 intensity data.}

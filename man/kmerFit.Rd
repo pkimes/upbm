@@ -4,10 +4,17 @@
 \alias{kmerFit}
 \title{Fit k-mer probe set models}
 \usage{
-kmerFit(pe, kmers = uniqueKmers(8L), positionbias = TRUE,
-  method = c("dl2", "dl"), contrasts = TRUE, baseline = NULL,
-  outlier_cutoff = stats::qnorm(0.995), outlier_maxp = 0.2,
-  verbose = FALSE)
+kmerFit(
+  pe,
+  kmers = uniqueKmers(8L),
+  positionbias = TRUE,
+  method = c("dl2", "dl"),
+  contrasts = TRUE,
+  baseline = NULL,
+  outlier_cutoff = stats::qnorm(0.995),
+  outlier_maxp = 0.2,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{pe}{a PBMExperiment object containing probe-level summarized intensity data

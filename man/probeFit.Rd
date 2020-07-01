@@ -4,9 +4,15 @@
 \alias{probeFit}
 \title{Fit probe models}
 \usage{
-probeFit(pe, assay = SummarizedExperiment::assayNames(pe)[1],
-  stratify = "condition", guardrail = TRUE, offset = 1L,
-  verbose = FALSE, ...)
+probeFit(
+  pe,
+  assay = SummarizedExperiment::assayNames(pe)[1],
+  stratify = "condition",
+  guardrail = TRUE,
+  offset = 1L,
+  verbose = FALSE,
+  ...
+)
 }
 \arguments{
 \item{pe}{a PBMExperiment object containing PBM intensity data.}

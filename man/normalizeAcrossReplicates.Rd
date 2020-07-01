@@ -4,9 +4,14 @@
 \alias{normalizeAcrossReplicates}
 \title{Normalize across replicates}
 \usage{
-normalizeAcrossReplicates(pe,
-  assay = SummarizedExperiment::assayNames(pe)[1], group = "id",
-  stratify = "condition", baseline = NULL, verbose = FALSE)
+normalizeAcrossReplicates(
+  pe,
+  assay = SummarizedExperiment::assayNames(pe)[1],
+  group = "id",
+  stratify = "condition",
+  baseline = NULL,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{pe}{SummarizedExperiment object containing GPR intensity information.}

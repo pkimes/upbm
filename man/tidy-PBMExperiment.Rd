@@ -5,9 +5,13 @@
 \alias{tidy.PBMExperiment}
 \title{Tidy PBMExperiment object}
 \usage{
-\method{tidy}{PBMExperiment}(x,
-  assay = SummarizedExperiment::assayNames(x)[1], long = FALSE,
-  process = TRUE, ...)
+\method{tidy}{PBMExperiment}(
+  x,
+  assay = SummarizedExperiment::assayNames(x)[1],
+  long = FALSE,
+  process = TRUE,
+  ...
+)
 }
 \arguments{
 \item{x}{a PBMExperiment object.}

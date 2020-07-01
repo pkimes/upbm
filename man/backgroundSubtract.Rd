@@ -4,9 +4,14 @@
 \alias{backgroundSubtract}
 \title{Background subtract intensities}
 \usage{
-backgroundSubtract(pe, assay = SummarizedExperiment::assayNames(pe)[1],
-  assayb = SummarizedExperiment::assayNames(pe)[2], keepb = TRUE,
-  nonnegative = TRUE, verbose = FALSE)
+backgroundSubtract(
+  pe,
+  assay = SummarizedExperiment::assayNames(pe)[1],
+  assayb = SummarizedExperiment::assayNames(pe)[2],
+  keepb = TRUE,
+  nonnegative = TRUE,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{pe}{a PBMExperiment object containing PBM intensity data.}
