@@ -66,7 +66,8 @@
 #' @importFrom limma loessFit
 #' @importFrom stats p.adjust pnorm
 #' @importFrom dplyr select group_by left_join ungroup mutate as_tibble
-#' @importFrom tidyr nest_legacy unnest_legacy
+#' @importFrom tidyr nest unnest
+#' @importFrom tidyselect everything
 #' @export
 #' @author Patrick Kimes
 kmerTestSpecificity <- function(se, method = c("subset", "bs", "loess"), span = 0.05, useref = TRUE, ...) {
@@ -100,7 +101,7 @@ kmerTestSpecificity <- function(se, method = c("subset", "bs", "loess"), span = 
         cdat <- dplyr::mutate(cdat, specificityAxis = contrastAverage)
     }
     
-    cdat <- tidyr::nest_legacy(cdat, -condition)
+    cdat <- tidyr::nest(cdat, data = c(-condition))
 
     if (method == "loess") {
         cdat <- dplyr::mutate(cdat,
@@ -138,7 +139,7 @@ kmerTestSpecificity <- function(se, method = c("subset", "bs", "loess"), span = 
                                       ## cut into nbin bins for clustering
                                       x <- dplyr::mutate(x, affbin = cut_interval(x$specificityAxis, 20))
                                       x <- dplyr::mutate(x, affbin = LETTERS[as.numeric(affbin)])
-                                      x <- tidyr::nest_legacy(x, -affbin)
+                                      x <- tidyr::nest(x, data = c(-affbin))
                                       x <- dplyr::mutate(x, n = vapply(data, nrow, numeric(1L)))
                                       x <- dplyr::arrange(x, affbin)
                                       ## merge small bins at beginning end (assume middle bins are fine)
@@ -149,8 +150,8 @@ kmerTestSpecificity <- function(se, method = c("subset", "bs", "loess"), span = 
                                                          affbin = ifelse(nsum_rev < 50, tail(affbin[nsum_rev >= 50], 1), affbin),
                                                          affbin = ifelse(nsum_fwd < 50, head(affbin[nsum_fwd >= 50], 1), affbin))
                                       x <- dplyr::select(x, -n, -nsum_rev, -nsum_fwd)
-                                      x <- tidyr::unnest_legacy(x)
-                                      x <- tidyr::nest_legacy(x, -affbin)
+                                      x <- tidyr::unnest(x, tidyselect::everything())
+                                      x <- tidyr::nest(x, data = c(-affbin))
                                       ## cluster within bins
                                       x <- dplyr::mutate(x,
                                                          mcl = lapply(data, function(z) {
@@ -224,7 +225,7 @@ kmerTestSpecificity <- function(se, method = c("subset", "bs", "loess"), span = 
                               }))
     }
     
-    cdat <- tidyr::unnest_legacy(cdat)
+    cdat <- tidyr::unnest(cdat, tidyselect::everything())
 
     ## compute z-scores, p-values, and adjusted p-values
     cdat <- dplyr::mutate(cdat, specificityZ = contrastResidual / sqrt(contrastVariance))

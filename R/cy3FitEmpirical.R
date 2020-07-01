@@ -50,7 +50,7 @@
 #'
 #' @seealso \code{\link{cy3GenerateRef}}, \code{\link{cy3Normalize}}
 #' @importFrom dplyr as_tibble select bind_cols group_by ungroup left_join mutate one_of
-#' @importFrom tidyr gather spread
+#' @importFrom tidyr pivot_longer pivot_wider
 #' @export
 #' @author Patrick Kimes
 cy3FitEmpirical <- function(pe, refpe, assay = SummarizedExperiment::assayNames(pe)[1],
@@ -129,7 +129,8 @@ cy3FitEmpirical <- function(pe, refpe, assay = SummarizedExperiment::assayNames(
     pdat1 <- as.data.frame(pdat1, optional = TRUE)
     pdat1 <- dplyr::as_tibble(pdat1)
     pdat1 <- dplyr::bind_cols(pdat1, rowdat1)
-    pdat1 <- tidyr::gather(pdat1, condition, intensity, colnames(npe))
+    pdat1 <- tidyr::pivot_longer(pdat1, names_to = "condition",
+                                 values_to = "intensity", colnames(npe))
 
     ## extract intensities for Cy3 reference
     pdat2 <- SummarizedExperiment::assay(refpe, "ref")
@@ -209,13 +210,13 @@ cy3FitEmpirical <- function(pe, refpe, assay = SummarizedExperiment::assayNames(
     ## create assays
     pexps <- dplyr::select(pdat, one_of(ovnames), condition, probe_ref)
     pexps <- dplyr::mutate(pexps, probe_ref = 2^probe_ref - metadata(refpe)$params$offset)
-    pexps <- tidyr::spread(pexps, condition, probe_ref)
+    pexps <- tidyr::pivot_wider(pexps, names_from = condition, values_from = probe_ref)
     pratios <- dplyr::select(pdat, one_of(ovnames), condition, pratios)
-    pratios <- tidyr::spread(pratios, condition, pratios)
+    pratios <- tidyr::pivot_wider(pratios, names_from = condition, values_from = pratios)
     pscores <- dplyr::select(pdat, one_of(ovnames), condition, pscores)
-    pscores <- tidyr::spread(pscores, condition, pscores)
+    pscores <- tidyr::pivot_wider(pscores, names_from = condition, values_from = pscores)
     plowq <- dplyr::select(pdat, one_of(ovnames), condition, pdrop)
-    plowq <- tidyr::spread(plowq, condition, pdrop)
+    plowq <- tidyr::pivot_wider(plowq, names_from = condition, values_from = pdrop)
 
     ## left join to original rowData to get full set
     full_rowdat <- as.data.frame(rowData(pe), optional = TRUE)

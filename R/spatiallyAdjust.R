@@ -43,8 +43,9 @@
 #'
 #' @import SummarizedExperiment
 #' @importFrom tibble as_tibble
-#' @importFrom tidyr gather spread unnest_legacy
+#' @importFrom tidyr pivot_longer pivot_wider unnest
 #' @importFrom dplyr select mutate select_ do group_by left_join row_number
+#' @importFrom tidyselect everything
 #' @importFrom S4Vectors SimpleList
 #' @export
 #' @author Patrick Kimes
@@ -96,7 +97,8 @@ spatiallyAdjust <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
                                    Column = rowData(pe)[, "Column"])
 
     ## compute spatial adjustment 
-    raw_intensity <- tidyr::gather(raw_intensity, sample, value, -Row, -Column)
+    raw_intensity <- tidyr::pivot_longer(raw_intensity, names_to = "sample",
+                                         values_to = "value", c(-Row, -Column))
     med_intensity <- dplyr::group_by(raw_intensity, sample)
     med_intensity <- dplyr::do(med_intensity, spatialmedian = .wrapSA(., k))
     med_intensity <- dplyr::ungroup(med_intensity)
@@ -108,7 +110,7 @@ spatiallyAdjust <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
     
     ## finish unwrapping spatial adjustments
     med_intensity <- dplyr::mutate(med_intensity, spatialmedian = lapply(spatialmedian, `[[`, 1))
-    med_intensity <- tidyr::unnest_legacy(med_intensity)
+    med_intensity <- tidyr::unnest(med_intensity, tidyselect::everything())
     
     ## join median deviations w/ original raw intensities, subtract
     sub_intensity <- dplyr::left_join(raw_intensity, med_intensity,
@@ -123,8 +125,10 @@ spatiallyAdjust <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
     sub_intensity <- dplyr::select(sub_intensity, Row, Column, sample, value)
 
     ## spread back so samples are in separate columns
-    med_intensity <- tidyr::spread(med_intensity, sample, value)
-    sub_intensity <- tidyr::spread(sub_intensity, sample, value)
+    med_intensity <- tidyr::pivot_wider(med_intensity, names_from = sample,
+                                        values_from = value)
+    sub_intensity <- tidyr::pivot_wider(sub_intensity, names_from = sample,
+                                        values_from = value)
 
     ## join to original rowData to get proper row orders 
     med_intensity <- dplyr::left_join(as.data.frame(rowData(pe)), med_intensity,
@@ -178,14 +182,15 @@ spatiallyAdjust <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
 ## @author Patrick Kimes
 .wrapSA <- function(x, k) {
     y <- dplyr::select(x, value, Column, Row)
-    y <- tidyr::spread(y, Column, value)
+    y <- tidyr::pivot_wider(y, names_from = Column, values_from = value)
     y <- dplyr::select(y, -Row)
     y <- blockmedian(as.matrix(y), k)
     yg <- y$global
     y <- y$local / y$global
     y <- tibble::as_tibble(y)
     y <- dplyr::mutate(y, Row = dplyr::row_number())
-    y <- tidyr::gather(y, Column, value, -Row)
+    y <- tidyr::pivot_longer(y, names_to = "Column",
+                             values_to = "value", c(-Row))
     y <- dplyr::mutate(y, Column = as.integer(gsub("V", "", Column)))
     return(list(y, yg))
 }

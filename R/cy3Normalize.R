@@ -34,7 +34,7 @@
 #'
 #' @seealso \code{\link{cy3FitEmpirical}}
 #' @importFrom dplyr as_tibble mutate select left_join
-#' @importFrom tidyr gather spread
+#' @importFrom tidyr pivot_longer pivot_wider
 #' @export
 #' @author Patrick Kimes
 cy3Normalize <- function(pe, cy3pe, assay = SummarizedExperiment::assayNames(pe)[1],
@@ -105,7 +105,8 @@ cy3Normalize <- function(pe, cy3pe, assay = SummarizedExperiment::assayNames(pe)
     new_assay <- dplyr::mutate(new_assay,
                                Row = rowData(pe)[, "Row"],
                                Column = rowData(pe)[, "Column"])
-    new_assay <- tidyr::gather(new_assay, sample, value, -Row, -Column)
+    new_assay <- tidyr::pivot_longer(new_assay, names_to = "sample",
+                                     values_to = "value", c(-Row, -Column))
     new_assay <- dplyr::left_join(new_assay, coldat1, by = "sample")
     ##new_assay <- dplyr::select(new_assay, -sample)
 
@@ -118,7 +119,8 @@ cy3Normalize <- function(pe, cy3pe, assay = SummarizedExperiment::assayNames(pe)
         scale_assay <- dplyr::mutate(scale_assay,
                                    Row = rowData(cy3pe)[, "Row"],
                                    Column = rowData(cy3pe)[, "Column"])
-        scale_assay <- tidyr::gather(scale_assay, sample, scalar, -Row, -Column)
+        scale_assay <- tidyr::pivot_longer(scale_assay, names_to = "sample",
+                                           values_to = "scalar", c(-Row, -Column))
         scale_assay <- dplyr::left_join(scale_assay, coldat2, by = "sample")
         scale_assay <- dplyr::select(scale_assay, -sample)
         
@@ -139,7 +141,8 @@ cy3Normalize <- function(pe, cy3pe, assay = SummarizedExperiment::assayNames(pe)
         filter_assay <- dplyr::mutate(filter_assay,
                                       Row = rowData(cy3pe)[, "Row"],
                                       Column = rowData(cy3pe)[, "Column"])
-        filter_assay <- tidyr::gather(filter_assay, sample, flag, -Row, -Column)
+        filter_assay <- tidyr::pivot_longer(filter_assay, names_to = "sample",
+                                            values_to = "flag", c(-Row, -Column))
         filter_assay <- dplyr::left_join(filter_assay, coldat2, by = "sample")
         filter_assay <- dplyr::select(filter_assay, -sample)
 
@@ -154,7 +157,7 @@ cy3Normalize <- function(pe, cy3pe, assay = SummarizedExperiment::assayNames(pe)
 
     ## return to square assay shape
     new_assay <- dplyr::select(new_assay, sample, value, Row, Column)
-    new_assay <- tidyr::spread(new_assay, sample, value)
+    new_assay <- tidyr::pivot_wider(new_assay, names_from = sample, values_from = value)
 
     ## match row order to rowData
     c_order <- paste(rowData(pe)$Row, rowData(pe)$Column, sep = "-")

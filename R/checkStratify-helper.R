@@ -30,7 +30,7 @@
     }
     
     sg_tab <- dplyr::count(sg, Stratify, Group)
-    sg_tab <- tidyr::spread(sg_tab, Stratify, n)
+    sg_tab <- tidyr::pivot_wider(sg_tab, names_from = Stratify, values_from = n)
     
     if (needbl && any(is.na(sg_tab[[bl]]))) {
         stop("Baseline condition [", bl, "] is not present in all groups.\n",

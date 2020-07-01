@@ -54,6 +54,7 @@
 #'
 #' @importFrom SummarizedExperiment SummarizedExperiment assayNames assay
 #' @importFrom dplyr left_join distinct
+#' @importFrom tidyr pivot_wider
 #' @importFrom limma lmFit eBayes
 #' @importFrom statmod gauss.quad.prob
 #' @importFrom purrr quietly
@@ -196,7 +197,8 @@ probeFit <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
     
     coldat <- dplyr::select(coldat, sample, Stratify)
     coldat <- dplyr::mutate(coldat, z = 1)
-    coldat <- tidyr::spread(coldat, Stratify, z, fill = 0)
+    coldat <- tidyr::pivot_wider(coldat, names_from = Stratify,
+                                 values_from = z, values_fill = list(z = 0))
     
     rord <- coldat$sample
     coldat <- dplyr::select(coldat, -sample)

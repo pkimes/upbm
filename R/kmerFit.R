@@ -97,7 +97,7 @@
 #' 
 #' @seealso \code{\link{probeFit}}, \code{\link{uniqueKmers}}
 #' @importFrom dplyr select_ group_by left_join ungroup do mutate arrange one_of rename
-#' @importFrom tidyr unnest_legacy spread
+#' @importFrom tidyr nest pivot_longer pivot_wider
 #' @importFrom stats qnorm
 #' @export
 #' @author Patrick Kimes
@@ -182,7 +182,8 @@ kmerFit <- function(pe, kmers = uniqueKmers(8L), positionbias = TRUE,
             cat("|| - Estimating sequence position biases for probe sets (positionbias = TRUE).\n")
         }
         ## reshape table and compute probe set bias per k-mer
-        bdat <- tidyr::gather(bdat, sample, value, -pos, -probeID, -seq)
+        bdat <- tidyr::pivot_longer(bdat, names_to = "sample",
+                                    values_to = "value", c(-pos, -probeID, -seq))
         
         bdat <- dplyr::group_by(bdat, seq, sample)
         bdat <- dplyr::mutate(bdat, pmean = mean(value, na.rm = TRUE),
@@ -200,12 +201,12 @@ kmerFit <- function(pe, kmers = uniqueKmers(8L), positionbias = TRUE,
 
         ## create table of adjusted beta estimates, samples as cols (so slow..)
         bdat_beta <- dplyr::select(bdat, seq, pos, probeID, sample, value)
-        bdat_beta <- tidyr::spread(bdat_beta, sample, value)
+        bdat_beta <- tidyr::pivot_wider(bdat_beta, names_from = sample, values_from = value)
         bdat_beta <- dplyr::select(bdat_beta, seq, pos, probeID, dplyr::one_of(colnames(pe)))
         
         ## ## create table of adjusted beta estimates, samples as cols (so slow..)
         ## bdat_pbias <- dplyr::select(bdat, seq, pos, ID, sample, value)
-        ## bdat_pbias <- tidyr::spread(bdat_pbias, sample, value)
+        ## bdat_pbias <- tidyr::pivot_wider(bdat_pbias, names_from = sample, values_from = value)
         ## bdat_pbias <- dplyr::arrange(bdat_pbias, seq, ID, pos)
     } else {
         if (verbose) {
@@ -227,8 +228,10 @@ kmerFit <- function(pe, kmers = uniqueKmers(8L), positionbias = TRUE,
     bdat_sd <- dplyr::arrange(bdat_sd, seq, probeID, pos)
 
     ## turn beta, sd values into tall table and join
-    bdat_beta <- tidyr::gather(bdat_beta, condition, beta, -seq, -pos, -probeID)
-    bdat_sd <- tidyr::gather(bdat_sd, condition, sd, -seq, -pos, -probeID)
+    bdat_beta <- tidyr::pivot_longer(bdat_beta, names_to = "condition",
+                                     values_to = "beta", c(-seq, -pos, -probeID))
+    bdat_sd <- tidyr::pivot_longer(bdat_sd, names_to = "condition",
+                                   values_to = "sd", c(-seq, -pos, -probeID))
 
     ## tidyr join operations takes time, so check order of rows and throw error if not same 
     stopifnot(bdat_beta$condition == bdat_sd$condition)
@@ -278,7 +281,7 @@ kmerFit <- function(pe, kmers = uniqueKmers(8L), positionbias = TRUE,
     }
 
     ## compute probe set mixed effects model for each k-mer and condition
-    adat <- tidyr::nest_legacy(adat, -condition, -seq)
+    adat <- tidyr::nest(adat, data = -c(condition, seq))
     if (method == "dl") {
         if (verbose) {
             cat("|| - Estimating cross-probe variance using DerSimonian-Laird estimator.\n")
@@ -322,9 +325,10 @@ kmerFit <- function(pe, kmers = uniqueKmers(8L), positionbias = TRUE,
             d
         }, d = data, r = res, SIMPLIFY = FALSE))
         ares <- dplyr::select(ares, condition, seq, data)
-        ares <- tidyr::spread(ares, condition, data)
+        ares <- tidyr::pivot_wider(ares, names_from = condition, values_from = data)
         ares <- dplyr::rename(ares, "bldata" = !!baseline)
-        ares <- tidyr::gather(ares, condition, data, -seq, -bldata)
+        ares <- tidyr::pivot_longer(ares, names_to = "condition",
+                                    values_to = "data", c(-seq, -bldata))
 
         ## compute empirical covariance and upperbound (assuming indep sampling error)
         ares <- dplyr::mutate(ares,
@@ -350,9 +354,10 @@ kmerFit <- function(pe, kmers = uniqueKmers(8L), positionbias = TRUE,
 
         ## clean up and tidy contrasts results
         cdat <- dplyr::select(adat, condition, seq, beta)
-        cdat <- tidyr::spread(cdat, condition, beta)
+        cdat <- tidyr::pivot_wider(cdat, names_from = condition, values_from = beta)
         cdat <- dplyr::rename(cdat, "blbeta" = !!baseline)
-        cdat <- tidyr::gather(cdat, condition, beta, -seq, -blbeta)
+        cdat <- tidyr::pivot_longer(cdat, names_to = "condition",
+                                    values_to = "beta", c(-seq, -blbeta))
         cdat <- dplyr::mutate(cdat, M = beta - blbeta)
         cdat <- dplyr::mutate(cdat, A = (beta + blbeta) / 2)
         assaylist <- c(assaylist,
@@ -381,7 +386,7 @@ kmerFit <- function(pe, kmers = uniqueKmers(8L), positionbias = TRUE,
 ## helper to turn tidy table column into matrix for SE
 .tidycol2mat <- function(x, cn, km, s) {
     x <- dplyr::select(x, seq, condition, !!cn)
-    x <- tidyr::spread(x, condition, !!cn)
+    x <- tidyr::pivot_wider(x, names_from = condition, values_from = !!cn)
     x <- x[match(km, x$seq), sort(names(x)), ]
     x <- as.matrix(dplyr::select(x, -seq))
     if (!all(colnames(x) %in% s))

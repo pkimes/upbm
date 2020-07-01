@@ -35,7 +35,7 @@
 #' @importFrom limma normexp.fit normexp.signal
 #' @importFrom stats p.adjust pnorm
 #' @importFrom dplyr select group_by left_join ungroup mutate
-#' @importFrom tidyr nest_legacy unnest_legacy
+#' @importFrom tidyr nest unnest
 #' @export
 #' @author Patrick Kimes
 kmerTestAffinity <- function(se) {
@@ -52,7 +52,7 @@ kmerTestAffinity <- function(se) {
     adat <- broom::tidy(se, c("affinityEstimate", "affinityVariance"))
     adat <- dplyr::rename(adat, condition = cname)
     
-    adat <- tidyr::nest_legacy(adat, -condition)
+    adat <- tidyr::nest(adat, data = c(-condition))
     adat <- dplyr::mutate(adat,
                           nefit = lapply(data, function(x) {
                               limma::normexp.fit(x$affinityEstimate, method = "saddle")$par
@@ -63,7 +63,7 @@ kmerTestAffinity <- function(se) {
                               x
                           }, x = data, y = nefit, SIMPLIFY = FALSE))
     adat <- dplyr::select(adat, -nefit)
-    adat <- tidyr::unnest_legacy(adat)
+    adat <- tidyr::unnest(adat, cols = data)
     adat <- dplyr::mutate(adat,
                           affinityZ = affinitySignal / sqrt(affinityVariance),
                           affinityP = 2 * stats::pnorm(-abs(affinityZ)))

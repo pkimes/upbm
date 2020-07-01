@@ -29,7 +29,7 @@
 #' @name tidy-SummarizedExperiment
 #' @importFrom dplyr as_tibble bind_cols left_join n 
 #' @importFrom tibble rownames_to_column
-#' @importFrom tidyr gather
+#' @importFrom tidyr pivot_longer
 #' @importFrom SummarizedExperiment assayNames assay
 #' @importFrom broom tidy
 #' @export 
@@ -54,7 +54,8 @@ tidy.SummarizedExperiment <- function(x, assay = SummarizedExperiment::assayName
     if (long || length(assay) > 1) {
         ## combine assays
         pdat <- lapply(pdat, dplyr::mutate, `__rowid` = 1:dplyr::n())
-        pdat <- lapply(pdat, tidyr::gather, cname, value, colnames(x))
+        pdat <- lapply(pdat, tidyr::pivot_longer, names_to = "cname",
+                       values_to = "value", cols = colnames(x))
         pdat <- mapply(function(tib, nam) {
             dplyr::rename(tib, !! nam := value)
         }, tib = pdat, nam = names(pdat), SIMPLIFY = FALSE) 
@@ -107,7 +108,7 @@ tidy.SummarizedExperiment <- function(x, assay = SummarizedExperiment::assayName
 #' @name tidy-PBMExperiment
 #' @importFrom dplyr as_tibble bind_cols left_join
 #' @importFrom tibble rownames_to_column
-#' @importFrom tidyr gather
+#' @importFrom tidyr pivot_longer
 #' @importFrom SummarizedExperiment assayNames assay
 #' @importFrom broom tidy
 #' @export 

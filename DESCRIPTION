@@ -8,7 +8,7 @@ BugReports: https://github.com/pkimes/upbm/issues
 URL: https://github.com/pkimes/upbm
 Description: Classes and methods for the organization and analysis of transcription factor binding affinities
   quantified in vitro using universal protein binding microarrays (uPBMs).
-Depends: R (>= 3.5),
+Depends: R (>= 4.0),
          SummarizedExperiment
 Imports: Rcpp,
          BiocGenerics,
@@ -20,6 +20,7 @@ Imports: Rcpp,
          dplyr,
          tibble,
          tidyr,
+         tidyselect,
          purrr,
          stringr,
          rlang,
@@ -42,4 +43,4 @@ Encoding: UTF-8
 LazyData: true
 LinkingTo: Rcpp, RcppArmadillo
 VignetteBuilder: knitr
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.0

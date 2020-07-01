@@ -78,7 +78,7 @@
 #' @seealso \code{\link{normalizeAcrossReplicates}}
 #' @importFrom stats quantile
 #' @importFrom dplyr as_tibble tibble mutate group_by filter do select ungroup left_join
-#' @importFrom tidyr gather spread nest_legacy
+#' @importFrom tidyr pivot_longer pivot_wider nest
 #' @importFrom rlang enquo quo_name
 #' @export
 #' @author Dongyuan Song, Patrick Kimes
@@ -165,7 +165,8 @@ normalizeWithinReplicates <- function(pe, assay = SummarizedExperiment::assayNam
     scale_assay <- dplyr::bind_cols(scale_assay, rdat)
 
     ## need to merge with columns from row data 
-    scale_assay <- tidyr::gather(scale_assay, sample, value, -(!! fpe@probeCols))
+    scale_assay <- tidyr::pivot_longer(scale_assay, names_to = "sample",
+                                       values_to = "value", -(!! fpe@probeCols))
     scale_assay <- dplyr::left_join(scale_assay, coldat, by = "sample")
     
     assay_fits <- dplyr::filter(scale_assay, !is.na(value), value > 0)
@@ -186,7 +187,7 @@ normalizeWithinReplicates <- function(pe, assay = SummarizedExperiment::assayNam
         assay_fits <- dplyr::mutate(assay_fits,
                                     M.value = (log2(value) - log2(value.bl)),
                                     A.value = (log2(value) + log2(value.bl))/2)  
-        assay_fits <- tidyr::nest_legacy(assay_fits, -sample, -Stratify, -Group, -isBaseline)
+        assay_fits <- tidyr::nest(assay_fits, data = c(-sample, -Stratify, -Group, -isBaseline))
 
         assay_fits <- dplyr::mutate(assay_fits,
                                     withinRepScale = vapply(data, function(x) {
@@ -226,7 +227,8 @@ normalizeWithinReplicates <- function(pe, assay = SummarizedExperiment::assayNam
     new_assay <- dplyr::mutate(new_assay,
                                Row = rowData(pe)[, "Row"],
                                Column = rowData(pe)[, "Column"])
-    new_assay <- tidyr::gather(new_assay, sample, value, -Row, -Column)
+    new_assay <- tidyr::pivot_longer(new_assay, names_to = "sample",
+                                     values_to = "value", c(-Row, -Column))
     ##new_assay <- dplyr::left_join(new_assay, coldat, by = "sample")
     
     ## adjust to reference
@@ -235,7 +237,7 @@ normalizeWithinReplicates <- function(pe, assay = SummarizedExperiment::assayNam
     
     ## return to square assay shape
     new_assay <- dplyr::select(new_assay, sample, value, Row, Column)
-    new_assay <- tidyr::spread(new_assay, sample, value)
+    new_assay <- tidyr::pivot_wider(new_assay, names_from = sample, values_from = value)
     
     ## match row order to rowData
     c_order <- paste(rowData(pe)$Row, rowData(pe)$Column, sep = "-")
