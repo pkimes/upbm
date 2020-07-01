@@ -96,7 +96,7 @@
 #' }
 #' 
 #' @seealso \code{\link{probeFit}}, \code{\link{uniqueKmers}}
-#' @importFrom dplyr select_ group_by left_join ungroup do mutate arrange one_of rename
+#' @importFrom dplyr select select_at group_by left_join ungroup do mutate arrange one_of rename
 #' @importFrom tidyr nest pivot_longer pivot_wider
 #' @importFrom stats qnorm
 #' @export

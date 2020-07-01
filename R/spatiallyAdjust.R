@@ -44,7 +44,7 @@
 #' @import SummarizedExperiment
 #' @importFrom tibble as_tibble
 #' @importFrom tidyr pivot_longer pivot_wider unnest
-#' @importFrom dplyr select mutate select_ do group_by left_join row_number
+#' @importFrom dplyr select mutate do group_by left_join row_number
 #' @importFrom tidyselect everything
 #' @importFrom S4Vectors SimpleList
 #' @export
@@ -137,8 +137,8 @@ spatiallyAdjust <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
                                       by = c("Row", "Column"))
 
     ## only keep data columns
-    med_intensity <- dplyr::select_(med_intensity, .dots = paste0("-", names(rowData(pe))))
-    sub_intensity <- dplyr::select_(sub_intensity, .dots = paste0("-", names(rowData(pe))))
+    med_intensity <- dplyr::select(med_intensity, -names(rowData(pe)))
+    sub_intensity <- dplyr::select(sub_intensity, -names(rowData(pe)))
 
     ## reorder columns to match original SummarizedExperiment
     med_intensity <- DataFrame(med_intensity, check.names = FALSE)
@@ -187,10 +187,11 @@ spatiallyAdjust <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
     y <- blockmedian(as.matrix(y), k)
     yg <- y$global
     y <- y$local / y$global
+    colnames(y) <- paste0("V", seq_len(ncol(y)))
     y <- tibble::as_tibble(y)
     y <- dplyr::mutate(y, Row = dplyr::row_number())
     y <- tidyr::pivot_longer(y, names_to = "Column",
                              values_to = "value", c(-Row))
-    y <- dplyr::mutate(y, Column = as.integer(gsub("V", "", Column)))
+    y <- dplyr::mutate(y, Column = as.integer(gsub("^V", "", Column)))
     return(list(y, yg))
 }
