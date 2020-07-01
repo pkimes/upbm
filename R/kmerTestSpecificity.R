@@ -66,6 +66,7 @@
 #' @importFrom limma loessFit
 #' @importFrom stats p.adjust pnorm
 #' @importFrom dplyr select group_by left_join ungroup mutate as_tibble
+#' @importFrom ggplot2 cut_interval
 #' @importFrom tidyr nest unnest
 #' @importFrom tidyselect everything
 #' @export
@@ -137,7 +138,7 @@ kmerTestSpecificity <- function(se, method = c("subset", "bs", "loess"), span = 
                                       x$contrastResidual <- NA
                                   } else {
                                       ## cut into nbin bins for clustering
-                                      x <- dplyr::mutate(x, affbin = cut_interval(x$specificityAxis, 20))
+                                      x <- dplyr::mutate(x, affbin = ggplot2::cut_interval(x$specificityAxis, 20))
                                       x <- dplyr::mutate(x, affbin = LETTERS[as.numeric(affbin)])
                                       x <- tidyr::nest(x, data = c(-affbin))
                                       x <- dplyr::mutate(x, n = vapply(data, nrow, numeric(1L)))
