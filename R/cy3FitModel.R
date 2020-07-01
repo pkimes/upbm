@@ -18,11 +18,11 @@
 #' Since probe intensities in the Cy3 scans are roughly
 #' proportional to the number of adenines in the probe sequence, the
 #' original Universal PBM Analysis Suite proposed modeling the observed Cy3
-#' intensities with linear regression using the counts of all tri-nucleotide sequences
+#' intensities with linear regression using the counts of all tetranucleotide sequences
 #' starting with an adenine as covariates. The observed-to-expected intensity ratios
 #' are then used as the scaling factors.
 #'
-#' Given a PBMExperiment of Cy3 scans, this function fits the tri-nucleotide
+#' Given a PBMExperiment of Cy3 scans, this function fits the tetranucleotide
 #' regression models and returns the expected Cy3 intensities,
 #' the residuals from the fits, and the corresponding observed-to-expected
 #' ratios for each probe as new assays added to the original Cy3
@@ -36,7 +36,7 @@
 #' @param pe a PBMExperiment object containing Cy3 intensity data.
 #' @param assay a numeric index or string specifying the intensity assay.
 #'        (default = \code{SummarizedExperiment::assayNames(pe)[1]})
-#' @param refit a logical value whether to refit trinucleotide
+#' @param refit a logical value whether to refit tetranucleotide
 #'        linear regression models after filtering outliers to compute
 #'        observed-to-expected ratios. (default = TRUE)
 #' @param threshold a numeric threshold on the absolute value of the log2 ratio between
@@ -58,7 +58,7 @@
 #' @seealso \code{\link{cy3Normalize}}, \code{\link{cy3FitEmpirical}}
 #' @importFrom stats lm na.exclude predict
 #' @importFrom dplyr as_tibble select select_at bind_cols group_by do ungroup left_join mutate starts_with
-#' @importFrom tidyr gather spread nest_legacy unnest_legacy
+#' @importFrom tidyr pivot_wider pivot_longer nest unnest
 #' @importFrom Biostrings DNAStringSet oligonucleotideFrequency
 #' @export
 #' @author Patrick Kimes
@@ -99,7 +99,7 @@ cy3FitModel <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
     rowdat <- dplyr::select_at(rowdat, npe@probeCols)
 
     nt_freq <- Biostrings::DNAStringSet(rowdat$Sequence)
-    nt_freq <- Biostrings::oligonucleotideFrequency(nt_freq, 3)
+    nt_freq <- Biostrings::oligonucleotideFrequency(nt_freq, 4)
     nt_freq <- dplyr::as_tibble(nt_freq)
     nt_freq <- dplyr::select(nt_freq, dplyr::starts_with("A"))
 
@@ -110,41 +110,59 @@ cy3FitModel <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
     pdat <- as.data.frame(pdat, optional = TRUE)
     pdat <- dplyr::as_tibble(pdat)
     pdat <- dplyr::bind_cols(pdat, rowdat)
-    pdat <- tidyr::gather(pdat, condition, intensity, colnames(pe))
+    pdat <- tidyr::pivot_longer(pdat, names_to = "condition",
+                                values_to = "intensity", colnames(pe))
 
     if (verbose) {
-        cat("|| - Fitting trinucleotide models to probes.\n")
+        cat("|| - Fitting tetranucleotide models to probes.\n")
     }
 
     ## fit models
     pdat <- dplyr::group_by(pdat, condition)
     pfits <- dplyr::do(pdat,
-                       fit = lm(intensity ~ AAA + AAC + AAG + AAT + ACA +
-                                    ACC + ACG + ACT + AGA + AGC + AGG +
-                                    AGT + ATA + ATC + ATG + ATT, data = .,
+                       fit = lm(intensity ~
+                                    AAAA + AAAT + AAAC + AAAG + 
+                                    AACA + AACT + AACC + AACG +
+                                    AAGA + AAGT + AAGC + AAGG +
+                                    AATA + AATT + AATC + AATG +
+                                    ACAA + ACAT + ACAC + ACAG +
+                                    ACCA + ACCT + ACCC + ACCG +
+                                    ACGA + ACGT + ACGC + ACGG +
+                                    ACTA + ACTT + ACTC + ACTG +
+                                    AGAA + AGAT + AGAC + AGAG +
+                                    AGCA + AGCT + AGCC + AGCG +
+                                    AGGA + AGGT + AGGC + AGGG +
+                                    AGTA + AGTT + AGTC + AGTG +
+                                    ATAA + ATAT + ATAC + ATAG +
+                                    ATCA + ATCT + ATCC + ATCG +
+                                    ATGA + ATGT + ATGC + ATGG +
+                                    ATTA + ATTT + ATTC + ATTG,
+                                data = .,
                                 na.action = na.exclude))
     pfits <- dplyr::ungroup(pfits)
     pdat <- dplyr::ungroup(pdat)
 
     ## compute expected values
-    pexps <- dplyr::left_join(pfits, tidyr::nest_legacy(pdat, -condition), by = "condition")
+    pexps <- dplyr::left_join(pfits, tidyr::nest(pdat, data = -c(condition)), by = "condition")
     pexps <- dplyr::mutate(pexps, preds = mapply(predict, object = fit, newdata = data,
                                                  SIMPLIFY = FALSE),
                            probecols = lapply(data, `[`, npe@probeCols))
     pexps <- dplyr::select(pexps, condition, preds, probecols)
-    pexps <- tidyr::unnest_legacy(pexps)
-    pexps <- tidyr::spread(pexps, condition, preds)
+    pexps <- tidyr::unnest(pexps, cols = c(preds, probecols))
+    pexps <- tidyr::pivot_wider(pexps, names_from = condition, values_from = preds)
     
     ## compute ratios
-    pratios <- tidyr::gather(pexps, condition, preds, -(!! npe@probeCols))
+    pratios <- tidyr::pivot_longer(pexps, names_to = "condition", values_to = "preds",
+                                   -(!! npe@probeCols))
     pratios <- dplyr::left_join(pratios, dplyr::select_at(pdat, c("condition", "intensity", npe@probeCols)),
                                 by = c("condition", npe@probeCols))
     pratios <- dplyr::mutate(pratios, ratio = intensity / preds)
     pratios <- dplyr::select_at(pratios, c("condition", "ratio", npe@probeCols))
-    pratios <- tidyr::spread(pratios, condition, ratio)
+    pratios <- tidyr::pivot_wider(pratios, names_from = condition, values_from = ratio)
 
     ## compute low quality probes (outside 2-fold difference)
-    pdrop <- tidyr::gather(pratios, condition, ratio, -(!! npe@probeCols))
+    pdrop <- tidyr::pivot_longer(pratios, names_to = "condition", values_to = "ratio",
+                                 -(!! npe@probeCols))
     pdrop <- dplyr::mutate(pdrop, lowq = ratio > 2^threshold | ratio < 2^(-threshold))
     pdrop <- dplyr::select_at(pdrop, c("condition", "lowq", npe@probeCols))
     
@@ -164,31 +182,47 @@ cy3FitModel <- function(pe, assay = SummarizedExperiment::assayNames(pe)[1],
         pdat <- dplyr::mutate(pdat, intensity = ifelse(lowq, NA, intensity))
         pdat <- dplyr::group_by(pdat, condition)
         pfits <- dplyr::do(pdat,
-                           fit = lm(intensity ~ AAA + AAC + AAG + AAT + ACA +
-                                        ACC + ACG + ACT + AGA + AGC + AGG +
-                                        AGT + ATA + ATC + ATG + ATT, data = .,
+                           fit = lm(intensity ~
+                                        AAAA + AAAT + AAAC + AAAG + 
+                                        AACA + AACT + AACC + AACG +
+                                        AAGA + AAGT + AAGC + AAGG +
+                                        AATA + AATT + AATC + AATG +
+                                        ACAA + ACAT + ACAC + ACAG +
+                                        ACCA + ACCT + ACCC + ACCG +
+                                        ACGA + ACGT + ACGC + ACGG +
+                                        ACTA + ACTT + ACTC + ACTG +
+                                        AGAA + AGAT + AGAC + AGAG +
+                                        AGCA + AGCT + AGCC + AGCG +
+                                        AGGA + AGGT + AGGC + AGGG +
+                                        AGTA + AGTT + AGTC + AGTG +
+                                        ATAA + ATAT + ATAC + ATAG +
+                                        ATCA + ATCT + ATCC + ATCG +
+                                        ATGA + ATGT + ATGC + ATGG +
+                                        ATTA + ATTT + ATTC + ATTG,
+                                    data = .,
                                     na.action = na.exclude))
         pfits <- dplyr::ungroup(pfits)
         pdat <- dplyr::ungroup(pdat)
         
         ## re-compute expected values
-        pexps <- dplyr::left_join(pfits, tidyr::nest_legacy(pdat, -condition), by = "condition")
+        pexps <- dplyr::left_join(pfits, tidyr::nest(pdat, data = -c(condition)), by = "condition")
         pexps <- dplyr::mutate(pexps, preds = mapply(predict, object = fit, newdata = data,
                                                      SIMPLIFY = FALSE),
                                probecols = lapply(data, `[`, npe@probeCols))
         pexps <- dplyr::select(pexps, condition, preds, probecols)
-        pexps <- tidyr::unnest_legacy(pexps)
-        pexps <- tidyr::spread(pexps, condition, preds)
+        pexps <- tidyr::unnest(pexps, cols = c(preds, probecols))
+        pexps <- tidyr::pivot_wider(pexps, names_from = condition, values_from = preds)
 
         ## re-compute ratios
-        pratios <- tidyr::gather(pexps, condition, preds, -(!! npe@probeCols))
+        pratios <- tidyr::pivot_longer(pexps, names_to = "condition", values_to = "preds",
+                                       -(!! npe@probeCols))
         pratios <- dplyr::left_join(pratios, dplyr::select_at(pdat, c("condition", "intensity", npe@probeCols)),
                                     by = c("condition", npe@probeCols))
         pratios <- dplyr::mutate(pratios, ratio = intensity / preds)
         pratios <- dplyr::select_at(pratios, c("condition", "ratio", npe@probeCols))
-        pratios <- tidyr::spread(pratios, condition, ratio)
+        pratios <- tidyr::pivot_wider(pratios, names_from = condition, values_from = ratio)
     }
-    pdrop <- tidyr::spread(pdrop, condition, lowq)
+    pdrop <- tidyr::pivot_wider(pdrop, names_from = condition, values_from = lowq)
 
     ## left join to original rowData to get full set
     full_rowdat <- as.data.frame(rowData(pbmTrimProbes(pe)), optional = TRUE)

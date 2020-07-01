@@ -4,8 +4,13 @@
 \alias{cy3FitModel}
 \title{Compute Cy3 scaling factors using regression}
 \usage{
-cy3FitModel(pe, assay = SummarizedExperiment::assayNames(pe)[1],
-  refit = TRUE, threshold = 1/2, verbose = FALSE)
+cy3FitModel(
+  pe,
+  assay = SummarizedExperiment::assayNames(pe)[1],
+  refit = TRUE,
+  threshold = 1/2,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{pe}{a PBMExperiment object containing Cy3 intensity data.}
@@ -13,7 +18,7 @@ cy3FitModel(pe, assay = SummarizedExperiment::assayNames(pe)[1],
 \item{assay}{a numeric index or string specifying the intensity assay.
 (default = \code{SummarizedExperiment::assayNames(pe)[1]})}
 
-\item{refit}{a logical value whether to refit trinucleotide
+\item{refit}{a logical value whether to refit tetranucleotide
 linear regression models after filtering outliers to compute
 observed-to-expected ratios. (default = TRUE)}
 
@@ -47,11 +52,11 @@ available in the \pkg{upbmAux} package.}
 Since probe intensities in the Cy3 scans are roughly
 proportional to the number of adenines in the probe sequence, the
 original Universal PBM Analysis Suite proposed modeling the observed Cy3
-intensities with linear regression using the counts of all tri-nucleotide sequences
+intensities with linear regression using the counts of all tetranucleotide sequences
 starting with an adenine as covariates. The observed-to-expected intensity ratios
 are then used as the scaling factors.
 
-Given a PBMExperiment of Cy3 scans, this function fits the tri-nucleotide
+Given a PBMExperiment of Cy3 scans, this function fits the tetranucleotide
 regression models and returns the expected Cy3 intensities,
 the residuals from the fits, and the corresponding observed-to-expected
 ratios for each probe as new assays added to the original Cy3
