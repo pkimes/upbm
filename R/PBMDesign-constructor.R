@@ -33,12 +33,16 @@
 #'
 #' @references
 #' \itemize{
-#' \item Berger, M. F., & Bulyk, M. L. (2017). Retrieved October 16, 2020, from http://thebrain.bwh.harvard.edu/PBMAnalysisSuite/indexSep2017.html
+#' \item Berger, M. F., & Bulyk, M. L. (2017). Universal Protein Binding Microarray (PBM) Analysis Suite Homepage. Retrieved October 16, 2020, from \url{http://thebrain.bwh.harvard.edu/PBMAnalysisSuite/indexSep2017.html}
 #' }
 #
 #' @examples
+#' ## Universal array designs included with the Universal PBM Analysis Suite software
+#' ## available at the referenced link can be read in as data frames or tibbles (here
+#' ## as an object 'mydesign') and converted to a PBMDesign object.
+#' ## The 'probeFilter=' and 'probeTrim=' settings here filter to de Bruijn sequences
+#' ## and use only the first 36 bases of each probe sequence for downstream analysis.
 #' \dontrun{
-#' ## universal array designs included with the Universal PBM Analysis Suite software available at referenced link can be read in as data frames or tibbles (here as an object 'mydesign') and converted toa PBMDesign object
 #' PBMDesign(
 #'     object = mydesign, 
 #'     probeFilter = list(probeID = function(x) { grepl("^dBr", x) }), 
