@@ -48,6 +48,22 @@ to return a logical vector of probes to keep (TRUE) and drop (FALSE) during anal
 positions in probe `Sequence' to use in analysis steps.
 }
 }
+\examples{
+\dontrun{
+## universal array designs included with the Universal PBM Analysis Suite software available at referenced link can be read in as data frames or tibbles (here as an object 'mydesign') and converted toa PBMDesign object
+PBMDesign(
+    object = mydesign, 
+    probeFilter = list(probeID = function(x) { grepl("^dBr", x) }), 
+    probeTrim = c(1, 36)
+)
+}
+
+}
+\references{
+\itemize{
+\item Berger, M. F., & Bulyk, M. L. (2017). Retrieved October 16, 2020, from http://thebrain.bwh.harvard.edu/PBMAnalysisSuite/indexSep2017.html
+}
+}
 \seealso{
 \code{\link{PBMDesign-class}}
 }

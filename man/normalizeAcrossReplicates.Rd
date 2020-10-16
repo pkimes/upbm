@@ -28,8 +28,8 @@ the unique baseline scan within each \code{group} and to match samples across va
 
 \item{baseline}{a character string specifying the baseline condition in the \code{stratify} column to normalize
 other conditions against within each \code{group}. If not specified and set to NULL, the baseline
-value is guessed by looking for ``ref" in any value of the \code{stratify} column. If multiple
-matching values are found, a warning is thrown and the first matching sample is used.
+value is guessed by looking for values in the \code{stratify} column ending in ``ref". If multiple
+unique matching values are found, a warning is thrown and the first matching sample is used.
 (default = NULL)}
 
 \item{verbose}{a logical value whether to print verbose output during analysis. (default = FALSE)}
