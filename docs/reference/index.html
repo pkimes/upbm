@@ -10,23 +10,27 @@
 
 
 <!-- jquery -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha256-916EbMg70RQy9LHiGkXzG8hSg9EdNy97GazNG/aiY1w=" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous" />
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script>
+
+<!-- bootstrap-toc -->
+<link rel="stylesheet" href="../bootstrap-toc.css">
+<script src="../bootstrap-toc.js"></script>
 
 <!-- Font Awesome icons -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/all.min.css" integrity="sha256-nAmazAk6vS34Xqo0BSrTb+abbtFlgsFK7NKSi6o7Y78=" crossorigin="anonymous" />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/v4-shims.min.css" integrity="sha256-6qHlizsOWFskGlwVOKuns+D1nB6ssZrHQrNj1wGplHc=" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous" />
 
 <!-- clipboard.js -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script>
 
 <!-- headroom.js -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/headroom.min.js" integrity="sha256-DJFC1kqIhelURkuza0AvYal5RxMtpzLjFhsnVIeuk+U=" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script>
 
 <!-- pkgdown -->
 <link href="../pkgdown.css" rel="stylesheet">
@@ -53,7 +57,7 @@
 
   </head>
 
-  <body>
+  <body data-spy="scroll" data-target="#toc">
     <div class="container template-reference-index">
       <header>
       <div class="navbar navbar-default navbar-fixed-top" role="navigation">
@@ -123,7 +127,7 @@
   </ul>
 </li>
 <li>
-  <a href="https://github.com/pkimes/upbm">
+  <a href="https://github.com/pkimes/upbm/">
     <span class="fab fa fab fa-github fa-lg"></span>
      
   </a>
@@ -159,6 +163,11 @@
           <p class="section-desc"><p>Two core classes, <a href="pbmexperiment-class.html">PBMExperiment</a> and <a href="pbmdesign-class.html">PBMDesign</a>, are have been constructed for organizing and analyzing PBM data in R. The following set of functions can be used to construct both PBMExperiment and PBMDesign objects from GPR files or data already loaded in R. For more details, see <a href="#section-pbm-class-definitions">class definitions</a> below.</p></p>
         </th>
       </tr>
+      
+      
+    </tbody><tbody>
+      
+      
       <tr>
         
         <td>
@@ -185,6 +194,11 @@
           <p class="section-desc"><p>Before any downstream inference can be performed, individual samples should be pre-processed. A single wrapper function, <a href="upbmPreprocess.html">upbmPreprocess</a> is provided for performing all standard pre-processing steps, as well as individual functions for handling the steps of background subtraction, Cy3 normalization, and within and across replicate normalization. (See <a href="../articles/analysis-preprocessing.html">Pre-Processing vignette</a> for more details.)</p></p>
         </th>
       </tr>
+      
+      
+    </tbody><tbody>
+      
+      
       <tr>
         
         <td>
@@ -247,6 +261,11 @@
           <p class="section-desc"><p>Pre-processed and normalized samples can be aggregated across replicates to obtain probe-level and K-mer-level affinity estimates. Additionally, a simple summarization function is provided for computing K-mer summary statistics for individual samples in the absence of replicate data. (See <a href="../articles/analysis-summarization.html">Summarization vignette</a> for more details.)</p></p>
         </th>
       </tr>
+      
+      
+    </tbody><tbody>
+      
+      
       <tr>
         
         <td>
@@ -273,6 +292,11 @@
           <p class="section-desc"><p>Finally, K-mer-level affinity estimates can be used to perform various inference procedures both for individual conditions and for testing across conditions. Three functions to perform different itesting procedures are listed below. (See <a href="../articles/analysis-inference.html">K-mer-Level Inference vignette</a> for more details.)</p></p>
         </th>
       </tr>
+      
+      
+    </tbody><tbody>
+      
+      
       <tr>
         
         <td>
@@ -299,6 +323,11 @@
           <p class="section-desc"><p>The package defines two new classes, <a href="pbmexperiment-class.html">PBMExperiment</a> and <a href="pbmdesign-class.html">PBMDesign</a> which buildon existing Bioconductor infrastructure. (See <a href="../articles/upbm-classes.html">Class Details vignette</a> for more details.)</p></p>
         </th>
       </tr>
+      
+      
+    </tbody><tbody>
+      
+      
       <tr>
         
         <td>
@@ -319,6 +348,11 @@
           <p class="section-desc"><p>The two PBM classes include special slots specifying probe filtering and trimming criteria. Functions are provided for accessing and applying these filtering and trimming procedures on both PBMExperiment and PBMDesign objects. These and additional slots can be accessed and modified using getter and setting functions.</p></p>
         </th>
       </tr>
+      
+      
+    </tbody><tbody>
+      
+      
       <tr>
         
         <td>
@@ -334,13 +368,13 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="PBMclass-accessors.html">probeFilter()</a></code> <code><a href="PBMclass-accessors.html">probeTrim()</a></code> <code><a href="PBMclass-accessors.html">probeCols()</a></code> <code><a href="PBMclass-accessors.html">`probeFilter<-`()</a></code> <code><a href="PBMclass-accessors.html">`probeTrim<-`()</a></code> <code><a href="PBMclass-accessors.html">`design<-`(<i>&lt;PBMDesign&gt;</i>,<i>&lt;data.frame&gt;</i>)</a></code> <code><a href="PBMclass-accessors.html">design(<i>&lt;PBMDesign&gt;</i>)</a></code> </p>
+          <p><code><a href="PBMclass-accessors.html">probeFilter()</a></code> <code><a href="PBMclass-accessors.html">probeTrim()</a></code> <code><a href="PBMclass-accessors.html">probeCols()</a></code> <code><a href="PBMclass-accessors.html">`probeFilter&lt;-`()</a></code> <code><a href="PBMclass-accessors.html">`probeTrim&lt;-`()</a></code> <code><a href="PBMclass-accessors.html">`design&lt;-`(<i>&lt;PBMDesign&gt;</i>,<i>&lt;data.frame&gt;</i>)</a></code> <code><a href="PBMclass-accessors.html">design(<i>&lt;PBMDesign&gt;</i>)</a></code> </p>
         </td>
         <td><p>PBM slot accessors and setters</p></td>
       </tr><tr>
         
         <td>
-          <p><code><a href="PBMDesign-replace.html">`PBMDesign<-`()</a></code> </p>
+          <p><code><a href="PBMDesign-replace.html">`PBMDesign&lt;-`()</a></code> </p>
         </td>
         <td><p>Set design in PBMExperiment object</p></td>
       </tr>
@@ -351,6 +385,11 @@
           <p class="section-desc"><p>The package also includes several helper functions for working with PBM data. This includes, most importantly, functions for extracting assay data stored in PBMExperiment objects as tidy tables (see <a href="../articles/analysis-inference.html">Tidy Data vignette</a> for more details).</p></p>
         </th>
       </tr>
+      
+      
+    </tbody><tbody>
+      
+      
       <tr>
         
         <td>
@@ -380,17 +419,10 @@
     </table>
   </div>
 
-  <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
-    <h2>Contents</h2>
-    <ul class="nav nav-pills nav-stacked">
-      <li><a href="#section-creating-pbm-objects">Creating PBM Objects</a></li>
-      <li><a href="#section-sample-pre-processing">Sample Pre-Processing</a></li>
-      <li><a href="#section-probe-k-mer-summarization">Probe/K-mer Summarization</a></li>
-      <li><a href="#section-k-mer-level-testing">K-mer-Level Testing</a></li>
-      <li><a href="#section-pbm-class-definitions">PBM Class Definitions</a></li>
-      <li><a href="#section-pbm-class-methods-and-setters">PBM Class Methods and Setters</a></li>
-      <li><a href="#section-helper-functions">Helper Functions</a></li>
-    </ul>
+  <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
+    <nav id="toc" data-toggle="toc" class="sticky-top">
+      <h2 data-toc-skip>Contents</h2>
+    </nav>
   </div>
 </div>
 
@@ -401,7 +433,7 @@
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
 </div>
 
       </footer>
